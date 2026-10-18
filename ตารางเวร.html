@@ -1,0 +1,3667 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดตารางเวร First Tier (OneDrive Edition)</title>
+  <!-- Google Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS CDN (โหลดตรงจากอินเทอร์เน็ต ไม่ต้องใช้ไฟล์แยก) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --primary-light: #eff6ff;
+      --accent: #0284c7;
+      --accent-light: #f0f9ff;
+      --secondary: #334155;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --text: #0f172a;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --danger-bg: #fef2f2;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+      --purple: #8b5cf6;
+      --purple-bg: #f5f3ff;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Sarabun', 'Prompt', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Modern Sleek Header */
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+      color: #ffffff;
+      padding: 12px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.15);
+    }
+
+    .header-inner {
+      max-width: 1750px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: white;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag {
+      background: rgba(255, 255, 255, 0.15);
+      font-size: 0.7rem;
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-weight: 500;
+      color: #7dd3fc;
+    }
+
+    .brand-text p {
+      font-size: 0.775rem;
+      color: #94a3b8;
+    }
+
+    /* Control Bar inside Header */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .select-pill {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 2px 8px;
+      gap: 6px;
+    }
+
+    .select-pill label {
+      font-size: 0.75rem;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    .select-pill select {
+      background: transparent;
+      color: #ffffff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 6px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .select-pill select option {
+      background: #1e293b;
+      color: white;
+    }
+
+    /* Action Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 0.825rem;
+      font-family: inherit;
+      font-weight: 600;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    }
+    .btn-save:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+    }
+
+    .btn-header-outline {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+    .btn-header-outline:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-outline {
+      background: #ffffff;
+      border: 1px solid var(--border-dark);
+      color: var(--secondary);
+    }
+    .btn-outline:hover {
+      background: var(--bg);
+      border-color: var(--muted);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 0.775rem;
+    }
+
+    /* Secondary Nav Tabs */
+    .nav-tabs {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 62px;
+      z-index: 40;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .nav-tabs-inner {
+      max-width: 1750px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .tabs-group {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+      background: #f8fafc;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 700;
+      border-bottom-color: var(--primary);
+      background: #ffffff;
+    }
+
+    .tab-tools {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1750px;
+      width: 100%;
+      margin: 16px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+
+    .panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modern Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 12px 18px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    table.roster-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      text-align: center;
+    }
+
+    table.roster-table th, 
+    table.roster-table td {
+      border: 1px solid var(--border);
+      padding: 5px 6px;
+      vertical-align: middle;
+    }
+
+    table.roster-table thead tr:first-child th {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 11.5px;
+      padding: 8px 6px;
+    }
+
+    table.roster-table thead tr:nth-child(2) th {
+      background: #1e293b;
+      color: #fde047;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 4px;
+    }
+
+    table.roster-table thead tr:nth-child(3) th {
+      background: #f1f5f9;
+      color: #1e293b;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 4px;
+    }
+
+    table.roster-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .week-col-badge {
+      background: #f1f5f9;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px;
+      white-space: nowrap;
+    }
+
+    .jd-row td {
+      font-size: 10.5px;
+      color: #475569;
+      text-align: left;
+      background: #f8fafc;
+      line-height: 1.45;
+      padding: 6px 8px !important;
+      vertical-align: top;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .wfh-bg {
+      background-color: #f5f3ff !important;
+    }
+
+    /* Clean Interactive Name Tags (Direct Click to Swap) */
+    .name-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      margin: 2px 0;
+      background: #ffffff;
+      color: #1e3a8a;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .name-tag:hover {
+      transform: translateY(-1px);
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 3px 6px rgba(59, 130, 246, 0.15);
+    }
+
+    .name-tag.selected-for-swap {
+      background: #7c3aed !important;
+      color: #ffffff !important;
+      border-color: #6d28d9 !important;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35) !important;
+      animation: pulseGlow 1.2s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    .name-tag.highlight-user {
+      background: #fef08a !important;
+      color: #854d0e !important;
+      border-color: #facc15 !important;
+      box-shadow: 0 0 0 2px #fde047 !important;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .badge-early { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-call { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .badge-spec { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-late { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-wfh { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .badge-hol { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+
+    /* Floating Swap Notification Bar */
+    #floating-swap-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 99px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    #floating-swap-bar.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .btn-cancel-swap {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      cursor: pointer;
+    }
+    .btn-cancel-swap:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Toast Notification */
+    #toast-msg {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      background: #10b981;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    #toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Modern Executive Agent Cards Grid */
+    .agent-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    .agent-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 1px 4px -1px rgba(15, 23, 42, 0.04);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .agent-card:hover {
+      transform: translateY(-3px);
+      border-color: #60a5fa;
+      box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.12), 0 4px 8px -2px rgba(15, 23, 42, 0.06);
+    }
+
+    .agent-card-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: white;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .agent-card-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .agent-avatar-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+    }
+
+    .agent-card-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .agent-card-team-label {
+      font-size: 11px;
+      color: #93c5fd;
+      font-weight: 500;
+    }
+
+    .agent-card-stats {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .agent-stat-chip {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .agent-card-body {
+      padding: 14px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #ffffff;
+    }
+
+    .agent-card-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    /* Weekday Shifts List */
+    .weekday-shifts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .shift-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      transition: all 0.15s ease;
+    }
+    .shift-box:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .shift-box-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .shift-box-week {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .shift-box-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: var(--secondary);
+    }
+
+    .shift-box-role {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Holiday Box */
+    .holiday-box-wrap {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .holiday-chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .hol-chip-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      color: #9f1239;
+      border: 1px solid #fda4af;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .hol-chip-item.is-bank {
+      background: #fefce8;
+      color: #854d0e;
+      border-color: #fde047;
+    }
+
+    .agent-card-footer {
+      padding: 8px 16px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: 1px solid #b91c1c;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+    }
+    .btn-danger:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+
+    /* Schedule Mode Switcher (Active vs Master Baseline) */
+    .schedule-mode-container {
+      margin-bottom: 16px;
+    }
+    .schedule-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: #f8fafc;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    }
+    @media (max-width: 768px) {
+      .schedule-mode-tabs {
+        grid-template-columns: 1fr;
+      }
+    }
+    .schedule-mode-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .schedule-mode-btn:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-1px);
+    }
+    .schedule-mode-btn.active#modeBtnActive {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+    }
+    .schedule-mode-btn.active#modeBtnMaster {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+    }
+    .schedule-mode-btn .mode-icon {
+      font-size: 26px;
+      line-height: 1;
+    }
+    .schedule-mode-btn .mode-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .schedule-mode-btn .mode-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .schedule-mode-btn.active#modeBtnActive .mode-title {
+      color: #15803d;
+    }
+    .schedule-mode-btn.active#modeBtnMaster .mode-title {
+      color: #b45309;
+    }
+    .schedule-mode-btn .mode-desc {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .schedule-mode-btn .mode-badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .mode-badge.badge-active {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .mode-badge.badge-master {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .badge-active-mode {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      border: 1px solid #86efac !important;
+      font-weight: 700;
+    }
+    .badge-master-mode {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border: 1px solid #fde68a !important;
+      font-weight: 700;
+    }
+
+    /* Swap Status Pill */
+    .swap-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .swap-status-pill.open {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .swap-status-pill.locked {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* Master Baseline Notice Bar */
+    .master-baseline-banner {
+      display: none;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px solid #f59e0b;
+      color: #92400e;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .master-baseline-banner.show {
+      display: flex;
+    }
+
+    /* Swapped Tag Indicator */
+    .name-tag.was-swapped {
+      position: relative;
+      border-color: #f59e0b !important;
+      background: #fffbeb !important;
+      color: #b45309 !important;
+      font-weight: 700;
+    }
+    .name-tag.was-swapped::after {
+      content: " ⇄";
+      font-size: 11px;
+      color: #d97706;
+      font-weight: 800;
+    }
+
+    .name-tag.name-tag-locked {
+      cursor: default !important;
+    }
+    .name-tag.name-tag-locked:hover {
+      transform: none !important;
+      box-shadow: none !important;
+      border-color: var(--border-dark) !important;
+    }
+
+    /* Admin Protection Styles */
+    .admin-only {
+      display: none !important;
+    }
+    body.is-admin .admin-only {
+      display: inline-flex !important;
+    }
+    body.is-admin div.admin-only {
+      display: flex !important;
+    }
+    body.is-admin button.tab-btn.admin-only {
+      display: flex !important;
+    }
+    body.is-admin td.admin-only,
+    body.is-admin th.admin-only {
+      display: table-cell !important;
+    }
+
+    .admin-indicator-bar {
+      display: none;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 12.5px;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+    body.is-admin .admin-indicator-bar {
+      display: flex;
+    }
+
+    /* Modal Styling */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-box-header {
+      background: linear-gradient(135deg, #1e3a8a, #0284c7);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-box-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-box-body {
+      padding: 18px;
+    }
+    .modal-box-footer {
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Print Styles */
+    @media print {
+      header, .nav-tabs, #floating-swap-bar, .no-print, .btn {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        font-size: 9pt;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        margin-bottom: 15px !important;
+      }
+      .table-responsive {
+        overflow: visible !important;
+        border: none !important;
+      }
+      table.roster-table {
+        font-size: 7pt !important;
+      }
+      table.roster-table th, table.roster-table td {
+        padding: 3px 4px !important;
+        border: 1px solid #333 !important;
+      }
+      .panel {
+        display: block !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 0.8cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sleek Top Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-logo">FT</div>
+        <div class="brand-text">
+          <h1>
+            First Tier Shift Roster
+            <span class="brand-tag">OneDrive Edition</span>
+          </h1>
+          <p>ระบบตารางเวรทีม IT Support • คลิกที่ชื่อเพื่อสลับเวรได้ทันที</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="select-pill">
+          <label>ปี:</label>
+          <select id="yearSelect" onchange="generateScheduleForSelectedMonth()">
+            <option value="2026" selected>2569</option>
+            <option value="2027">2570</option>
+          </select>
+        </div>
+
+        <div class="select-pill">
+          <label>เดือน:</label>
+          <select id="monthSelect" onchange="generateScheduleForSelectedMonth()">
+            <option value="9">กันยายน (ข้อมูลจริง)</option>
+            <option value="10">ตุลาคม (ข้อมูลจริง)</option>
+            <option value="11" selected>พฤศจิกายน (ข้อมูลจริง)</option>
+            <option value="12">ธันวาคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="1">มกราคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="2">กุมภาพันธ์ (คำนวณตามรอบหมุนวน)</option>
+            <option value="3">มีนาคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="4">เมษายน (คำนวณตามรอบหมุนวน)</option>
+            <option value="5">พฤษภาคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="6">มิถุนายน (คำนวณตามรอบหมุนวน)</option>
+            <option value="7">กรกฎาคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="8">สิงหาคม (คำนวณตามรอบหมุนวน)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-header-outline" id="adminToggleBtn" onclick="handleAdminToggle()" style="background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); font-weight: 700;">
+          🔒 โหมดหัวหน้า (Admin)
+        </button>
+
+        <button class="btn btn-save" onclick="saveUpdatedMasterHTML()">
+          💾 เซฟทับไฟล์ (OneDrive)
+        </button>
+
+        <button class="btn btn-header-outline" onclick="exportToExcel()">
+          📊 ส่งออก Excel
+        </button>
+
+        <button class="btn btn-header-outline" onclick="window.print()">
+          🖨️ พิมพ์ / PDF
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Secondary Navigation Tabs -->
+  <nav class="nav-tabs no-print">
+    <div class="nav-tabs-inner">
+      <div class="tabs-group">
+        <button class="tab-btn active" id="tabBtnMaster" onclick="switchTab('masterTab', this)">
+          📊 1. ตารางรวมทั้งเดือน (Master Table)
+        </button>
+        <button class="tab-btn" id="tabBtnCards" onclick="switchTab('cardsTab', this)">
+          👤 2. การ์ดสรุปรายบุคคล (Individual Cards)
+        </button>
+        <button class="tab-btn" id="tabBtnHourly" onclick="switchTab('hourlyTab', this); renderHourlyHeadcountTable();">
+          ⏱️ 3. เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount)
+        </button>
+        <button class="tab-btn admin-only" id="tabBtnMatrix" onclick="switchTab('matrixTab', this)">
+          ⚖️ 4. ตรวจสอบโควตา & กะ Call (Matrix Check)
+        </button>
+        <button class="tab-btn admin-only" id="tabBtnAgents" onclick="switchTab('agentsTab', this)">
+          👥 5. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
+        </button>
+      </div>
+
+      <div class="tab-tools">
+        <button class="btn btn-outline btn-sm" onclick="toggleJD()">
+          👁️ <span id="jdToggleText">ซ่อน JD งาน</span>
+        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <label style="font-size: 0.775rem; color: var(--muted); font-weight: 600;">เน้นชื่อ:</label>
+          <select id="userFilterSelect" onchange="applyUserHighlight(this.value)" style="padding: 3px 6px; border: 1px solid var(--border-dark); border-radius: 6px; font-size: 12px;">
+            <option value="ALL">-- ทุกคน --</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Areas -->
+  <main>
+
+    <!-- Admin Indicator Banner -->
+    <div class="admin-indicator-bar no-print" id="adminIndicator">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:22px;">👑</span>
+        <div>
+          <strong style="font-size:14px; color:#78350f;">โหมดหัวหน้างาน (Admin Control)</strong>
+          <span style="font-weight:normal; color:#b45309; margin-left:6px; font-size:12px;">ควบคุมสิทธิ์สลับเวร และจัดการฐานข้อมูลตาราง</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-sm" id="swapLockToggleBtn" onclick="toggleUserSwapPermission()" style="background:#dc2626; color:white; font-weight:700;">
+          🔒 ปิดรับการสลับเวร (ล็อกดูอย่างเดียว)
+        </button>
+        <button class="btn btn-outline btn-sm" id="viewBaselineBtn" onclick="toggleViewOriginal()" style="border-color:#0284c7; color:#0369a1; background:white; font-weight:600;">
+          📜 สลับดูตารางต้นฉบับ
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openChangePinModal()" style="border-color:#f59e0b; color:#b45309; background:white;">
+          🔑 เปลี่ยน PIN
+        </button>
+        <button class="btn btn-sm" onclick="exitAdminMode()" style="background:#78350f; color:white;">
+          ออกจากโหมด
+        </button>
+
+        <!-- Danger Zone Box with Safety Guard -->
+        <div style="display:flex; align-items:center; gap:6px; background:rgba(234, 88, 12, 0.12); padding:3px 8px; border-radius:8px; border:1px dashed #f97316; margin-left:6px;">
+          <span style="font-size:11px; font-weight:800; color:#c2410c;">🛡️ คำสั่งขั้นสูง:</span>
+          <button class="btn btn-outline btn-sm" onclick="requestRestoreOriginal()" style="border-color:#dc2626; color:#b91c1c; background:white; font-weight:700; padding:3px 8px; font-size:11.5px;" title="ยกเลิกการสลับเวรทั้งหมดและย้อนกลับสู่ต้นฉบับ (มีกล่องยืนยันความปลอดภัย)">
+            🔄 คืนค่าตารางต้นฉบับ
+          </button>
+          <button class="btn btn-sm" onclick="requestCalculateNextMonth()" style="background:linear-gradient(135deg, #0284c7, #1d4ed8); color:white; font-weight:700; border:none; padding:3px 8px; font-size:11.5px;" title="คำนวณเวรเดือนถัดไปโดยใช้ตารางต้นฉบับของเดือนนี้เป็นตัวตั้ง (มีกล่องยืนยันความปลอดภัย)">
+            ✨ คำนวณเดือนถัดไป
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="requestShuffle()" style="border-color:#94a3b8; color:#475569; background:white; padding:3px 8px; font-size:11.5px;" title="สุ่มสร้างตารางต้นฉบับใหม่ (มีกล่องยืนยันความปลอดภัย)">
+            🎲 สลับคิวใหม่
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: ตารางรวมทั้งเดือน (Master Table) — แสดงเป็นหน้าแรกทันที -->
+    <section id="masterTab" class="panel active">
+
+      <!-- Schedule Mode Switcher (Active vs Master Baseline) - Admin Only -->
+      <div class="schedule-mode-container no-print admin-only" id="scheduleModeContainer">
+        <div class="schedule-mode-tabs">
+          <button type="button" id="modeBtnActive" class="schedule-mode-btn active" onclick="setScheduleViewMode(false)">
+            <span class="mode-icon">📋</span>
+            <div class="mode-text">
+              <span class="mode-title">ตารางปฏิบัติงานจริง (Active)</span>
+              <span class="mode-desc">ตารางปัจจุบันที่มีการสลับเวรแล้ว • ใช้ดูเวลาเข้างานจริงรายวัน</span>
+            </div>
+            <span class="mode-badge badge-active">ปฏิบัติงาน</span>
+          </button>
+          
+          <button type="button" id="modeBtnMaster" class="schedule-mode-btn" onclick="setScheduleViewMode(true)">
+            <span class="mode-icon">📜</span>
+            <div class="mode-text">
+              <span class="mode-title">ตารางต้นฉบับ Master (Baseline)</span>
+              <span class="mode-desc">ตารางตั้งต้นตามสูตรหมุนวน (ก่อนสลับ) • ใช้เป็นฐานคำนวณเดือนถัดไป</span>
+            </div>
+            <span class="mode-badge badge-master">ต้นฉบับ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Swap Status Banner for Members -->
+      <div class="swap-status-pill open no-print" id="swapStatusPill">
+        <span>🟢</span>
+        <span id="swapStatusPillText"><strong>สถานะการสลับเวร:</strong> เปิดให้น้องๆ สลับเวรกันเองได้ (คลิกชื่อคนที่ 1 และคนที่ 2 เพื่อสลับเวร)</span>
+      </div>
+
+      <!-- Master Baseline Notice Bar -->
+      <div class="master-baseline-banner no-print" id="baselineNoticeBar">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="font-size:26px; line-height:1;">👑</span>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong style="font-size:14px; color:#92400e;">กำลังดู "ตารางต้นฉบับ Master (Baseline)"</strong>
+              <span class="badge badge-master-mode">โหมดดูอย่างเดียว</span>
+            </div>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#b45309; line-height:1.4;">
+              นี่คือตารางตั้งต้นของเดือนนี้ตามรอบหมุนเวรที่เป็นธรรม <strong>ก่อนที่น้องๆ จะทำการสลับเวรใดๆ</strong> โดยระบบจะยึดตารางนี้เป็นฐานข้อมูลในการคำนวณเดือนถัดไปเสมอ<br>
+              *(🔒 ในโหมดนี้ระบบจะล็อกไม่ให้คลิกสลับเวร เพื่อรักษาความถูกต้องของข้อมูลต้นฉบับ)*
+            </p>
+          </div>
+        </div>
+        <button class="btn btn-sm" onclick="setScheduleViewMode(false)" style="background:white; border:1px solid #d97706; color:#92400e; font-weight:700; white-space:nowrap; padding:6px 14px;">
+          ⬅️ สลับกลับสู่ตารางปฏิบัติงานจริง
+        </button>
+      </div>
+
+      <!-- Weekday Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🏢 ตารางเวรวันทำการ (จันทร์ - ศุกร์)</span>
+            <span class="badge badge-early" id="weekdayMonthBadge">ประจำเดือน</span>
+            <span class="badge badge-active-mode admin-only" id="scheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง (Active)</span>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--muted);" id="swapHintText">
+            💡 <strong>วิธีสลับเวร:</strong> คลิกที่ชื่อคนที่ 1 แล้วคลิกชื่อคนที่ 2 เพื่อสลับเวร (หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือน)
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table" id="masterWeekdayTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekend Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🏖️ ตารางเวรวันหยุด & วันพิเศษ (เสาร์ - อาทิตย์ / วันหยุดนักขัตฤกษ์)</span>
+            <span class="badge badge-hol">4 กะต่อวัน</span>
+            <span class="badge badge-active-mode admin-only" id="holScheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง (Active)</span>
+          </div>
+          <div class="admin-only" style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" id="quickHolDate" min="1" max="31" placeholder="วันที่" style="width: 60px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+            <input type="text" id="quickHolName" placeholder="ชื่อวันหยุด" style="width: 140px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+            <button class="btn btn-outline btn-sm" onclick="addCustomHolidayQuick()">+ เพิ่มวันหยุด</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table" id="masterHolidayTable"></table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: การ์ดสรุปรายบุคคล (Individual Cards) -->
+    <section id="cardsTab" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>👤 ตารางเวรแยกตามรายบุคคล (Individual Shift Cards)</span>
+            <span class="badge badge-active-mode admin-only" id="cardScheduleTypeBadge">🟢 ข้อมูลอิงจากตารางปฏิบัติงานจริง</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 0.8rem; font-weight: 600;">กรองเฉพาะบุคคล:</label>
+            <select id="cardFilterSelect" onchange="renderIndividualCards(this.value)" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary);">
+              <option value="ALL">-- แสดงครบทุกคน (20 คน) --</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="individualCardsGrid" class="agent-cards-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount Table) -->
+    <section id="hourlyTab" class="panel">
+      <div class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+          <div class="card-title">
+            <span>⏱️ ตารางเช็คจำนวนคนแต่ละช่วงเวลา (Hourly Staffing & Coverage Check)</span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">เลือกโหมด:</label>
+              <div class="btn-group" style="display: flex; background: var(--bg-hover); padding: 2px; border-radius: 6px;">
+                <button type="button" class="btn btn-sm btn-primary" id="hourlyModeWeekdayBtn" onclick="setHourlyMode('WEEKDAY')" style="padding: 3px 10px; font-size: 12px; font-weight: 600;">📅 วันทำการ (Weekday)</button>
+                <button type="button" class="btn btn-sm" id="hourlyModeHolidayBtn" onclick="setHourlyMode('HOLIDAY')" style="padding: 3px 10px; font-size: 12px; font-weight: 600; background: transparent; color: var(--muted);">🏖️ วันหยุด (Holiday)</button>
+              </div>
+            </div>
+            <div id="hourlyWeekSelectContainer" style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">สัปดาห์:</label>
+              <select id="hourlyWeekSelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              </select>
+            </div>
+            <div id="hourlyHolidaySelectContainer" style="display: none; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">วันหยุด:</label>
+              <select id="hourlyHolidaySelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- KPI Summary Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(59,130,246,0.03)); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase;">🔥 ช่วงเวลาเร่งด่วน (Peak Hours)</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">08:30 - 17:00 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" id="kpiPeakCoverage">กำลังพล On-Duty 11 - 19 คน</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.03)); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase;">☕ การสลับพักเที่ยง & บ่าย</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">11:00 - 15:00 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">กระจายพัก 4 รอบ ไม่กระทบสาย</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.03)); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase;">🌙 ครอบคลุมรอบวัน (All-Day)</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">07:00 - 22:30 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">เช้าตรู่ 2 คน • กะดึก WFH 1 คน</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(124,58,237,0.03)); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase;">📊 สัดส่วนหน้าที่งาน (Roles)</div>
+              <div style="font-size: 15px; font-weight: 800; color: var(--text); margin-top: 4px;">Call 13 • Mail 5 • Self 2</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Log 2 • Follow SR 1 คน</div>
+            </div>
+          </div>
+
+          <!-- Capacity Timeline Visualizer -->
+          <div style="margin-bottom: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text);">📈 กราฟระดับความหนาแน่นผู้ปฏิบัติงาน On-Duty ตลอดวัน (Capacity Timeline)</span>
+              <div style="display: flex; gap: 12px; font-size: 11px;">
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:2px;"></span> $\ge$14 คน (Peak สูง)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:2px;"></span> 7-13 คน (ปกติ)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:2px;"></span> 2-6 คน (เช้า/เย็น)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#8b5cf6; border-radius:2px;"></span> 1 คน (เปิด/ปิดกะ)</span>
+              </div>
+            </div>
+            <div id="hourlyCapacityTimeline" style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px;"></div>
+          </div>
+
+          <!-- Main Table Container -->
+          <div class="table-responsive">
+            <table class="roster-table" id="hourlyHeadcountTable" style="font-size: 11.5px; text-align: center;">
+              <thead id="hourlyHead"></thead>
+              <tbody id="hourlyBody"></tbody>
+              <tfoot id="hourlyFoot"></tfoot>
+            </table>
+          </div>
+
+          <!-- Roles Distribution Detail Note -->
+          <div style="margin-top: 20px; padding: 14px; background: rgba(59,130,246,0.04); border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.6;">
+            <strong>📌 ข้อมูลอ้างอิงหน้าที่งานหลัก First Tier:</strong>
+            <ul style="margin: 6px 0 0 18px; padding: 0;">
+              <li><strong>Call (07.00 - 22.30 น.):</strong> รับสายตลอดช่วงเวลาเปิดทำการ มี Agent ประจำการรวม 13 คนต่อวัน (หมุนเวียนพักตามรอบ)</li>
+              <li><strong>Mail K-Helps & Realtime:</strong> ประจำการ 5 คนต่อวัน เพื่อตอบกลับข้อความและจัดการเคสผ่านช่องทางอิเล็กทรอนิกส์</li>
+              <li><strong>Monitor Self Service:</strong> ประจำการ 2 คน ดูแลระบบบริการตนเองของลูกค้า</li>
+              <li><strong>Confirm Outstanding Log & Follow SR:</strong> ประจำการ 2 คน และ 1 คน ติดตามงาน Change และความคืบหน้าระบบ KInfra</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ตรวจสอบโควตา (Matrix Check) -->
+    <section id="matrixTab" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>⚖️ ตารางตรวจสอบการกระจายเวรและโควตา (Matrix & Balance Check)</span>
+          </div>
+          <span class="badge badge-spec">เช็คความสมดุลของทีม</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table">
+              <thead id="matrixHead"></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: จัดการรายชื่อทีม, เวลาเข้างาน & JD -->
+    <section id="agentsTab" class="panel">
+      <!-- Sub-tabs within Tab 4 -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="subTabBtnAgents" onclick="switchSettingsSubTab('agentsSubTab', this)">
+          👥 1. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
+        </button>
+        <button class="btn btn-outline btn-sm" id="subTabBtnWeekdayJD" onclick="switchSettingsSubTab('weekdayJdSubTab', this)">
+          ⏰ 2. แก้ไขเวลาเข้างาน & JD วันทำการ (16 กะ)
+        </button>
+        <button class="btn btn-outline btn-sm" id="subTabBtnHolidayJD" onclick="switchSettingsSubTab('holidayJdSubTab', this)">
+          🏖️ 3. แก้ไขเวลาเข้างาน & JD วันหยุด (4 กะ)
+        </button>
+      </div>
+
+      <!-- Sub-tab 1: Agents -->
+      <div id="agentsSubTab" class="settings-sub-panel">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>👥 รายชื่อสมาชิกทีม First Tier (20 คน)</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="agentsGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-bottom: 16px;"></div>
+            <button class="btn btn-primary" onclick="saveAgentNames()">💾 บันทึกรายชื่อและอัปเดตตาราง</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-tab 2: Weekday Shifts & JD Editor -->
+      <div id="weekdayJdSubTab" class="settings-sub-panel" style="display:none;">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div class="card-title">
+              <span>⏰ แก้ไขเวลาเข้างาน, เวลาพัก และ Job Description (JD) กะวันทำการ (16 กะ)</span>
+            </div>
+            <button class="btn btn-save btn-sm" onclick="saveWeekdayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันทำการ</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+              💡 สามารถแก้ไขเวลาเข้า-ออกงาน, เวลาพัก, หน้าที่รับผิดชอบ และกด <strong>"+ เพิ่มหัวข้อ JD"</strong> หรือ <strong>"✕ ลบ"</strong> ได้ตามต้องการ
+            </p>
+            <div id="weekdayJdGrid" style="display:flex; flex-direction:column; gap:16px;"></div>
+            <div style="margin-top: 20px;">
+              <button class="btn btn-save" onclick="saveWeekdayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันทำการ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-tab 3: Holiday Shifts & JD Editor -->
+      <div id="holidayJdSubTab" class="settings-sub-panel" style="display:none;">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div class="card-title">
+              <span>🏖️ แก้ไขเวลาเข้างาน, เวลาพัก และ Job Description (JD) กะวันหยุด (4 กะ)</span>
+            </div>
+            <button class="btn btn-save btn-sm" onclick="saveHolidayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันหยุด</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+              💡 แก้ไขเวลาเข้างาน, เวลาพัก และหัวข้อ JD สำหรับ 4 กะของเวรวันหยุดและวันหยุดนักขัตฤกษ์ ธปท.
+            </p>
+            <div id="holidayJdGrid" style="display:flex; flex-direction:column; gap:16px;"></div>
+            <div style="margin-top: 20px;">
+              <button class="btn btn-save" onclick="saveHolidayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันหยุด</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Swap Notification Bar -->
+  <div id="floating-swap-bar">
+    <span>🔄 กำลังเลือก: <strong id="swapSelectedName" style="color: #67e8f9;">-</strong> — คลิกเลือกเพื่อนในสัปดาห์อื่น หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือนได้อิสระ</span>
+    <button class="btn-cancel-swap" onclick="cancelPendingSwap()">✕ ยกเลิก</button>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg">
+    <span>✅</span>
+    <span id="toast-text">สำเร็จ</span>
+  </div>
+
+  <!-- Embedded State for OneDrive Self-Updating Mode -->
+  <script id="embeddedOneDriveState">
+    window.__EMBEDDED_ONEDRIVE_STATE__ = null;
+  </script>
+
+  <script>
+    
+    // Admin Mode & PIN Management
+    let isAdminMode = false;
+    let currentAdminPin = "1234";
+
+    function handleAdminToggle() {
+      if (isAdminMode) {
+        exitAdminMode();
+      } else {
+        openPinModal();
+      }
+    }
+
+    function openPinModal() {
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinErrorMsg").style.display = "none";
+      document.getElementById("pinModal").classList.add("show");
+      setTimeout(() => document.getElementById("pinInput").focus(), 150);
+    }
+
+    function closePinModal() {
+      document.getElementById("pinModal").classList.remove("show");
+    }
+
+    function submitAdminPin() {
+      const enteredPin = document.getElementById("pinInput").value.trim();
+      if (enteredPin === currentAdminPin) {
+        isAdminMode = true;
+        closePinModal();
+        updateAdminModeUI();
+        showToast("🔓 เข้าสู่โหมดหัวหน้างานเรียบร้อยแล้ว");
+      } else {
+        document.getElementById("pinErrorMsg").style.display = "block";
+      }
+    }
+
+    function exitAdminMode() {
+      isAdminMode = false;
+      if (isViewingOriginal) setScheduleViewMode(false);
+      updateAdminModeUI();
+      // If currently on admin-only tab, switch to masterTab
+      if (document.getElementById("tabBtnMatrix").classList.contains("active") || 
+          document.getElementById("tabBtnAgents").classList.contains("active")) {
+        switchTab("masterTab", document.getElementById("tabBtnMaster"));
+      }
+      showToast("🔒 ออกจากโหมดหัวหน้าแล้ว (สลับสู่โหมดน้อง)");
+    }
+
+    function updateAdminModeUI() {
+      const body = document.body;
+      const toggleBtn = document.getElementById("adminToggleBtn");
+
+      if (isAdminMode) {
+        body.classList.add("is-admin");
+        toggleBtn.innerHTML = "🔓 โหมดหัวหน้า (ออกจากระบบ)";
+        toggleBtn.style.background = "linear-gradient(135deg, #b45309, #d97706)";
+        toggleBtn.style.borderColor = "#f59e0b";
+      } else {
+        body.classList.remove("is-admin");
+        toggleBtn.innerHTML = "🔒 โหมดหัวหน้า (Admin)";
+        toggleBtn.style.background = "rgba(255,255,255,0.14)";
+        toggleBtn.style.borderColor = "rgba(255,255,255,0.3)";
+      }
+      updateSwapPermissionUI();
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+    }
+
+    function openChangePinModal() {
+      document.getElementById("newPinInput").value = "";
+      document.getElementById("changePinModal").classList.add("show");
+    }
+
+    function closeChangePinModal() {
+      document.getElementById("changePinModal").classList.remove("show");
+    }
+
+    function saveNewPin() {
+      const newPin = document.getElementById("newPinInput").value.trim();
+      if (!newPin || newPin.length < 4) {
+        alert("กรุณากรอกรหัส PIN เป็นตัวเลขอย่างน้อย 4 หลัก");
+        return;
+      }
+      currentAdminPin = newPin;
+      closeChangePinModal();
+      showToast("🔑 เปลี่ยนรหัส PIN เรียบร้อยแล้ว (กดเซฟทับเพื่อบันทึก)");
+    }
+
+    // Master Team List (20 Agents)
+    let AGENTS = [
+      "เมวิกา", "สาวิตรี", "จุฑารัตน์", "ชฎาพร", "คมกริช",
+      "อนุสิทธิ์", "ปริญญา", "ธีรวุฒิ", "พันธุ์ทิพย์", "สุริยา",
+      "ปาณิสรา", "กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร",
+      "นิทัศน์", "พรภูมิ", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"
+    ];
+
+    // 16 Weekday Column Definitions
+    let WEEKDAY_COLUMNS = [
+      { id: 1, time: "07.00-16.00", breakTime: "พัก 11.00", role: "Call/ECE", code: "7C", slots: 1, wfh: false, jd: ["7.00 - 08.00 Call+ECE", "8.00 - 16.00 น. Call"] },
+      { id: 2, time: "07.00-16.00", breakTime: "พัก 12.00", role: "Mail K-Helps/Self/Realtime", code: "7A", slots: 1, wfh: false, jd: ["7.00 - 08.00 Mail All", "09.00 - 16.00 Self ท้าย 0-3"] },
+      { id: 3, time: "08.00-17.00", breakTime: "พัก 11.30", role: "Call", code: "8C", slots: 2, wfh: false, jd: ["รับสาย Call 08.00 - 17.00 น."] },
+      { id: 4, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Self Service", code: "8A", slots: 1, wfh: false, jd: ["09.00 - 17.00 Self ท้าย 4-6"] },
+      { id: 5, time: "08.00-17.00", breakTime: "พัก 12.00", role: "ECE", code: "8E", slots: 1, wfh: false, jd: ["ทำ ECE รอบ 08.00 - 17.00 น."] },
+      { id: 6, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Mail K-Helps/Realtime", code: "8M", slots: 1, wfh: false, jd: ["08.00 – 17.00 ทำ Mail All"] },
+      { id: 7, time: "08.30-17.30", breakTime: "พัก 12.30", role: "Aging/16App/Follow SR (คู่)", code: "Agingคู่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคู่", "13.30-14.30 All"] },
+      { id: 8, time: "08.30-17.30", breakTime: "พัก 13.00", role: "ECE", code: "8.3E", slots: 1, wfh: false, jd: ["ทำ ECE 08.30 - 17.30 น."] },
+      { id: 9, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Aging/16App/Follow SR (คี่)", code: "Agingคี่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคี่", "12.30-13.30 All"] },
+      { id: 10, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Call", code: "8.3C", slots: 4, wfh: false, jd: ["รับสาย Call 08.30 - 17.30 น."] },
+      { id: 11, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Self Service", code: "9A", slots: 1, wfh: false, jd: ["09.00-17.00 Self ท้าย 7-9"] },
+      { id: 12, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Call/ECE", code: "9C", slots: 1, wfh: false, jd: ["09.00-14.00 ECE", "15.00-18.00 Call"] },
+      { id: 13, time: "10.00-19.00", breakTime: "พัก 13.30", role: "Self/Real Time", code: "10", slots: 1, wfh: false, jd: ["ทำ ECE 10.00 - 19.00 น."] },
+      { id: 14, time: "11.00-20.00", breakTime: "พัก 14.00", role: "Call", code: "11", slots: 1, wfh: false, jd: ["รับสาย Call 11.00 - 20.00 น."] },
+      { id: 15, time: "12.00-21.00 (WFH)", breakTime: "พัก 15.00", role: "Call/Mail/ECE+Self", code: "12", slots: 1, wfh: true, jd: ["12.00-15.00 Self", "16.00-21.00 Mail/Call"] },
+      { id: 16, time: "13.30-22.30 (WFH)", breakTime: "พัก 16.00", role: "Call/Mail/ECE+Self", code: "13", slots: 1, wfh: true, jd: ["13.30 ECE", "14.30-21 Call", "21-22.30 ALL"] }
+    ];
+
+    let HOLIDAY_SHIFT_META = [
+      { time: "08.00-17.00 น.", breakTime: "พัก 13.30-14.30 น.", jd: ["เวลา 08.00 - 09.00 น. (All)", "เวลา 09.00 - 17.00 น. (Call+ECE)", "Monitor V2 เวลา 9.00 , 11.00 น. , 13.00 น."] },
+      { time: "09.00-18.00 น.", breakTime: "พัก 14.30-15.30 น.", jd: ["เวลา 09.00 - 10.00 น. (All)", "เวลา 10.00 - 18.00 น. (Call+ECE)", "Monitor V2 เวลา 10.00 , 12.00 , 14.00 น."] },
+      { time: "10.00-19.00 น.", breakTime: "พัก 14.00-15.00 น.", jd: ["เวลา 10.00 - 11.00 น. (All)", "เวลา 11.00 - 18.00 น. (Mail + ECE+Self+Follow PK/Console Expert)", "Monitor V2 เวลา 15.00 , 17.00 , 18.30 น.", "เวลา 18.00 น.-19.00 น. (All)"] },
+      { time: "13.30-22.30 น.", breakTime: "พัก 16.00-17.00 น.", jd: ["13.30 - 14.00 น. (Call+ECE)", "เวลา 14.00 - 15.00 (Mail + ECE+Self+Follow PK/Console Expert)", "เวลา 15.00 - 19.00 (Call+ECE)", "เวลา 19.00 (All)", "Monitor V2 เวลา 19.30 , 20.30 , 22.00 น."] }
+    ];
+
+    // Real historical schedules for September and October
+    const HISTORICAL_SCHEDULES = {"2026-9": {"weeks": [{"label": "1 - 4 ก.ย. 69", "assignments": [["ชฎาพร"], ["มัลลิกา"], ["พรภูมิ", "นุชนาถ"], ["ญาสุมินทร์"], ["ภัทรภรณ์"], ["กิตติยากร"], ["สุริยา"], ["คมกริช"], ["สิริยากร"], ["ปริญญา", "ธีรวุฒิ", "ปาณิสรา", "กิตติภา"], ["สาวิตรี"], ["เมวิกา"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["จุฑารัตน์"], ["อนุสิทธิ์"]]}, {"label": "7 - 11 ก.ย. 69", "assignments": [["เมวิกา"], ["คมกริช"], ["นุชนาถ", "จุฑารัตน์"], ["ปริญญา"], ["ชฎาพร"], ["สิริยากร"], ["อนุสิทธิ์"], ["ภัทรภรณ์"], ["ธีรวุฒิ"], ["นิทัศน์", "ญาสุมินทร์", "กิตติยากร", "พรภูมิ"], ["สุริยา"], ["สาวิตรี"], ["พันธุ์ทิพย์"], ["ปาณิสรา"], ["กิตติภา"], ["มัลลิกา"]]}, {"label": "14 - 18 ก.ย. 69", "assignments": [["ภัทรภรณ์"], ["นิทัศน์"], ["สุริยา", "สาวิตรี"], ["พันธุ์ทิพย์"], ["ปาณิสรา"], ["จุฑารัตน์"], ["นุชนาถ"], ["กิตติยากร"], ["เมวิกา"], ["มัลลิกา", "ชฎาพร", "อนุสิทธิ์", "พรภูมิ"], ["กิตติภา"], ["ธีรวุฒิ"], ["สิริยากร"], ["ญาสุมินทร์"], ["คมกริช"], ["ปริญญา"]]}, {"label": "21 - 25 ก.ย. 69", "assignments": [["พันธุ์ทิพย์"], ["ชฎาพร"], ["กิตติยากร", "สิริยากร"], ["มัลลิกา"], ["ญาสุมินทร์"], ["ธีรวุฒิ"], ["คมกริช"], ["ปริญญา"], ["ภัทรภรณ์"], ["สุริยา", "ปาณิสรา", "จุฑารัตน์", "สาวิตรี"], ["พรภูมิ"], ["นิทัศน์"], ["กิตติภา"], ["อนุสิทธิ์"], ["เมวิกา"], ["นุชนาถ"]]}, {"label": "28 - 30 ก.ย. 69", "assignments": [["ญาสุมินทร์"], ["อนุสิทธิ์"], ["นุชนาถ", "ภัทรภรณ์"], ["กิตติยากร"], ["กิตติภา"], ["พันธุ์ทิพย์"], ["ปาณิสรา"], ["นิทัศน์"], ["จุฑารัตน์"], ["คมกริช", "ธีรวุฒิ", "สิริยากร", "เมวิกา"], ["ปริญญา"], ["ชฎาพร"], ["สาวิตรี"], ["มัลลิกา"], ["พรภูมิ"], ["สุริยา"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "", "shifts": ["เมวิกา", "สาวิตรี", "พันธุ์ทิพย์", "พรภูมิ"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "shifts": ["ปาณิสรา", "ชฎาพร", "จุฑารัตน์", "กิตติยากร"]}, {"dayName": "เสาร์", "date": 12, "note": "", "shifts": ["สุริยา", "ปริญญา", "คมกริช", "นุชนาถ"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "shifts": ["กิตติภา", "ธีรวุฒิ", "อนุสิทธิ์", "ญาสุมินทร์"]}, {"dayName": "เสาร์", "date": 19, "note": "", "shifts": ["มัลลิกา", "ปาณิสรา", "เมวิกา", "พันธุ์ทิพย์"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["ภัทรภรณ์", "สุริยา", "สาวิตรี", "จุฑารัตน์"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["สิริยากร", "กิตติภา", "ชฎาพร", "คมกริช"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["นิทัศน์", "มัลลิกา", "ปริญญา", "อนุสิทธิ์"]}]}, "2026-10": {"weeks": [{"label": "5 - 9 ต.ค. 69", "assignments": [["นุชนาถ"], ["จุฑารัตน์"], ["นิทัศน์", "พันธุ์ทิพย์"], ["คมกริช"], ["เมวิกา"], ["กิตติภา"], ["ชฎาพร"], ["สุริยา"], ["อนุสิทธิ์"], ["ภัทรภรณ์", "พรภูมิ", "กิตติยากร", "ญาสุมินทร์"], ["มัลลิกา"], ["ปาณิสรา"], ["ธีรวุฒิ"], ["ปริญญา"], ["สาวิตรี"], ["สิริยากร"]]}, {"label": "12 - 16 ต.ค. 69", "assignments": [["สุริยา"], ["พันธุ์ทิพย์"], ["กิตติภา", "ปาณิสรา"], ["ชฎาพร"], ["ภัทรภรณ์"], ["มัลลิกา"], ["กิตติยากร"], ["สิริยากร"], ["พรภูมิ"], ["ธีรวุฒิ", "สาวิตรี", "ปริญญา", "เมวิกา"], ["อนุสิทธิ์"], ["คมกริช"], ["นุชนาถ"], ["จุฑารัตน์"], ["ญาสุมินทร์"], ["นิทัศน์"]]}, {"label": "19 - 22 ต.ค. 69", "assignments": [["สิริยากร"], ["พรภูมิ"], ["ธีรวุฒิ", "คมกริช"], ["เมวิกา"], ["นิทัศน์"], ["กิตติยากร"], ["ญาสุมินทร์"], ["นุชนาถ"], ["พันธุ์ทิพย์"], ["มัลลิกา", "สุริยา", "ชฎาพร", "อนุสิทธิ์"], ["จุฑารัตน์"], ["กิตติภา"], ["ปริญญา"], ["ภัทรภรณ์"], ["ปาณิสรา"], ["สาวิตรี"]]}, {"label": "26 - 30 ต.ค. 69", "assignments": [["มัลลิกา"], ["สุริยา"], ["จุฑารัตน์", "ปริญญา"], ["นุชนาถ"], ["สาวิตรี"], ["คมกริช"], ["เมวิกา"], ["อนุสิทธิ์"], ["กิตติภา"], ["ปาณิสรา", "นิทัศน์", "พรภูมิ", "กิตติยากร"], ["ญาสุมินทร์"], ["สิริยากร"], ["ภัทรภรณ์"], ["ธีรวุฒิ"], ["ชฎาพร"], ["พันธุ์ทิพย์"]]}], "holidays": [{"dayName": "เสาร์", "date": 3, "note": "", "shifts": ["พรภูมิ", "ภัทรภรณ์", "ธีรวุฒิ", "เมวิกา"]}, {"dayName": "อาทิตย์", "date": 4, "note": "", "shifts": ["กิตติยากร", "สิริยากร", "ปาณิสรา", "สาวิตรี"]}, {"dayName": "เสาร์", "date": 10, "note": "", "shifts": ["นุชนาถ", "นิทัศน์", "สุริยา", "ชฎาพร"]}, {"dayName": "อาทิตย์", "date": 11, "note": "", "shifts": ["ญาสุมินทร์", "พรภูมิ", "กิตติภา", "ปริญญา"]}, {"dayName": "อังคาร", "date": 13, "note": "วันหยุด ธปท.: วันนวมินทรมหาราช", "isBankHoliday": true, "holidayName": "วันนวมินทรมหาราช", "shifts": ["พันธุ์ทิพย์", "กิตติยากร", "มัลลิกา", "ธีรวุฒิ"]}, {"dayName": "เสาร์", "date": 17, "note": "", "shifts": ["จุฑารัตน์", "นุชนาถ", "ภัทรภรณ์", "ปาณิสรา"]}, {"dayName": "อาทิตย์", "date": 18, "note": "", "shifts": ["คมกริช", "ญาสุมินทร์", "สิริยากร", "สุริยา"]}, {"dayName": "ศุกร์", "date": 23, "note": "วันหยุด ธปท.: วันปิยมหาราช", "isBankHoliday": true, "holidayName": "วันปิยมหาราช", "shifts": ["อนุสิทธิ์", "พันธุ์ทิพย์", "นิทัศน์", "กิตติภา"]}, {"dayName": "เสาร์", "date": 24, "note": "", "shifts": ["เมวิกา", "จุฑารัตน์", "พรภูมิ", "มัลลิกา"]}, {"dayName": "อาทิตย์", "date": 25, "note": "", "shifts": ["สาวิตรี", "คมกริช", "กิตติยากร", "ภัทรภรณ์"]}, {"dayName": "เสาร์", "date": 31, "note": "", "shifts": ["ชฎาพร", "อนุสิทธิ์", "นุชนาถ", "สิริยากร"]}, {"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["ปริญญา", "เมวิกา", "ญาสุมินทร์", "นิทัศน์"]}]}, "2026-11": {"weeks": [{"label": "2 - 6 พ.ย. 69", "assignments": [["กิตติยากร"], ["นุชนาถ"], ["ปริญญา", "สุริยา"], ["อนุสิทธิ์"], ["เมวิกา"], ["พรภูมิ"], ["นิทัศน์"], ["ญาสุมินทร์"], ["ปาณิสรา"], ["กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร"], ["สาวิตรี"], ["จุฑารัตน์"], ["คมกริช"], ["พันธุ์ทิพย์"], ["ธีรวุฒิ"], ["ชฎาพร"]]}, {"label": "9 - 13 พ.ย. 69", "assignments": [["สาวิตรี"], ["ธีรวุฒิ"], ["สุริยา", "ปาณิสรา"], ["นิทัศน์"], ["กิตติยากร"], ["เมวิกา"], ["จุฑารัตน์"], ["ชฎาพร"], ["ปริญญา"], ["สิริยากร", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["ภัทรภรณ์"], ["อนุสิทธิ์"], ["มัลลิกา"], ["คมกริช"], ["พันธุ์ทิพย์"], ["กิตติภา"]]}, {"label": "16 - 20 พ.ย. 69", "assignments": [["จุฑารัตน์"], ["ปาณิสรา"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["สิริยากร"], ["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา"], ["พรภูมิ"], ["นุชนาถ"], ["มัลลิกา", "ภัทรภรณ์", "กิตติยากร", "ญาสุมินทร์"], ["เมวิกา"], ["สุริยา"], ["ชฎาพร"], ["นิทัศน์"], ["คมกริช"], ["ปริญญา"]]}, {"label": "23 - 27 พ.ย. 69", "assignments": [["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา", "มัลลิกา"], ["พรภูมิ"], ["คมกริช"], ["ภัทรภรณ์"], ["สิริยากร"], ["เมวิกา"], ["ชฎาพร"], ["นิทัศน์", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"], ["จุฑารัตน์"], ["ปริญญา"], ["พันธุ์ทิพย์"], ["สุริยา"], ["ปาณิสรา"], ["ธีรวุฒิ"]]}, {"label": "30 พ.ย. 69", "assignments": [["พรภูมิ"], ["ภัทรภรณ์"], ["คมกริช", "สุริยา"], ["สาวิตรี"], ["ธีรวุฒิ"], ["ปริญญา"], ["จุฑารัตน์"], ["มัลลิกา"], ["ญาสุมินทร์"], ["ปาณิสรา", "สิริยากร", "กิตติยากร", "นุชนาถ"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["อนุสิทธิ์"], ["กิตติภา"], ["เมวิกา"], ["ชฎาพร"]]}], "holidays": [{"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["ปริญญา", "เมวิกา", "ญาสุมินทร์", "นิทัศน์"]}, {"dayName": "เสาร์", "date": 7, "note": "", "shifts": ["ธีรวุฒิ", "สาวิตรี", "พันธุ์ทิพย์", "พรภูมิ"]}, {"dayName": "อาทิตย์", "date": 8, "note": "", "shifts": ["ปาณิสรา", "ชฎาพร", "จุฑารัตน์", "กิตติยากร"]}, {"dayName": "เสาร์", "date": 14, "note": "", "shifts": ["สุริยา", "ปริญญา", "คมกริช", "นุชนาถ"]}, {"dayName": "อาทิตย์", "date": 15, "note": "", "shifts": ["กิตติภา", "ธีรวุฒิ", "อนุสิทธิ์", "ญาสุมินทร์"]}, {"dayName": "เสาร์", "date": 21, "note": "", "shifts": ["มัลลิกา", "ปาณิสรา", "เมวิกา", "พันธุ์ทิพย์"]}, {"dayName": "อาทิตย์", "date": 22, "note": "", "shifts": ["ภัทรภรณ์", "สุริยา", "สาวิตรี", "จุฑารัตน์"]}, {"dayName": "เสาร์", "date": 28, "note": "", "shifts": ["สิริยากร", "กิตติภา", "ชฎาพร", "คมกริช"]}, {"dayName": "อาทิตย์", "date": 29, "note": "", "shifts": ["นิทัศน์", "มัลลิกา", "ปริญญา", "อนุสิทธิ์"]}]}};
+
+    const BASE_ROTATION_ORDER_INDICES = [12, 9, 2, 6, 18, 1, 4, 0, 5, 11, 10, 15, 16, 17, 19, 14, 13, 7, 3, 8];
+
+    // Master holiday rotation sequence from Excel Sheet 'รายชื่อหมุนเวรวันวันหยุด'
+    const HOLIDAY_ROTATION_AGENTS = ["พันธุ์ทิพย์", "จุฑารัตน์", "คมกริช", "อนุสิทธิ์", "เมวิกา", "สาวิตรี", "ชฎาพร", "ปริญญา", "ธีรวุฒิ", "ปาณิสรา", "สุริยา", "กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร", "นิทัศน์", "พรภูมิ", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"];
+
+    // 20-week weekday shift rotation matrix from Excel Sheet 'รายชื่อหมุนเวรวันธรรมดา'
+    const WEEKDAY_ROTATION_MATRIX = [[["กิตติยากร"], ["นุชนาถ"], ["ปริญญา", "สุริยา"], ["อนุสิทธิ์"], ["เมวิกา"], ["พรภูมิ"], ["นิทัศน์"], ["ญาสุมินทร์"], ["ปาณิสรา"], ["กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร"], ["สาวิตรี"], ["จุฑารัตน์"], ["คมกริช"], ["พันธุ์ทิพย์"], ["ธีรวุฒิ"], ["ชฎาพร"]], [["สาวิตรี"], ["ธีรวุฒิ"], ["สุริยา", "ปาณิสรา"], ["นิทัศน์"], ["กิตติยากร"], ["เมวิกา"], ["จุฑารัตน์"], ["ชฎาพร"], ["ปริญญา"], ["สิริยากร", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["ภัทรภรณ์"], ["อนุสิทธิ์"], ["มัลลิกา"], ["คมกริช"], ["พันธุ์ทิพย์"], ["กิตติภา"]], [["จุฑารัตน์"], ["ปาณิสรา"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["สิริยากร"], ["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา"], ["พรภูมิ"], ["นุชนาถ"], ["มัลลิกา", "ภัทรภรณ์", "กิตติยากร", "ญาสุมินทร์"], ["เมวิกา"], ["สุริยา"], ["ชฎาพร"], ["นิทัศน์"], ["คมกริช"], ["ปริญญา"]], [["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา", "มัลลิกา"], ["พรภูมิ"], ["คมกริช"], ["ภัทรภรณ์"], ["สิริยากร"], ["เมวิกา"], ["ชฎาพร"], ["นิทัศน์", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"], ["จุฑารัตน์"], ["ปริญญา"], ["พันธุ์ทิพย์"], ["สุริยา"], ["ปาณิสรา"], ["ธีรวุฒิ"]], [["พรภูมิ"], ["ภัทรภรณ์"], ["คมกริช", "สุริยา"], ["สาวิตรี"], ["ธีรวุฒิ"], ["ปริญญา"], ["จุฑารัตน์"], ["มัลลิกา"], ["ญาสุมินทร์"], ["ปาณิสรา", "สิริยากร", "กิตติยากร", "นุชนาถ"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["อนุสิทธิ์"], ["กิตติภา"], ["เมวิกา"], ["ชฎาพร"]], [["กิตติภา"], ["เมวิกา"], ["ธีรวุฒิ", "ปาณิสรา"], ["สุริยา"], ["ปริญญา"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["จุฑารัตน์"], ["สาวิตรี"], ["สิริยากร", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["คมกริช"], ["มัลลิกา"], ["ชฎาพร"], ["กิตติยากร"], ["ภัทรภรณ์"], ["อนุสิทธิ์"]], [["ปาณิสรา"], ["ปริญญา"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["เมวิกา"], ["สุริยา"], ["สาวิตรี"], ["พรภูมิ"], ["กิตติภา"], ["กิตติยากร"], ["มัลลิกา", "สิริยากร", "นิทัศน์", "ญาสุมินทร์"], ["จุฑารัตน์"], ["ภัทรภรณ์"], ["ชฎาพร"], ["นุชนาถ"], ["คมกริช"], ["อนุสิทธิ์"]], [["ปริญญา"], ["ญาสุมินทร์"], ["อนุสิทธิ์", "ปาณิสรา"], ["ธีรวุฒิ"], ["จุฑารัตน์"], ["สุริยา"], ["มัลลิกา"], ["ชฎาพร"], ["คมกริช"], ["กิตติภา", "ภัทรภรณ์", "นิทัศน์", "นุชนาถ"], ["สิริยากร"], ["พรภูมิ"], ["กิตติยากร"], ["เมวิกา"], ["พันธุ์ทิพย์"], ["สาวิตรี"]], [["ธีรวุฒิ"], ["กิตติยากร"], ["ปริญญา", "พันธุ์ทิพย์"], ["จุฑารัตน์"], ["นิทัศน์"], ["ปาณิสรา"], ["เมวิกา"], ["สาวิตรี"], ["ภัทรภรณ์"], ["กิตติภา", "มัลลิกา", "สิริยากร", "พรภูมิ"], ["คมกริช"], ["นุชนาถ"], ["อนุสิทธิ์"], ["ชฎาพร"], ["สุริยา"], ["ญาสุมินทร์"]], [["ชฎาพร"], ["เมวิกา"], ["ธีรวุฒิ", "สุริยา"], ["ปริญญา"], ["กิตติภา"], ["นุชนาถ"], ["สาวิตรี"], ["พันธุ์ทิพย์"], ["จุฑารัตน์"], ["มัลลิกา", "สิริยากร", "พรภูมิ", "ญาสุมินทร์"], ["คมกริช"], ["กิตติยากร"], ["อนุสิทธิ์"], ["ปาณิสรา"], ["นิทัศน์"], ["ภัทรภรณ์"]], [["นิทัศน์"], ["สิริยากร"], ["สุริยา", "กิตติภา"], ["พันธุ์ทิพย์"], ["ญาสุมินทร์"], ["ชฎาพร"], ["ภัทรภรณ์"], ["คมกริช"], ["เมวิกา"], ["มัลลิกา", "พรภูมิ", "กิตติยากร", "นุชนาถ"], ["ปาณิสรา"], ["สาวิตรี"], ["อนุสิทธิ์"], ["ปริญญา"], ["จุฑารัตน์"], ["ธีรวุฒิ"]], [["คมกริช"], ["พรภูมิ"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["มัลลิกา"], ["ชฎาพร"], ["ญาสุมินทร์"], ["สุริยา"], ["ภัทรภรณ์"], ["จุฑารัตน์"], ["ปาณิสรา", "สิริยากร", "นิทัศน์", "กิตติยากร"], ["สาวิตรี"], ["เมวิกา"], ["นุชนาถ"], ["อนุสิทธิ์"], ["กิตติภา"], ["ปริญญา"]], [["เมวิกา"], ["มัลลิกา"], ["ธีรวุฒิ", "ปาณิสรา"], ["กิตติยากร"], ["พันธุ์ทิพย์"], ["สิริยากร"], ["อนุสิทธิ์"], ["จุฑารัตน์"], ["นิทัศน์"], ["ภัทรภรณ์", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["สุริยา"], ["สาวิตรี"], ["กิตติภา"], ["ชฎาพร"], ["คมกริช"], ["ปริญญา"]], [["ภัทรภรณ์"], ["คมกริช"], ["ปาณิสรา", "มัลลิกา"], ["ชฎาพร"], ["ญาสุมินทร์"], ["จุฑารัตน์"], ["นุชนาถ"], ["ปริญญา"], ["สาวิตรี"], ["สิริยากร", "นิทัศน์", "พรภูมิ", "กิตติยากร"], ["กิตติภา"], ["ธีรวุฒิ"], ["อนุสิทธิ์"], ["พันธุ์ทิพย์"], ["เมวิกา"], ["สุริยา"]], [["พันธุ์ทิพย์"], ["นิทัศน์"], ["ปาณิสรา", "มัลลิกา"], ["ชฎาพร"], ["กิตติภา"], ["เมวิกา"], ["คมกริช"], ["สาวิตรี"], ["อนุสิทธิ์"], ["ภัทรภรณ์", "สิริยากร", "กิตติยากร", "ญาสุมินทร์"], ["พรภูมิ"], ["ปริญญา"], ["ธีรวุฒิ"], ["จุฑารัตน์"], ["สุริยา"], ["นุชนาถ"]], [["ญาสุมินทร์"], ["ชฎาพร"], ["พันธุ์ทิพย์", "มัลลิกา"], ["เมวิกา"], ["จุฑารัตน์"], ["กิตติภา"], ["คมกริช"], ["สุริยา"], ["พรภูมิ"], ["สิริยากร", "นิทัศน์", "กิตติยากร", "นุชนาถ"], ["ปริญญา"], ["อนุสิทธิ์"], ["ปาณิสรา"], ["ภัทรภรณ์"], ["สาวิตรี"], ["ธีรวุฒิ"]], [["นุชนาถ"], ["อนุสิทธิ์"], ["พันธุ์ทิพย์", "สุริยา"], ["เมวิกา"], ["ภัทรภรณ์"], ["มัลลิกา"], ["ปาณิสรา"], ["สิริยากร"], ["จุฑารัตน์"], ["กิตติภา", "นิทัศน์", "พรภูมิ", "กิตติยากร"], ["สาวิตรี"], ["ชฎาพร"], ["ปริญญา"], ["ธีรวุฒิ"], ["ญาสุมินทร์"], ["คมกริช"]], [["สุริยา"], ["จุฑารัตน์"], ["ชฎาพร", "ปริญญา"], ["ญาสุมินทร์"], ["นิทัศน์"], ["กิตติยากร"], ["เมวิกา"], ["นุชนาถ"], ["ธีรวุฒิ"], ["พันธุ์ทิพย์", "กิตติภา", "มัลลิกา", "พรภูมิ"], ["อนุสิทธิ์"], ["คมกริช"], ["ภัทรภรณ์"], ["สิริยากร"], ["ปาณิสรา"], ["สาวิตรี"]], [["มัลลิกา"], ["พันธุ์ทิพย์"], ["ภัทรภรณ์", "สิริยากร"], ["กิตติภา"], ["สาวิตรี"], ["คมกริช"], ["ญาสุมินทร์"], ["อนุสิทธิ์"], ["เมวิกา"], ["นิทัศน์", "พรภูมิ", "กิตติยากร", "นุชนาถ"], ["จุฑารัตน์"], ["ปริญญา"], ["ธีรวุฒิ"], ["สุริยา"], ["ชฎาพร"], ["ปาณิสรา"]], [["สิริยากร"], ["สุริยา"], ["ชฎาพร", "ปริญญา"], ["ภัทรภรณ์"], ["ปาณิสรา"], ["ธีรวุฒิ"], ["เมวิกา"], ["สาวิตรี"], ["อนุสิทธิ์"], ["กิตติภา", "นิทัศน์", "กิตติยากร", "นุชนาถ"], ["ญาสุมินทร์"], ["จุฑารัตน์"], ["คมกริช"], ["พรภูมิ"], ["มัลลิกา"], ["พันธุ์ทิพย์"]]];
+
+    let currentSchedule = { weeks: [], holidays: [] };
+    let originalSchedule = { weeks: [], holidays: [] };
+    let monthSchedules = {}; // Stores multi-month state: { "2026-9": { schedule, originalSchedule, swapHistory }, "2026-10": ... }
+    let allowUserSwap = true;
+    let isViewingOriginal = false;
+    let showJD = true;
+    let customSpinSeed = 0;
+    let swapHistory = [];
+    let pendingSwapSlot = null;
+    let highlightedAgent = "ALL";
+
+    const THAI_MONTHS = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    const THAI_MONTHS_SHORT = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+    const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+    // App Initialization
+    function initApp() {
+      const embeddedState = window.__EMBEDDED_ONEDRIVE_STATE__;
+      if (embeddedState) {
+        if (embeddedState.yearAD) document.getElementById("yearSelect").value = embeddedState.yearAD;
+        if (embeddedState.month) document.getElementById("monthSelect").value = embeddedState.month;
+        if (Array.isArray(embeddedState.agents)) AGENTS = embeddedState.agents;
+        if (embeddedState.adminPin) currentAdminPin = embeddedState.adminPin;
+        if (embeddedState.allowUserSwap !== undefined) allowUserSwap = embeddedState.allowUserSwap;
+        if (Array.isArray(embeddedState.weekdayColumns)) WEEKDAY_COLUMNS = embeddedState.weekdayColumns;
+        if (Array.isArray(embeddedState.holidayShiftMeta)) HOLIDAY_SHIFT_META = embeddedState.holidayShiftMeta;
+        
+        if (embeddedState.monthSchedules && typeof embeddedState.monthSchedules === 'object') {
+          monthSchedules = embeddedState.monthSchedules;
+        } else if (embeddedState.schedule) {
+          const key = `${embeddedState.yearAD || 2026}-${embeddedState.month || 9}`;
+          monthSchedules[key] = {
+            schedule: embeddedState.schedule,
+            originalSchedule: embeddedState.originalSchedule ? embeddedState.originalSchedule : JSON.parse(JSON.stringify(embeddedState.schedule)),
+            swapHistory: Array.isArray(embeddedState.swapHistory) ? embeddedState.swapHistory : []
+          };
+        }
+      }
+
+      // Initialize preloaded months from HISTORICAL_SCHEDULES into monthSchedules if not yet present
+      Object.keys(HISTORICAL_SCHEDULES).forEach(key => {
+        if (!monthSchedules[key]) {
+          monthSchedules[key] = {
+            schedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
+            originalSchedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
+            swapHistory: []
+          };
+        }
+      });
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      currentSchedule = curData.schedule;
+      originalSchedule = curData.originalSchedule;
+      swapHistory = curData.swapHistory || [];
+      currentlyLoadedMonthKey = `${yearAD}-${month}`;
+
+      updateAdminModeUI();
+      updateSwapPermissionUI();
+      populateFilterDropdowns();
+      renderAgentsEditor();
+      renderWeekdayJdEditor();
+      renderHolidayJdEditor();
+      renderAllViews();
+    }
+
+    window.onload = initApp;
+
+    
+    // Bank of Thailand (BOT / ธนาคารแห่งประเทศไทย) Official Holiday Calendar
+    const BOT_HOLIDAYS_EXACT = {
+      // 2025
+      "2025-1-1": "วันขึ้นปีใหม่",
+      "2025-2-12": "วันมาฆบูชา",
+      "2025-4-6": "วันจักรี",
+      "2025-4-13": "วันสงกรานต์",
+      "2025-4-14": "วันสงกรานต์",
+      "2025-4-15": "วันสงกรานต์",
+      "2025-5-1": "วันแรงงานแห่งชาติ",
+      "2025-5-5": "ชดเชยวันฉัตรมงคล (4 พ.ค.)",
+      "2025-5-12": "ชดเชยวันวิสาขบูชา (11 พ.ค.)",
+      "2025-6-3": "วันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี",
+      "2025-7-10": "วันอาสาฬหบูชา",
+      "2025-7-28": "วันเฉลิมพระชนมพรรษา พระบาทสมเด็จพระเจ้าอยู่หัว (ร.10)",
+      "2025-8-12": "วันแม่แห่งชาติ",
+      "2025-10-13": "วันนวมินทรมหาราช",
+      "2025-10-23": "วันปิยมหาราช",
+      "2025-12-5": "วันพ่อแห่งชาติ / วันชาติ",
+      "2025-12-10": "วันรัฐธรรมนูญ",
+      "2025-12-31": "วันสิ้นปี",
+
+      // 2026 (พ.ศ. 2569)
+      "2026-1-1": "วันขึ้นปีใหม่",
+      "2026-1-2": "วันหยุดพิเศษ (ธปท.)",
+      "2026-3-3": "วันมาฆบูชา",
+      "2026-4-6": "วันจักรี",
+      "2026-4-13": "วันสงกรานต์",
+      "2026-4-14": "วันสงกรานต์",
+      "2026-4-15": "วันสงกรานต์",
+      "2026-5-1": "วันแรงงานแห่งชาติ",
+      "2026-5-4": "วันฉัตรมงคล",
+      "2026-6-1": "ชดเชยวันวิสาขบูชา (31 พ.ค.)",
+      "2026-6-3": "วันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี",
+      "2026-7-28": "วันเฉลิมพระชนมพรรษา พระบาทสมเด็จพระเจ้าอยู่หัว (ร.10)",
+      "2026-7-29": "วันอาสาฬหบูชา",
+      "2026-8-12": "วันแม่แห่งชาติ",
+      "2026-10-13": "วันนวมินทรมหาราช",
+      "2026-10-23": "วันปิยมหาราช",
+      "2026-12-7": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)",
+      "2026-12-10": "วันรัฐธรรมนูญ",
+      "2026-12-31": "วันสิ้นปี",
+
+      // 2027 (พ.ศ. 2570)
+      "2027-1-1": "วันขึ้นปีใหม่",
+      "2027-2-22": "ชดเชยวันมาฆบูชา (21 ก.พ.)",
+      "2027-4-6": "วันจักรี",
+      "2027-4-13": "วันสงกรานต์",
+      "2027-4-14": "วันสงกรานต์",
+      "2027-4-15": "วันสงกรานต์",
+      "2027-5-3": "ชดเชยวันแรงงานแห่งชาติ (1 พ.ค.)",
+      "2027-5-4": "วันฉัตรมงคล",
+      "2027-5-20": "วันวิสาขบูชา",
+      "2027-6-3": "วันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี",
+      "2027-7-19": "ชดเชยวันอาสาฬหบูชา (18 ก.ค.)",
+      "2027-7-28": "วันเฉลิมพระชนมพรรษา พระบาทสมเด็จพระเจ้าอยู่หัว (ร.10)",
+      "2027-8-12": "วันแม่แห่งชาติ",
+      "2027-10-13": "วันนวมินทรมหาราช",
+      "2027-10-25": "ชดเชยวันปิยมหาราช (23 ต.ค.)",
+      "2027-12-6": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)",
+      "2027-12-10": "วันรัฐธรรมนูญ",
+      "2027-12-31": "วันสิ้นปี"
+    };
+
+    function getBotHoliday(yearAD, month, day) {
+      const key = `${yearAD}-${month}-${day}`;
+      if (BOT_HOLIDAYS_EXACT[key]) return BOT_HOLIDAYS_EXACT[key];
+
+      // Generic fixed-date annual BOT holidays for other years
+      const fixed = {
+        "1-1": "วันขึ้นปีใหม่",
+        "4-6": "วันจักรี",
+        "4-13": "วันสงกรานต์",
+        "4-14": "วันสงกรานต์",
+        "4-15": "วันสงกรานต์",
+        "5-1": "วันแรงงานแห่งชาติ",
+        "5-4": "วันฉัตรมงคล",
+        "6-3": "วันเฉลิมพระชนมพรรษา สมเด็จพระนางเจ้าฯ พระบรมราชินี",
+        "7-28": "วันเฉลิมพระชนมพรรษา พระบาทสมเด็จพระเจ้าอยู่หัว (ร.10)",
+        "8-12": "วันแม่แห่งชาติ",
+        "10-13": "วันนวมินทรมหาราช",
+        "10-23": "วันปิยมหาราช",
+        "12-5": "วันพ่อแห่งชาติ / วันชาติ",
+        "12-10": "วันรัฐธรรมนูญ",
+        "12-31": "วันสิ้นปี"
+      };
+      const md = `${month}-${day}`;
+      if (fixed[md]) return fixed[md];
+
+      // Automatic Monday substitution if weekend falls on fixed holiday
+      const dt = new Date(yearAD, month - 1, day);
+      if (dt.getDay() === 1) { // Monday
+        const sun = new Date(dt.getTime() - 86400000);
+        const sat = new Date(dt.getTime() - 2 * 86400000);
+        const sunMd = `${sun.getMonth() + 1}-${sun.getDate()}`;
+        const satMd = `${sat.getMonth() + 1}-${sat.getDate()}`;
+        if (fixed[sunMd]) return `ชดเชย${fixed[sunMd]}`;
+        if (fixed[satMd]) return `ชดเชย${fixed[satMd]}`;
+      }
+      return null;
+    }
+
+    function getCodeBadge(code) {
+      if (code.startsWith("7")) return `<span class="badge badge-early">${code}</span>`;
+      if (code === "8C" || code === "8.3C") return `<span class="badge badge-call">${code}</span>`;
+      if (code === "12" || code === "13") return `<span class="badge badge-wfh">${code} WFH</span>`;
+      if (code === "10" || code === "11") return `<span class="badge badge-late">${code}</span>`;
+      return `<span class="badge badge-spec">${code}</span>`;
+    }
+
+    function buildCalendarWeeksAndHolidays(yearAD, month) {
+      const daysInMonth = new Date(yearAD, month, 0).getDate();
+      const weeks = [];
+      const holidays = [];
+      let currentWeekDays = [];
+      let currentWeekHolidays = [];
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(yearAD, month - 1, d);
+        const dow = dt.getDay(); // 0 = อาทิตย์, 6 = เสาร์
+        const botName = getBotHoliday(yearAD, month, d);
+
+        if (dow === 0 || dow === 6) {
+          // Weekend day
+          if (currentWeekDays.length > 0) {
+            let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
+            if (currentWeekHolidays.length > 0) {
+              label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
+            }
+            weeks.push({ label, days: [...currentWeekDays] });
+            currentWeekDays = [];
+            currentWeekHolidays = [];
+          }
+          holidays.push({
+            dayName: THAI_DAYS[dow],
+            date: d,
+            note: botName ? `วันหยุด ธปท.: ${botName}` : "",
+            isBankHoliday: !!botName,
+            holidayName: botName || ""
+          });
+        } else if (botName) {
+          // Weekday that is a Bank of Thailand Holiday!
+          holidays.push({
+            dayName: THAI_DAYS[dow],
+            date: d,
+            note: `วันหยุด ธปท.: ${botName}`,
+            isBankHoliday: true,
+            holidayName: botName
+          });
+          currentWeekHolidays.push(`${d} ${THAI_MONTHS_SHORT[month]} ${botName}`);
+
+          // If Friday is a bank holiday, finalize the week at Thursday
+          if (dow === 5 && currentWeekDays.length > 0) {
+            let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
+            if (currentWeekHolidays.length > 0) {
+              label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
+            }
+            weeks.push({ label, days: [...currentWeekDays] });
+            currentWeekDays = [];
+            currentWeekHolidays = [];
+          }
+        } else {
+          // Normal weekday working day
+          currentWeekDays.append ? currentWeekDays.push(d) : currentWeekDays.push(d);
+          if (dow === 5 || d === daysInMonth) {
+            if (currentWeekDays.length > 0) {
+              let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
+              if (currentWeekHolidays.length > 0) {
+                label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
+              }
+              weeks.push({ label, days: [...currentWeekDays] });
+              currentWeekDays = [];
+              currentWeekHolidays = [];
+            }
+          }
+        }
+      }
+      return { weeks, holidays };
+    }
+
+    
+    function getOrInitMonthSchedule(yearAD, month) {
+      const key = `${yearAD}-${month}`;
+      if (monthSchedules[key]) {
+        return monthSchedules[key];
+      }
+      if (HISTORICAL_SCHEDULES[key]) {
+        monthSchedules[key] = {
+          schedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
+          originalSchedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
+          swapHistory: []
+        };
+        return monthSchedules[key];
+      }
+
+      // Auto-generate for future months using authentic rotation matrices
+      const cal = buildCalendarWeeksAndHolidays(yearAD, month);
+      
+      // Calculate continuous week offset from November 2026 (Nov 2026 = 5 weeks, Dec 2026 starts at cycle week 5)
+      const monthDiff = (yearAD - 2026) * 12 + (month - 11);
+      const approxWeeksBefore = monthDiff > 0 ? (5 + (monthDiff - 1) * 4) : 0;
+      
+      const generatedWeeks = cal.weeks.map((w, wIdx) => {
+        const cycleIdx = (approxWeeksBefore + wIdx + customSpinSeed) % 20;
+        const cycleAssignments = WEEKDAY_ROTATION_MATRIX[cycleIdx];
+        return {
+          label: w.label,
+          assignments: JSON.parse(JSON.stringify(cycleAssignments))
+        };
+      });
+
+      // Holiday rotation continues seamlessly from November's last holiday (indices 15, 12, 7, 3)
+      // So first holiday day after Nov starts at offsets: [16, 13, 8, 4]
+      const approxHolidaysBefore = monthDiff > 0 ? (monthDiff - 1) * 8 : 0;
+      const generatedHolidays = cal.holidays.map((h, hIdx) => {
+        const step = (approxHolidaysBefore + hIdx + customSpinSeed) % 20;
+        const shifts = [
+          HOLIDAY_ROTATION_AGENTS[(16 + step) % 20],
+          HOLIDAY_ROTATION_AGENTS[(13 + step) % 20],
+          HOLIDAY_ROTATION_AGENTS[(8 + step) % 20],
+          HOLIDAY_ROTATION_AGENTS[(4 + step) % 20]
+        ];
+        return { ...h, shifts };
+      });
+
+      const sched = { weeks: generatedWeeks, holidays: generatedHolidays };
+      monthSchedules[key] = {
+        schedule: sched,
+        originalSchedule: JSON.parse(JSON.stringify(sched)),
+        swapHistory: []
+      };
+      return monthSchedules[key];
+    }
+
+    let currentlyLoadedMonthKey = "";
+
+    function generateScheduleForSelectedMonth(forceRegen = false) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const key = `${yearAD}-${month}`;
+
+      // Auto-save current month schedule to monthSchedules before switching
+      if (currentlyLoadedMonthKey && currentSchedule && currentSchedule.weeks && currentSchedule.weeks.length > 0) {
+        monthSchedules[currentlyLoadedMonthKey] = {
+          schedule: currentSchedule,
+          originalSchedule: originalSchedule,
+          swapHistory: swapHistory
+        };
+      }
+
+      if (forceRegen) {
+        delete monthSchedules[key];
+      }
+
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      currentSchedule = mData.schedule;
+      originalSchedule = mData.originalSchedule;
+      swapHistory = mData.swapHistory || [];
+      currentlyLoadedMonthKey = key;
+
+      renderAllViews();
+    }
+
+    function shuffleCurrentMonth() {
+      requestShuffle();
+    }
+
+    function renderAllViews() {
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      renderIndividualCards(document.getElementById("cardFilterSelect").value || "ALL");
+      renderHourlyHeadcountTable();
+      renderMatrixTable();
+      updateBadgesAndTitles();
+    }
+
+    function updateBadgesAndTitles() {
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const yearTH = parseInt(document.getElementById("yearSelect").value, 10) + 543;
+      const badge = document.getElementById("weekdayMonthBadge");
+      if (badge) badge.innerText = `${THAI_MONTHS[month]} ${yearTH}`;
+
+      // Update schedule mode badges and indicators
+      const typeBadge = document.getElementById("scheduleTypeBadge");
+      const holTypeBadge = document.getElementById("holScheduleTypeBadge");
+      const cardTypeBadge = document.getElementById("cardScheduleTypeBadge");
+      const swapHint = document.getElementById("swapHintText");
+
+      if (isViewingOriginal) {
+        if (typeBadge) {
+          typeBadge.innerHTML = "📜 ตารางต้นฉบับ Master (Baseline)";
+          typeBadge.className = "badge badge-master-mode";
+        }
+        if (holTypeBadge) {
+          holTypeBadge.innerHTML = "📜 ตารางต้นฉบับ Master (Baseline)";
+          holTypeBadge.className = "badge badge-master-mode";
+        }
+        if (cardTypeBadge) {
+          cardTypeBadge.innerHTML = "📜 ข้อมูลอิงจากตารางต้นฉบับ Master";
+          cardTypeBadge.className = "badge badge-master-mode";
+        }
+        if (swapHint) {
+          swapHint.innerHTML = "🔒 <strong>ตารางต้นฉบับ Master:</strong> แสดงฐานข้อมูลตั้งต้นตามสูตรหมุนวน (โหมดดูตรวจสอบ ไม่สามารถสลับเวรได้)";
+        }
+      } else {
+        if (typeBadge) {
+          typeBadge.innerHTML = "🟢 ตารางปฏิบัติงานจริง (Active)";
+          typeBadge.className = "badge badge-active-mode";
+        }
+        if (holTypeBadge) {
+          holTypeBadge.innerHTML = "🟢 ตารางปฏิบัติงานจริง (Active)";
+          holTypeBadge.className = "badge badge-active-mode";
+        }
+        if (cardTypeBadge) {
+          cardTypeBadge.innerHTML = "🟢 ข้อมูลอิงจากตารางปฏิบัติงานจริง";
+          cardTypeBadge.className = "badge badge-active-mode";
+        }
+        if (swapHint) {
+          swapHint.innerHTML = "💡 <strong>วิธีสลับเวร:</strong> คลิกชื่อคนที่ 1 แล้วคลิกชื่อคนที่ 2 เพื่อสลับเวร (หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือน)";
+        }
+      }
+    }
+
+    // TAB 1: RENDER MASTER WEEKDAY TABLE
+    function renderMasterWeekdayTable() {
+      const table = document.getElementById("masterWeekdayTable");
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      let html = `
+        <thead>
+          <tr>
+            <th rowspan="3" style="width: 100px;">สัปดาห์</th>
+            ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}</th>`).join("")}
+          </tr>
+          <tr>
+            ${WEEKDAY_COLUMNS.map(c => `<th>${c.breakTime}</th>`).join("")}
+          </tr>
+          <tr>
+            ${WEEKDAY_COLUMNS.map(c => `<th>${c.role}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const isLockedForUser = !allowUserSwap && !isAdminMode;
+
+      sched.weeks.forEach((w, wIdx) => {
+        html += `<tr>`;
+        html += `<td class="week-col-badge" rowspan="${showJD ? 2 : 1}">${w.label}</td>`;
+
+        WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+          const names = w.assignments[cIdx] || [];
+          const tagsHTML = names.map((n, sIdx) => {
+            if (!n) return "-";
+            const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
+            const isSelected = pendingSwapSlot && pendingSwapSlot.yearAD === yearAD && pendingSwapSlot.month === month && pendingSwapSlot.type === "WEEKDAY" && pendingSwapSlot.wIdx === wIdx && pendingSwapSlot.cIdx === cIdx && pendingSwapSlot.sIdx === sIdx ? "selected-for-swap" : "";
+            
+            // Check if swapped from original
+            const origName = originalSchedule.weeks?.[wIdx]?.assignments?.[cIdx]?.[sIdx];
+            const isSwapped = !isViewingOriginal && origName && origName !== n;
+            const swapClass = isSwapped ? "was-swapped" : "";
+            const lockedClass = isLockedForUser || isViewingOriginal ? "name-tag-locked" : "";
+            
+            let tagTitle = "คลิกเพื่อสลับเวร";
+            if (isViewingOriginal) tagTitle = "ตารางต้นฉบับ (โหมดดู)";
+            else if (isLockedForUser) tagTitle = "🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)";
+            else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
+
+            const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
+            return `<span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>`;
+          }).join("<br>");
+
+          html += `<td class="${col.wfh ? 'wfh-bg' : ''}">${tagsHTML || "-"}</td>`;
+        });
+        html += `</tr>`;
+
+        if (showJD) {
+          html += `<tr class="jd-row">`;
+          WEEKDAY_COLUMNS.forEach(col => {
+            html += `<td class="${col.wfh ? 'wfh-bg' : ''}">${col.jd.map(l => `• ${l}`).join("<br>")}</td>`;
+          });
+          html += `</tr>`;
+        }
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    // TAB 1: RENDER MASTER HOLIDAY TABLE
+    function renderMasterHolidayTable() {
+      const table = document.getElementById("masterHolidayTable");
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthShort = THAI_MONTHS_SHORT[month];
+
+      let html = `
+        <thead>
+          <tr>
+            <th style="width: 80px;">วัน</th>
+            <th style="width: 80px;">วันที่</th>
+            ${HOLIDAY_SHIFT_META.map(m => `<th>เวร ${m.time}<br><span style="color: #fde047; font-size: 11px;">${m.breakTime}</span></th>`).join("")}
+            <th class="no-print admin-only" style="width: 50px;">ลบ</th>
+          </tr>
+        </thead>
+        <tbody>
+      `;
+
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const isLockedForUser = !allowUserSwap && !isAdminMode;
+
+      sched.holidays.forEach((h, hIdx) => {
+        const isSun = h.dayName === 'อาทิตย์';
+        const isSat = h.dayName === 'เสาร์';
+        const dayBadge = isSun ? 'badge-hol' : (isSat ? 'badge-early' : 'badge-call');
+
+        let holidayNoteHTML = "";
+        if (h.isBankHoliday || h.note) {
+          const title = h.note || (h.holidayName ? `วันหยุด ธปท.: ${h.holidayName}` : 'วันหยุด ธปท.');
+          holidayNoteHTML = `<div style="font-size: 10px; color: #b45309; font-weight: 700; margin-top: 3px; line-height: 1.2;">🏦 ${title}</div>`;
+        }
+
+        html += `<tr>`;
+        html += `<td rowspan="${showJD ? 2 : 1}"><span class="badge ${dayBadge}">${h.dayName}</span></td>`;
+        html += `<td rowspan="${showJD ? 2 : 1}"><strong>${h.date} ${monthShort}</strong>${holidayNoteHTML}</td>`;
+
+        for (let s = 0; s < 4; s++) {
+          const n = h.shifts[s] || "-";
+          const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
+          const isSelected = pendingSwapSlot && pendingSwapSlot.yearAD === yearAD && pendingSwapSlot.month === month && pendingSwapSlot.type === "HOLIDAY" && pendingSwapSlot.hIdx === hIdx && pendingSwapSlot.sIdx === s ? "selected-for-swap" : "";
+          
+          const origName = originalSchedule.holidays?.[hIdx]?.shifts?.[s];
+          const isSwapped = !isViewingOriginal && origName && origName !== n;
+          const swapClass = isSwapped ? "was-swapped" : "";
+          const lockedClass = isLockedForUser || isViewingOriginal ? "name-tag-locked" : "";
+
+          let tagTitle = "คลิกเพื่อสลับเวร";
+          if (isViewingOriginal) tagTitle = "ตารางต้นฉบับ (โหมดดู)";
+          else if (isLockedForUser) tagTitle = "🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)";
+          else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
+
+          const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agName: n, label: `${h.date} ${monthShort}`, shiftTime: HOLIDAY_SHIFT_META[s].time }).replace(/"/g, '&quot;');
+          html += `<td><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span></td>`;
+        }
+
+        html += `<td class="no-print admin-only" rowspan="${showJD ? 2 : 1}"><button class="btn btn-outline btn-sm" onclick="removeHoliday(${hIdx})" style="color: var(--danger); padding: 2px 6px;">✕</button></td>`;
+        html += `</tr>`;
+
+        if (showJD) {
+          html += `<tr class="jd-row">`;
+          for (let s = 0; s < 4; s++) {
+            html += `<td>${HOLIDAY_SHIFT_META[s].jd.map(l => `• ${l}`).join("<br>")}</td>`;
+          }
+          html += `</tr>`;
+        }
+      });
+
+      html += `</tbody>`;
+      table.innerHTML = html;
+    }
+
+    // DIRECT CLICK TO SWAP LOGIC
+    function handleTagClickDirect(slot) {
+      if (isViewingOriginal) {
+        showToast("ℹ️ กำลังดูตารางต้นฉบับ (ไม่สามารถสลับในหน้านี้ได้) กรุณาสลับกลับไปดูตารางปัจจุบัน");
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode) {
+        showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวรแล้ว (โหมดดูได้อย่างเดียว) หากจำเป็นต้องสลับกรุณาแจ้งหัวหน้างาน");
+        return;
+      }
+      if (!pendingSwapSlot) {
+        // Step 1: Select person A
+        pendingSwapSlot = slot;
+        const monthShort = THAI_MONTHS_SHORT[slot.month];
+        document.getElementById("swapSelectedName").innerHTML = `คุณ${slot.agName} <span style="font-weight:normal; color:#fde047;">(${monthShort} ${slot.label || ''})</span>`;
+        document.getElementById("floating-swap-bar").classList.add("show");
+        renderMasterWeekdayTable();
+        renderMasterHolidayTable();
+      } else {
+        // Step 2: Selected person B
+        if (pendingSwapSlot.yearAD === slot.yearAD &&
+            pendingSwapSlot.month === slot.month &&
+            pendingSwapSlot.type === slot.type &&
+            pendingSwapSlot.wIdx === slot.wIdx &&
+            pendingSwapSlot.cIdx === slot.cIdx &&
+            pendingSwapSlot.sIdx === slot.sIdx &&
+            pendingSwapSlot.hIdx === slot.hIdx) {
+          cancelPendingSwap();
+          return;
+        }
+        executeSwapDirect(pendingSwapSlot, slot);
+      }
+    }
+
+    function cancelPendingSwap() {
+      pendingSwapSlot = null;
+      document.getElementById("floating-swap-bar").classList.remove("show");
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+    }
+
+    function executeSwapDirect(slotA, slotB) {
+      const mDataA = getOrInitMonthSchedule(slotA.yearAD, slotA.month);
+      const mDataB = getOrInitMonthSchedule(slotB.yearAD, slotB.month);
+
+      // 1. Retrieve Person A name
+      let nameA = "";
+      if (slotA.type === "WEEKDAY") {
+        nameA = mDataA.schedule.weeks[slotA.wIdx].assignments[slotA.cIdx][slotA.sIdx];
+      } else {
+        nameA = mDataA.schedule.holidays[slotA.hIdx].shifts[slotA.sIdx];
+      }
+
+      // 2. Retrieve Person B name
+      let nameB = "";
+      if (slotB.type === "WEEKDAY") {
+        nameB = mDataB.schedule.weeks[slotB.wIdx].assignments[slotB.cIdx][slotB.sIdx];
+      } else {
+        nameB = mDataB.schedule.holidays[slotB.hIdx].shifts[slotB.sIdx];
+      }
+
+      // 3. Execute swap across slots
+      if (slotA.type === "WEEKDAY") {
+        mDataA.schedule.weeks[slotA.wIdx].assignments[slotA.cIdx][slotA.sIdx] = nameB;
+      } else {
+        mDataA.schedule.holidays[slotA.hIdx].shifts[slotA.sIdx] = nameB;
+      }
+
+      if (slotB.type === "WEEKDAY") {
+        mDataB.schedule.weeks[slotB.wIdx].assignments[slotB.cIdx][slotB.sIdx] = nameA;
+      } else {
+        mDataB.schedule.holidays[slotB.hIdx].shifts[slotB.sIdx] = nameA;
+      }
+
+      // 4. Construct descriptive swap log tag
+      let swapTag = "[สลับเวร]";
+      if (slotA.month !== slotB.month || slotA.yearAD !== slotB.yearAD) {
+        swapTag = "[สลับข้ามเดือน]";
+      } else if (slotA.type === "WEEKDAY" && slotB.type === "WEEKDAY" && slotA.wIdx !== slotB.wIdx) {
+        swapTag = "[สลับข้ามสัปดาห์]";
+      } else if (slotA.type === "HOLIDAY" && slotB.type === "HOLIDAY" && slotA.hIdx !== slotB.hIdx) {
+        swapTag = "[สลับข้ามวันหยุด]";
+      } else if (slotA.type !== slotB.type) {
+        swapTag = "[สลับข้ามประเภทเวร]";
+      }
+
+      const nowStr = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const detail = `${swapTag} คุณ${nameA} (${THAI_MONTHS_SHORT[slotA.month]} ${slotA.label || ''}) ⇄ คุณ${nameB} (${THAI_MONTHS_SHORT[slotB.month]} ${slotB.label || ''})`;
+
+      mDataA.swapHistory.unshift({ time: nowStr, detail });
+      if (mDataB !== mDataA) {
+        mDataB.swapHistory.unshift({ time: nowStr, detail });
+      }
+
+      // 5. Sync current view in case user is currently on either month
+      const curYearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const curMonth = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(curYearAD, curMonth);
+      currentSchedule = curData.schedule;
+      originalSchedule = curData.originalSchedule;
+      swapHistory = curData.swapHistory;
+
+      cancelPendingSwap();
+      renderAllViews();
+      showToast(`สลับเวรสำเร็จ: คุณ${nameA} ⇄ คุณ${nameB} (${swapTag})`);
+    }
+
+    // TAB 2: INDIVIDUAL CARDS (Redesigned without '1. คุณ' prefix)
+    function renderIndividualCards(filterAgent = "ALL") {
+      const grid = document.getElementById("individualCardsGrid");
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthShort = THAI_MONTHS_SHORT[month];
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const targetAgents = filterAgent === "ALL" ? AGENTS : AGENTS.filter(a => a === filterAgent);
+
+      grid.innerHTML = targetAgents.map(ag => {
+        let holCount = 0;
+        let callCount = 0;
+        let wfhCount = 0;
+        let workingWeeksCount = 0;
+
+        // 1. Weekday shifts for this agent
+        const weekdayItems = sched.weeks.map(w => {
+          let matchedCol = null;
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            if ((w.assignments[cIdx] || []).includes(ag)) {
+              matchedCol = col;
+              if (col.code === "8C" || col.code === "8.3C") callCount++;
+              if (col.wfh) wfhCount++;
+            }
+          });
+
+          if (!matchedCol) {
+            return `
+              <div class="shift-box" style="opacity: 0.65;">
+                <div class="shift-box-top">
+                  <span class="shift-box-week">📅 สัปดาห์ ${w.label}</span>
+                  <span style="color:#94a3b8; font-size:11px;">ไม่มีกะวันทำการ</span>
+                </div>
+              </div>
+            `;
+          }
+
+          workingWeeksCount++;
+          const cleanTime = matchedCol.time.replace(" (WFH)", "");
+          const locBadge = matchedCol.wfh
+            ? `<span style="display:inline-flex; align-items:center; gap:2px; font-size:10.5px; font-weight:700; color:#4338ca; background:#e0e7ff; border:1px solid #c7d2fe; padding:2px 7px; border-radius:999px;">🏠 WFH</span>`
+            : `<span style="display:inline-flex; align-items:center; gap:2px; font-size:10.5px; font-weight:700; color:#0369a1; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 7px; border-radius:999px;">🏢 Onsite</span>`;
+
+          const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)
+            ? `<div style="font-size:10.5px; color:#64748b; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:4px; line-height:1.4;">
+                ${matchedCol.jd.map(j => `<div>• ${j}</div>`).join("")}
+               </div>`
+            : "";
+
+          return `
+            <div class="shift-box">
+              <div class="shift-box-top">
+                <span class="shift-box-week">📅 สัปดาห์ ${w.label}</span>
+                ${locBadge}
+              </div>
+              <div class="shift-box-details" style="margin-top: 4px;">
+                <span>⏰ <strong>${cleanTime} น.</strong></span>
+                <span style="color: #b45309; font-weight:700;">☕ ${matchedCol.breakTime}</span>
+              </div>
+              <div class="shift-box-role" style="font-weight:600; color:var(--text); margin-top:3px;">
+                💼 ${matchedCol.role}
+              </div>
+              ${jdPreview}
+            </div>
+          `;
+        }).join("");
+
+        // 2. Holiday shifts for this agent
+        const holChipsArr = [];
+        sched.holidays.forEach(h => {
+          h.shifts.forEach((shName, sIdx) => {
+            if (shName === ag) {
+              holCount++;
+              const meta = HOLIDAY_SHIFT_META[sIdx] || { time: "เวรวันหยุด", breakTime: "" };
+              const isBank = h.isBankHoliday;
+              const chipClass = isBank ? "hol-chip-item is-bank" : "hol-chip-item";
+              const icon = isBank ? "🏦" : "🏖️";
+              const noteText = isBank && h.holidayName ? ` (${h.holidayName})` : "";
+              const breakText = meta.breakTime ? ` • ${meta.breakTime}` : "";
+              holChipsArr.push(`
+                <div style="background:#ffffff; border:1px solid ${isBank ? '#fde047' : '#fecdd3'}; border-radius:6px; padding:6px 10px; margin-bottom:4px; font-size:11.5px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:${isBank ? '#854d0e' : '#9f1239'};">${icon} ${h.dayName}ที่ ${h.date} ${monthShort}${noteText}</strong>
+                    <span style="font-size:10.5px; color:#b45309; font-weight:600;">${breakText}</span>
+                  </div>
+                  <div style="color:var(--text); font-size:11px; margin-top:2px;">
+                    ⏰ <strong>${meta.time}</strong>
+                  </div>
+                </div>
+              `);
+            }
+          });
+        });
+
+        const holBoxHTML = holChipsArr.length > 0 ? `
+          <div class="holiday-box-wrap">
+            <div class="agent-card-section-label" style="color: #9f1239;">
+              <span>🏖️ เวรวันหยุด & วันพิเศษ (${holCount} วัน)</span>
+            </div>
+            <div class="holiday-chips-container" style="display:flex; flex-direction:column; gap:2px;">
+              ${holChipsArr.join("")}
+            </div>
+          </div>
+        ` : `
+          <div style="background:#f8fafc; border:1px dashed var(--border); border-radius:8px; padding:10px; text-align:center; font-size:11.5px; color:var(--muted);">
+            ✨ ไม่มีเวรวันหยุดในเดือนนี้
+          </div>
+        `;
+
+        const avatarInitial = ag ? ag.substring(0, 2) : "ทีม";
+
+        return `
+          <div class="agent-card">
+            <!-- Card Header: Clean Name, NO number prefix, NO 'คุณ' -->
+            <div class="agent-card-header">
+              <div class="agent-card-profile">
+                <div class="agent-avatar-badge">${avatarInitial}</div>
+                <div>
+                  <h4 class="agent-card-name">${ag}</h4>
+                  <div class="agent-card-team-label">First Tier Support</div>
+                </div>
+              </div>
+              <div class="agent-card-stats">
+                <span class="agent-stat-chip" title="จำนวนเวรวันหยุดในเดือนนี้">🏖️ ${holCount} วัน</span>
+                ${callCount > 0 ? `<span class="agent-stat-chip" style="background:rgba(234,179,8,0.2); border-color:rgba(250,204,21,0.35); color:#fef08a;" title="กะรับสาย Call">📞 ${callCount} สัปดาห์</span>` : ''}
+                ${wfhCount > 0 ? `<span class="agent-stat-chip" style="background:rgba(129,140,248,0.2); border-color:rgba(165,180,252,0.35); color:#e0e7ff;" title="กะ WFH">🏠 ${wfhCount} สัปดาห์</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="agent-card-body">
+              <div>
+                <div class="agent-card-section-label">
+                  <span>🏢 เวรวันทำการ (จันทร์ - ศุกร์)</span>
+                </div>
+                <div class="weekday-shifts-list">
+                  ${weekdayItems}
+                </div>
+              </div>
+
+              ${holBoxHTML}
+            </div>
+
+            <!-- Card Footer -->
+            <div class="agent-card-footer">
+              <span style="color:var(--muted); font-size:11px;">เข้างานตรงเวลาตามกะที่กำหนด</span>
+              <button class="btn btn-outline btn-sm" onclick="highlightAndJumpToMaster('${ag}')" style="padding:2px 8px; font-size:11px;" title="ไฮไลท์ชื่อ ${ag} ในหน้าตารางรวม">
+                🔍 ไฮไลท์ในตารางรวม
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function highlightAndJumpToMaster(agentName) {
+      highlightedAgent = agentName;
+      const userSel = document.getElementById("userFilterSelect");
+      if (userSel) userSel.value = agentName;
+      switchTab("masterTab", document.getElementById("tabBtnMaster"));
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      showToast(`🔍 ไฮไลท์คุณ${agentName} ในตารางรวมเรียบร้อยแล้ว`);
+    }
+
+
+    // =========================================================================
+    // TAB 3: ตารางเช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount & Staffing Check)
+    // =========================================================================
+    let currentHourlyMode = "WEEKDAY"; // "WEEKDAY" or "HOLIDAY"
+    let selectedHourlyWeekIndex = 0;
+    let selectedHourlyHolidayIndex = 0;
+
+    function setHourlyMode(mode) {
+      currentHourlyMode = mode;
+      const wkBtn = document.getElementById("hourlyModeWeekdayBtn");
+      const holBtn = document.getElementById("hourlyModeHolidayBtn");
+      const wkContainer = document.getElementById("hourlyWeekSelectContainer");
+      const holContainer = document.getElementById("hourlyHolidaySelectContainer");
+
+      if (mode === "WEEKDAY") {
+        if (wkBtn) { wkBtn.className = "btn btn-sm btn-primary"; wkBtn.style.background = ""; wkBtn.style.color = ""; }
+        if (holBtn) { holBtn.className = "btn btn-sm"; holBtn.style.background = "transparent"; holBtn.style.color = "var(--muted)"; }
+        if (wkContainer) wkContainer.style.display = "flex";
+        if (holContainer) holContainer.style.display = "none";
+      } else {
+        if (wkBtn) { wkBtn.className = "btn btn-sm"; wkBtn.style.background = "transparent"; wkBtn.style.color = "var(--muted)"; }
+        if (holBtn) { holBtn.className = "btn btn-sm btn-primary"; holBtn.style.background = ""; holBtn.style.color = ""; }
+        if (wkContainer) wkContainer.style.display = "none";
+        if (holContainer) holContainer.style.display = "flex";
+      }
+      renderHourlyHeadcountTable();
+    }
+
+    const HOURLY_TIME_SLOTS_WEEKDAY = [
+      { label: "07.00", start: 7.0, end: 8.0, text: "07:00 - 08:00" },
+      { label: "08.00", start: 8.0, end: 8.5, text: "08:00 - 08:30" },
+      { label: "08.30", start: 8.5, end: 9.0, text: "08:30 - 09:00" },
+      { label: "09.00", start: 9.0, end: 9.5, text: "09:00 - 09:30" },
+      { label: "09.30", start: 9.5, end: 10.0, text: "09:30 - 10:00" },
+      { label: "10.00", start: 10.0, end: 10.5, text: "10:00 - 10:30" },
+      { label: "10.30", start: 10.5, end: 11.0, text: "10:30 - 11:00" },
+      { label: "11.00", start: 11.0, end: 11.5, text: "11:00 - 11:30" },
+      { label: "11.30", start: 11.5, end: 12.0, text: "11:30 - 12:00" },
+      { label: "12.00", start: 12.0, end: 12.5, text: "12:00 - 12:30" },
+      { label: "12.30", start: 12.5, end: 13.0, text: "12:30 - 13:00" },
+      { label: "13.00", start: 13.0, end: 13.5, text: "13:00 - 13:30" },
+      { label: "13.30", start: 13.5, end: 14.0, text: "13:30 - 14:00" },
+      { label: "14.00", start: 14.0, end: 14.5, text: "14:00 - 14:30" },
+      { label: "14.30", start: 14.5, end: 15.0, text: "14:30 - 15:00" },
+      { label: "15.00-16.00", start: 15.0, end: 16.0, text: "15:00 - 16:00" },
+      { label: "16.00", start: 16.0, end: 16.5, text: "16:00 - 16:30" },
+      { label: "16.30", start: 16.5, end: 17.0, text: "16:30 - 17:00" },
+      { label: "17.00", start: 17.0, end: 17.5, text: "17:00 - 17:30" },
+      { label: "17.30", start: 17.5, end: 18.0, text: "17:30 - 18:00" },
+      { label: "18.00", start: 18.0, end: 19.0, text: "18:00 - 19:00" },
+      { label: "19.00", start: 19.0, end: 20.0, text: "19:00 - 20:00" },
+      { label: "20.00", start: 20.0, end: 21.0, text: "20:00 - 21:00" },
+      { label: "21.00-22.30", start: 21.0, end: 22.5, text: "21:00 - 22:30" }
+    ];
+
+    const HOURLY_TIME_SLOTS_HOLIDAY = [
+      { label: "08.00-09.00", start: 8.0, end: 9.0, text: "08:00 - 09:00" },
+      { label: "09.00-10.00", start: 9.0, end: 10.0, text: "09:00 - 10:00" },
+      { label: "10.00-11.00", start: 10.0, end: 11.0, text: "10:00 - 11:00" },
+      { label: "11.00-12.00", start: 11.0, end: 12.0, text: "11:00 - 12:00" },
+      { label: "12.00-13.00", start: 12.0, end: 13.0, text: "12:00 - 13:00" },
+      { label: "13.00-13.30", start: 13.0, end: 13.5, text: "13:00 - 13:30" },
+      { label: "13.30-14.00", start: 13.5, end: 14.0, text: "13:30 - 14:00" },
+      { label: "14.00-14.30", start: 14.0, end: 14.5, text: "14:00 - 14:30" },
+      { label: "14.30-15.00", start: 14.5, end: 15.0, text: "14:30 - 15:00" },
+      { label: "15.00-15.30", start: 15.0, end: 15.5, text: "15:00 - 15:30" },
+      { label: "15.30-16.00", start: 15.5, end: 16.0, text: "15:30 - 16:00" },
+      { label: "16.00-17.00", start: 16.0, end: 17.0, text: "16:00 - 17:00" },
+      { label: "17.00-18.00", start: 17.0, end: 18.0, text: "17:00 - 18:00" },
+      { label: "18.00-19.00", start: 18.0, end: 19.0, text: "18:00 - 19:00" },
+      { label: "19.00-20.00", start: 19.0, end: 20.0, text: "19:00 - 20:00" },
+      { label: "20.00-21.00", start: 20.0, end: 21.0, text: "20:00 - 21:00" },
+      { label: "21.00-22.30", start: 21.0, end: 22.5, text: "21:00 - 22:30" }
+    ];
+
+    // 20 Individual Duty Slots for Weekday Check
+    const WEEKDAY_DUTY_SLOTS = [
+      { name: "รับสาย 1 (07.00 Call)", colIdx: 0, slotIdx: 0, timeStr: "07.00-16.00", breakStr: "พัก 11.00-12.00", start: 7.0, end: 16.0, bStart: 11.0, bEnd: 12.0 },
+      { name: "รับสาย 2 (07.00 Mail)", colIdx: 1, slotIdx: 0, timeStr: "07.00-16.00", breakStr: "พัก 12.00-13.00", start: 7.0, end: 16.0, bStart: 12.0, bEnd: 13.0 },
+      { name: "รับสาย 3 (08.00 Call 1)", colIdx: 2, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 11.30-12.30", start: 8.0, end: 17.0, bStart: 11.5, bEnd: 12.5 },
+      { name: "รับสาย 4 (08.00 Call 2)", colIdx: 2, slotIdx: 1, timeStr: "08.00-17.00", breakStr: "พัก 12.00-13.00", start: 8.0, end: 17.0, bStart: 12.0, bEnd: 13.0 },
+      { name: "รับสาย 5 (08.00 Self)", colIdx: 3, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 13.00-14.00", start: 8.0, end: 17.0, bStart: 13.0, bEnd: 14.0 },
+      { name: "รับสาย 6 (08.00 ECE)", colIdx: 4, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 12.00-13.00", start: 8.0, end: 17.0, bStart: 12.0, bEnd: 13.0 },
+      { name: "รับสาย 7 (08.00 Mail)", colIdx: 5, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 13.00-14.00", start: 8.0, end: 17.0, bStart: 13.0, bEnd: 14.0 },
+      { name: "รับสาย 8 (08.30 Aging คู่)", colIdx: 6, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 12.30-13.30", start: 8.5, end: 17.5, bStart: 12.5, bEnd: 13.5 },
+      { name: "รับสาย 9 (08.30 ECE)", colIdx: 7, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
+      { name: "รับสาย 10 (08.30 Aging คี่)", colIdx: 8, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
+      { name: "รับสาย 11 (08.30 Call 1)", colIdx: 9, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
+      { name: "รับสาย 12 (08.30 Call 2)", colIdx: 9, slotIdx: 1, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
+      { name: "รับสาย 13 (08.30 Call 3)", colIdx: 9, slotIdx: 2, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
+      { name: "รับสาย 14 (08.30 Call 4)", colIdx: 9, slotIdx: 3, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
+      { name: "รับสาย 15 (09.00 Self)", colIdx: 10, slotIdx: 0, timeStr: "09.00-18.00", breakStr: "พัก 14.00-15.00", start: 9.0, end: 18.0, bStart: 14.0, bEnd: 15.0 },
+      { name: "รับสาย 16 (09.00 C+Ef)", colIdx: 11, slotIdx: 0, timeStr: "09.00-18.00", breakStr: "พัก 14.00-15.00", start: 9.0, end: 18.0, bStart: 14.0, bEnd: 15.0 },
+      { name: "รับสาย 17 (10.00)", colIdx: 12, slotIdx: 0, timeStr: "10.00-19.00", breakStr: "พัก 13.30-14.30", start: 10.0, end: 19.0, bStart: 13.5, bEnd: 14.5 },
+      { name: "รับสาย 18 (11.00)", colIdx: 13, slotIdx: 0, timeStr: "11.00-20.00", breakStr: "พัก 14.00-15.00", start: 11.0, end: 20.0, bStart: 14.0, bEnd: 15.0 },
+      { name: "รับสาย 19 (12.00 WFH)", colIdx: 14, slotIdx: 0, timeStr: "12.00-21.00", breakStr: "พัก 15.00-16.00", start: 12.0, end: 21.0, bStart: 15.0, bEnd: 16.0 },
+      { name: "รับสาย 20 (13.30 WFH)", colIdx: 15, slotIdx: 0, timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0 }
+    ];
+
+    function renderHourlyHeadcountTable() {
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      if (!sched || !sched.weeks) return;
+
+      const weekSelect = document.getElementById("hourlyWeekSelect");
+      const holSelect = document.getElementById("hourlyHolidaySelect");
+
+      // 1. Update week dropdown options
+      if (weekSelect && sched.weeks.length > 0) {
+        const curVal = weekSelect.value;
+        weekSelect.innerHTML = sched.weeks.map((w, idx) => `<option value="${idx}">${w.label}</option>`).join("");
+        if (curVal !== "" && parseInt(curVal, 10) < sched.weeks.length) {
+          weekSelect.value = curVal;
+        } else {
+          weekSelect.value = "0";
+        }
+        selectedHourlyWeekIndex = parseInt(weekSelect.value, 10) || 0;
+      }
+
+      // 2. Update holiday dropdown options
+      if (holSelect && sched.holidays && sched.holidays.length > 0) {
+        const curHVal = holSelect.value;
+        holSelect.innerHTML = sched.holidays.map((h, idx) => `<option value="${idx}">${h.dayName}ที่ ${h.date} ${h.note ? `(${h.note})` : ''}</option>`).join("");
+        if (curHVal !== "" && parseInt(curHVal, 10) < sched.holidays.length) {
+          holSelect.value = curHVal;
+        } else {
+          holSelect.value = "0";
+        }
+        selectedHourlyHolidayIndex = parseInt(holSelect.value, 10) || 0;
+      }
+
+      const thead = document.getElementById("hourlyHead");
+      const tbody = document.getElementById("hourlyBody");
+      const tfoot = document.getElementById("hourlyFoot");
+      const timelineDiv = document.getElementById("hourlyCapacityTimeline");
+
+      if (currentHourlyMode === "WEEKDAY") {
+        renderHourlyWeekdayView(sched, thead, tbody, tfoot, timelineDiv);
+      } else {
+        renderHourlyHolidayView(sched, thead, tbody, tfoot, timelineDiv);
+      }
+    }
+
+    function renderHourlyWeekdayView(sched, thead, tbody, tfoot, timelineDiv) {
+      const week = sched.weeks[selectedHourlyWeekIndex] || sched.weeks[0];
+      const slots = HOURLY_TIME_SLOTS_WEEKDAY;
+
+      // Table Header
+      let headHtml = `
+        <tr>
+          <th style="min-width: 140px; text-align: left;">กะงาน (Shift)</th>
+          <th style="min-width: 90px;">เวลาทำงาน</th>
+          <th style="min-width: 105px;">เวลาพัก</th>
+          <th style="min-width: 110px; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
+          ${slots.map(s => `<th style="min-width: 48px; padding: 4px 2px; font-size: 11px;">${s.label}</th>`).join("")}
+        </tr>
+      `;
+      thead.innerHTML = headHtml;
+
+      // Track sums per slot
+      const colWorking = new Array(slots.length).fill(0);
+      const colBreak = new Array(slots.length).fill(0);
+
+      // Table Body
+      let bodyHtml = "";
+      WEEKDAY_DUTY_SLOTS.forEach(duty => {
+        let agentName = "-";
+        if (week && week.assignments && week.assignments[duty.colIdx]) {
+          agentName = week.assignments[duty.colIdx][duty.slotIdx] || "-";
+        }
+
+        bodyHtml += `<tr>`;
+        bodyHtml += `<td style="text-align: left; font-weight: 600; font-size: 11.5px; white-space: nowrap;">${duty.name}</td>`;
+        bodyHtml += `<td style="color: var(--muted); font-size: 11px;">${duty.timeStr}</td>`;
+        bodyHtml += `<td style="color: #d97706; font-size: 11px;">${duty.breakStr}</td>`;
+        bodyHtml += `<td style="font-weight: 700; color: var(--primary); font-size: 12px;">${agentName}</td>`;
+
+        slots.forEach((s, sIdx) => {
+          const mid = (s.start + s.end) / 2.0;
+          const isWorkingTime = (duty.start <= mid && mid < duty.end);
+          const isBreakTime = (duty.bStart <= mid && mid < duty.bEnd);
+
+          if (isWorkingTime) {
+            if (isBreakTime) {
+              colBreak[sIdx]++;
+              bodyHtml += `<td style="background: rgba(245,158,11,0.12); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 4px; background:#fef3c7; color:#b45309; border-radius:4px; font-size:10px; font-weight:700;">พัก</span></td>`;
+            } else {
+              colWorking[sIdx]++;
+              bodyHtml += `<td style="background: rgba(16,185,129,0.06); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 6px; background:#dcfce7; color:#15803d; border-radius:4px; font-weight:700; font-size:11px;">1</span></td>`;
+            }
+          } else {
+            bodyHtml += `<td style="color: rgba(148,163,184,0.3); font-size: 11px;">-</td>`;
+          }
+        });
+
+        bodyHtml += `</tr>`;
+      });
+      tbody.innerHTML = bodyHtml;
+
+      // Table Footer with Totals
+      let footHtml = `
+        <tr style="background: rgba(59,130,246,0.08); font-weight: 700;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: var(--text);">รวมปฏิบัติงาน (Total Working)</td>
+          ${colWorking.map((w, i) => `<td style="font-size: 12px; color: var(--primary); font-weight: 700;">${w + colBreak[i]}</td>`).join("")}
+        </tr>
+        <tr style="background: rgba(245,158,11,0.08); font-weight: 700;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: #d97706;">รวมคนที่พัก (Staff on Break)</td>
+          ${colBreak.map(b => `<td style="font-size: 12px; color: #d97706;">${b > 0 ? b : '-'}</td>`).join("")}
+        </tr>
+        <tr style="background: #1e293b; color: #38bdf8; font-weight: 800; font-size: 12.5px;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: #fde047;">⚡ รวมรับสายสุทธิ (Net On-Duty Staff)</td>
+          ${colWorking.map(w => `<td style="color: #38bdf8; font-size: 13px;">${w}</td>`).join("")}
+        </tr>
+      `;
+      tfoot.innerHTML = footHtml;
+
+      // Render Visual Timeline
+      renderTimelineBars(slots, colWorking, timelineDiv);
+    }
+
+    function renderHourlyHolidayView(sched, thead, tbody, tfoot, timelineDiv) {
+      const holidays = sched.holidays || [];
+      const hol = holidays[selectedHourlyHolidayIndex] || holidays[0];
+      const slots = HOURLY_TIME_SLOTS_HOLIDAY;
+
+      let headHtml = `
+        <tr>
+          <th style="min-width: 140px; text-align: left;">กะงานวันหยุด (Holiday Shift)</th>
+          <th style="min-width: 90px;">เวลาทำงาน</th>
+          <th style="min-width: 105px;">เวลาพัก</th>
+          <th style="min-width: 110px; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
+          ${slots.map(s => `<th style="min-width: 52px; padding: 4px 2px; font-size: 11px;">${s.label}</th>`).join("")}
+        </tr>
+      `;
+      thead.innerHTML = headHtml;
+
+      const holShiftsDef = [
+        { name: "เวร 1 (08.00-17.00 น.)", timeStr: "08.00-17.00", breakStr: "พัก 13.30-14.30", start: 8.0, end: 17.0, bStart: 13.5, bEnd: 14.5, sIdx: 0 },
+        { name: "เวร 2 (09.00-18.00 น.)", timeStr: "09.00-18.00", breakStr: "พัก 14.30-15.30", start: 9.0, end: 18.0, bStart: 14.5, bEnd: 15.5, sIdx: 1 },
+        { name: "เวร 3 (10.00-19.00 น.)", timeStr: "10.00-19.00", breakStr: "พัก 14.00-15.00", start: 10.0, end: 19.0, bStart: 14.0, bEnd: 15.0, sIdx: 2 },
+        { name: "เวร 4 (13.30-22.30 น.)", timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0, sIdx: 3 }
+      ];
+
+      const colWorking = new Array(slots.length).fill(0);
+      const colBreak = new Array(slots.length).fill(0);
+
+      let bodyHtml = "";
+      holShiftsDef.forEach(hDef => {
+        let agentName = "-";
+        if (hol && hol.shifts) agentName = hol.shifts[hDef.sIdx] || "-";
+
+        bodyHtml += `<tr>`;
+        bodyHtml += `<td style="text-align: left; font-weight: 600; font-size: 11.5px; white-space: nowrap;">${hDef.name}</td>`;
+        bodyHtml += `<td style="color: var(--muted); font-size: 11px;">${hDef.timeStr}</td>`;
+        bodyHtml += `<td style="color: #d97706; font-size: 11px;">${hDef.breakStr}</td>`;
+        bodyHtml += `<td style="font-weight: 700; color: var(--primary); font-size: 12px;">${agentName}</td>`;
+
+        slots.forEach((s, sIdx) => {
+          const mid = (s.start + s.end) / 2.0;
+          const isWorkingTime = (hDef.start <= mid && mid < hDef.end);
+          const isBreakTime = (hDef.bStart <= mid && mid < hDef.bEnd);
+
+          if (isWorkingTime) {
+            if (isBreakTime) {
+              colBreak[sIdx]++;
+              bodyHtml += `<td style="background: rgba(245,158,11,0.12); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 4px; background:#fef3c7; color:#b45309; border-radius:4px; font-size:10px; font-weight:700;">พัก</span></td>`;
+            } else {
+              colWorking[sIdx]++;
+              bodyHtml += `<td style="background: rgba(16,185,129,0.06); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 6px; background:#dcfce7; color:#15803d; border-radius:4px; font-weight:700; font-size:11px;">1</span></td>`;
+            }
+          } else {
+            bodyHtml += `<td style="color: rgba(148,163,184,0.3); font-size: 11px;">-</td>`;
+          }
+        });
+        bodyHtml += `</tr>`;
+      });
+      tbody.innerHTML = bodyHtml;
+
+      let footHtml = `
+        <tr style="background: rgba(59,130,246,0.08); font-weight: 700;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: var(--text);">รวมปฏิบัติงาน (Total Working)</td>
+          ${colWorking.map((w, i) => `<td style="font-size: 12px; color: var(--primary); font-weight: 700;">${w + colBreak[i]}</td>`).join("")}
+        </tr>
+        <tr style="background: rgba(245,158,11,0.08); font-weight: 700;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: #d97706;">รวมคนที่พัก (Staff on Break)</td>
+          ${colBreak.map(b => `<td style="font-size: 12px; color: #d97706;">${b > 0 ? b : '-'}</td>`).join("")}
+        </tr>
+        <tr style="background: #1e293b; color: #38bdf8; font-weight: 800; font-size: 12.5px;">
+          <td colspan="4" style="text-align: right; padding-right: 12px; color: #fde047;">⚡ รวมรับสายสุทธิ (Net On-Duty Staff)</td>
+          ${colWorking.map(w => `<td style="color: #38bdf8; font-size: 13px;">${w}</td>`).join("")}
+        </tr>
+      `;
+      tfoot.innerHTML = footHtml;
+
+      renderTimelineBars(slots, colWorking, timelineDiv);
+    }
+
+    function renderTimelineBars(slots, netCounts, timelineDiv) {
+      if (!timelineDiv) return;
+      let html = "";
+      slots.forEach((s, idx) => {
+        const cnt = netCounts[idx];
+        let color = "#8b5cf6"; // 1 person
+        let bg = "rgba(139,92,246,0.15)";
+        if (cnt >= 14) {
+          color = "#10b981"; // peak
+          bg = "rgba(16,185,129,0.15)";
+        } else if (cnt >= 7) {
+          color = "#3b82f6"; // normal
+          bg = "rgba(59,130,246,0.15)";
+        } else if (cnt >= 2) {
+          color = "#f59e0b"; // light
+          bg = "rgba(245,158,11,0.15)";
+        }
+
+        const heightPct = Math.max(16, Math.min(100, (cnt / 20) * 100));
+
+        html += `
+          <div style="flex: 1; min-width: 36px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 90px; background: ${bg}; border-radius: 6px; padding: 4px 2px; position: relative;">
+            <span style="font-size: 11px; font-weight: 800; color: ${color}; margin-bottom: 4px;">${cnt}</span>
+            <div style="width: 70%; height: ${heightPct}%; background: ${color}; border-radius: 4px 4px 0 0; transition: height 0.3s;"></div>
+            <span style="font-size: 9.5px; color: var(--muted); margin-top: 4px; white-space: nowrap; transform: scale(0.9);">${s.label}</span>
+          </div>
+        `;
+      });
+      timelineDiv.innerHTML = html;
+    }
+
+    // TAB 4: MATRIX BALANCE CHECK
+    function renderMatrixTable() {
+      const thead = document.getElementById("matrixHead");
+      const tbody = document.getElementById("matrixBody");
+
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+
+      let headHTML = `<tr><th style="width:40px;">#</th><th style="text-align:left; width:130px;">ชื่อพนักงาน</th>`;
+      sched.weeks.forEach(w => { headHTML += `<th>${w.label}</th>`; });
+      headHTML += `<th>รวมกะ Call<br><span style="font-size:10.5px; font-weight:normal; color:#fde047;">(ต้นฉบับ | ปัจจุบัน)</span></th><th>รวมเวรวันหยุด<br><span style="font-size:10.5px; font-weight:normal; color:#fde047;">(ต้นฉบับ | ปัจจุบัน)</span></th></tr>`;
+      thead.innerHTML = headHTML;
+
+      tbody.innerHTML = "";
+      AGENTS.forEach((ag, idx) => {
+        let currCallCount = 0, currHolCount = 0;
+        let origCallCount = 0, origHolCount = 0;
+        let rowCells = "";
+
+        // Current schedule metrics
+        currentSchedule.weeks.forEach(w => {
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            if ((w.assignments[cIdx] || []).includes(ag)) {
+              if (col.code === "8C" || col.code === "8.3C") currCallCount++;
+            }
+          });
+        });
+        currentSchedule.holidays.forEach(h => { if (h.shifts.includes(ag)) currHolCount++; });
+
+        // Baseline schedule metrics (Used for next month calculation!)
+        originalSchedule.weeks.forEach(w => {
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            if ((w.assignments[cIdx] || []).includes(ag)) {
+              if (col.code === "8C" || col.code === "8.3C") origCallCount++;
+            }
+          });
+        });
+        originalSchedule.holidays.forEach(h => { if (h.shifts.includes(ag)) origHolCount++; });
+
+        sched.weeks.forEach(w => {
+          let codes = [];
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            if ((w.assignments[cIdx] || []).includes(ag)) {
+              codes.push(col.code);
+            }
+          });
+          rowCells += `<td>${codes.map(c => getCodeBadge(c)).join(" ") || "-"}</td>`;
+        });
+
+        const callDisplay = origCallCount === currCallCount 
+          ? `<strong>${origCallCount}</strong>` 
+          : `<strong>${origCallCount}</strong> <span style="font-size:11px; color:#d97706;">(${currCallCount})</span>`;
+          
+        const holDisplay = origHolCount === currHolCount 
+          ? `<strong>${origHolCount}</strong>` 
+          : `<strong>${origHolCount}</strong> <span style="font-size:11px; color:#d97706;">(${currHolCount})</span>`;
+
+        tbody.innerHTML += `<tr><td>${idx+1}</td><td style="text-align:left;font-weight:700;">${ag}</td>${rowCells}<td>${callDisplay}</td><td>${holDisplay}</td></tr>`;
+      });
+    }
+
+    // TAB 4: AGENTS MANAGER
+    function renderAgentsEditor() {
+      const grid = document.getElementById("agentsGrid");
+      grid.innerHTML = "";
+      AGENTS.forEach((ag, idx) => {
+        grid.innerHTML += `<div style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:6px 10px;border:1px solid var(--border);border-radius:6px;"><span style="font-weight:700;width:24px;color:var(--muted);">${idx+1}.</span><input type="text" class="agent-name-input" data-idx="${idx}" value="${ag}" style="width:100%; border:1px solid var(--border); padding:4px 6px; border-radius:4px; font-family:inherit;"></div>`;
+      });
+    }
+
+    
+    // Swap Permission & Master Baseline Management
+    function toggleUserSwapPermission() {
+      allowUserSwap = !allowUserSwap;
+      updateSwapPermissionUI();
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      if (allowUserSwap) {
+        showToast("🔓 เปิดให้น้องๆ สลับเวรได้แล้ว (กดเซฟทับเพื่อบันทึกสถานะ)");
+      } else {
+        showToast("🔒 ปิดรับการสลับเวรแล้ว (น้องๆ จะดูได้อย่างเดียว)");
+      }
+    }
+
+    function updateSwapPermissionUI() {
+      const pill = document.getElementById("swapStatusPill");
+      const pillText = document.getElementById("swapStatusPillText");
+      const toggleBtn = document.getElementById("swapLockToggleBtn");
+
+      if (allowUserSwap) {
+        if (pill) {
+          pill.className = "swap-status-pill open no-print";
+          pillText.innerHTML = "<strong>สถานะการสลับเวร:</strong> 🟢 เปิดให้น้องๆ สลับเวรกันเองได้ (คลิกชื่อเพื่อจับคู่สลับ)";
+        }
+        if (toggleBtn) {
+          toggleBtn.innerHTML = "🔒 ปิดรับการสลับเวร (ล็อกดูอย่างเดียว)";
+          toggleBtn.style.background = "#dc2626";
+        }
+      } else {
+        if (pill) {
+          pill.className = "swap-status-pill locked no-print";
+          pillText.innerHTML = "<strong>สถานะการสลับเวร:</strong> 🔒 ปิดรับการสลับเวรแล้ว (โหมดดูได้อย่างเดียว หากต้องการเปลี่ยนเวรกรุณาติดต่อหัวหน้างาน)";
+        }
+        if (toggleBtn) {
+          toggleBtn.innerHTML = "🔓 เปิดให้น้องๆ สลับเวรได้";
+          toggleBtn.style.background = "#16a34a";
+        }
+      }
+    }
+
+    function setScheduleViewMode(isOriginal) {
+      isViewingOriginal = !!isOriginal;
+      
+      const btnActive = document.getElementById("modeBtnActive");
+      const btnMaster = document.getElementById("modeBtnMaster");
+      if (btnActive) btnActive.classList.toggle("active", !isViewingOriginal);
+      if (btnMaster) btnMaster.classList.toggle("active", isViewingOriginal);
+
+      const notice = document.getElementById("baselineNoticeBar");
+      if (notice) {
+        if (isViewingOriginal) notice.classList.add("show");
+        else notice.classList.remove("show");
+      }
+
+      const swapPill = document.getElementById("swapStatusPill");
+      if (swapPill) {
+        swapPill.style.display = isViewingOriginal ? "none" : "inline-flex";
+      }
+
+      const adminToggleViewBtn = document.getElementById("viewBaselineBtn");
+      if (adminToggleViewBtn) {
+        adminToggleViewBtn.innerHTML = isViewingOriginal ? "📋 สลับดูตารางปฏิบัติงานจริง" : "📜 สลับดูตารางต้นฉบับ";
+      }
+
+      if (pendingSwapSlot) cancelPendingSwap();
+      renderAllViews();
+
+      if (isViewingOriginal) {
+        showToast("📜 กำลังดูตารางต้นฉบับ Master (Baseline)");
+      } else {
+        showToast("📋 กำลังดูตารางปฏิบัติงานจริง (Active)");
+      }
+    }
+
+    function toggleViewOriginal() {
+      setScheduleViewMode(!isViewingOriginal);
+    }
+
+    // =========================================================================
+    // SAFETY CONFIRMATION MODAL LOGIC (กันการเผลอกดคืนค่าหรือคำนวณใหม่)
+    // =========================================================================
+    let pendingSafetyAction = null;
+
+    function openSafetyModal({ title, icon, alertHTML, checkboxText, confirmBtnText, actionFn }) {
+      document.getElementById("safetyModalTitle").innerText = title;
+      document.getElementById("safetyModalIcon").innerText = icon || "⚠️";
+      document.getElementById("safetyModalAlertBox").innerHTML = alertHTML;
+      document.getElementById("safetyCheckboxLabel").innerText = checkboxText;
+      
+      const actionBtn = document.getElementById("safetyConfirmActionBtn");
+      actionBtn.innerText = confirmBtnText || "💥 ยืนยันดำเนินการ";
+      actionBtn.disabled = true;
+      actionBtn.style.opacity = "0.5";
+      actionBtn.style.cursor = "not-allowed";
+
+      const cb = document.getElementById("safetyConfirmCheckbox");
+      cb.checked = false;
+
+      pendingSafetyAction = actionFn;
+      document.getElementById("safetyConfirmModal").classList.add("show");
+    }
+
+    function closeSafetyModal() {
+      document.getElementById("safetyConfirmModal").classList.remove("show");
+      pendingSafetyAction = null;
+    }
+
+    function onSafetyCheckboxChange() {
+      const cb = document.getElementById("safetyConfirmCheckbox");
+      const actionBtn = document.getElementById("safetyConfirmActionBtn");
+      if (cb.checked) {
+        actionBtn.disabled = false;
+        actionBtn.style.opacity = "1";
+        actionBtn.style.cursor = "pointer";
+      } else {
+        actionBtn.disabled = true;
+        actionBtn.style.opacity = "0.5";
+        actionBtn.style.cursor = "not-allowed";
+      }
+    }
+
+    function executeSafetyAction() {
+      const cb = document.getElementById("safetyConfirmCheckbox");
+      if (!cb.checked) return;
+      if (typeof pendingSafetyAction === "function") {
+        const fn = pendingSafetyAction;
+        closeSafetyModal();
+        fn();
+      }
+    }
+
+    function requestRestoreOriginal() {
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthName = THAI_MONTHS[month];
+      const yearTH = parseInt(document.getElementById("yearSelect").value, 10) + 543;
+      const swapCount = (swapHistory || []).length;
+
+      const alertHTML = `
+        <div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:12px; border-radius:8px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🛑</span> คำเตือนสำคัญ: การคืนค่าจะลบประวัติการสลับเวรทั้งหมด
+          </div>
+          <ul style="margin:0; padding-left:18px; line-height:1.5;">
+            <li>ระบบจะ <strong>ลบประวัติการสลับเวร (${swapCount} รายการ)</strong> ของเดือน ${monthName} ${yearTH} ทิ้งทั้งหมด</li>
+            <li>รายชื่อเวรทั้งหมดจะถูกดึงย้อนกลับไปเป็น <strong>"ตารางต้นฉบับ Master"</strong> ทันที</li>
+            <li>น้องๆ ที่เคยตกลงสลับเวรกันไว้จะต้องมาดำเนินการใหม่อีกครั้ง</li>
+          </ul>
+          <div style="margin-top:10px; padding:8px 10px; background:#fff; border:1px solid #fca5a5; border-radius:6px; font-size:12px; color:#b91c1c;">
+            💡 <strong>ข้อแนะนำ:</strong> หากคุณต้องการเพียงแค่ <em>"ดูหรือตรวจสอบ"</em> ตารางเดิม ให้ปิดหน้านี้แล้วเลือกแท็บ <strong>"📜 ตารางต้นฉบับ Master"</strong> ด้านบนได้ทันทีโดยไม่สูญเสียข้อมูล
+          </div>
+        </div>
+      `;
+
+      openSafetyModal({
+        title: "ยืนยันการคืนค่าสู่ตารางต้นฉบับ (Reset Schedule)",
+        icon: "🔄",
+        alertHTML: alertHTML,
+        checkboxText: `ฉันเข้าใจว่าประวัติการสลับเวรของเดือน ${monthName} จะถูกลบทั้งหมด และยืนยันคืนค่าตารางต้นฉบับ`,
+        confirmBtnText: "💥 ยืนยันคืนค่าสู่ตารางต้นฉบับ",
+        actionFn: () => {
+          currentSchedule = JSON.parse(JSON.stringify(originalSchedule));
+          swapHistory = [];
+          if (pendingSwapSlot) cancelPendingSwap();
+          renderAllViews();
+          showToast("🔄 คืนค่าสู่ตารางต้นฉบับเรียบร้อยแล้ว (การสลับเวรถูกรีเซ็ต)");
+        }
+      });
+    }
+
+    function restoreOriginalSchedule() {
+      requestRestoreOriginal();
+    }
+
+    function requestCalculateNextMonth() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      
+      let nextYearAD = yearAD;
+      let nextMonth = month + 1;
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYearAD++;
+      }
+      const curMonthName = THAI_MONTHS[month];
+      const nextMonthName = THAI_MONTHS[nextMonth];
+      const nextYearTH = nextYearAD + 543;
+
+      const nextKey = `${nextYearAD}-${nextMonth}`;
+      const alreadyExists = !!monthSchedules[nextKey];
+
+      const alertHTML = `
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:12px; border-radius:8px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>✨</span> คำนวณตารางเวรเดือนถัดไป: <strong>${nextMonthName} ${nextYearTH}</strong>
+          </div>
+          <ul style="margin:0; padding-left:18px; line-height:1.5;">
+            <li>ระบบจะใช้ <strong>"ตารางต้นฉบับ (Master Baseline)"</strong> ของเดือน ${curMonthName} เป็นฐานในการหมุนเวรต่อเนื่อง</li>
+            <li><strong>ไม่นำการสลับเวรของน้องๆ มาคำนวณ</strong> เพื่อความยุติธรรมสูงสุดในการเกลี่ยโควตาวันหยุด</li>
+            ${alreadyExists ? `<li style="color:#b91c1c; font-weight:700;">⚠️ หมายเหตุ: เดือน ${nextMonthName} มีข้อมูลอยู่แล้ว หากยืนยันระบบจะคำนวณใหม่และทับตารางเดิม</li>` : ''}
+          </ul>
+        </div>
+      `;
+
+      openSafetyModal({
+        title: `ยืนยันการคำนวณตารางเวรเดือนถัดไป (${nextMonthName})`,
+        icon: "✨",
+        alertHTML: alertHTML,
+        checkboxText: `ฉันยืนยันให้ระบบคำนวณและสร้างตารางเวรเดือน ${nextMonthName} ${nextYearTH}`,
+        confirmBtnText: `✨ ยืนยันคำนวณเดือน ${nextMonthName}`,
+        actionFn: () => {
+          calculateNextMonthFromBaselineLogic(nextYearAD, nextMonth, nextMonthName, nextYearTH);
+        }
+      });
+    }
+
+    function calculateNextMonthFromBaseline() {
+      requestCalculateNextMonth();
+    }
+
+    function requestShuffle() {
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthName = THAI_MONTHS[month];
+      const yearTH = parseInt(document.getElementById("yearSelect").value, 10) + 543;
+
+      const alertHTML = `
+        <div style="background:#fefce8; border:1px solid #fef08a; color:#854d0e; padding:12px; border-radius:8px;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🎲</span> คำเตือน: สุ่มจัดคิวตารางต้นฉบับใหม่
+          </div>
+          <ul style="margin:0; padding-left:18px; line-height:1.5;">
+            <li>ระบบจะสุ่มสลับตำแหน่งเวรและสร้างเป็น <strong>"ตารางต้นฉบับชุดใหม่"</strong> ประจำเดือน ${monthName} ${yearTH}</li>
+            <li>ประวัติการสลับเวรทั้งหมดในเดือนนี้จะถูกรีเซ็ตใหม่</li>
+          </ul>
+        </div>
+      `;
+
+      openSafetyModal({
+        title: `ยืนยันการสุ่มจัดตารางใหม่ (${monthName} ${yearTH})`,
+        icon: "🎲",
+        alertHTML: alertHTML,
+        checkboxText: `ฉันเข้าใจและยืนยันต้องการสุ่มสร้างตารางต้นฉบับใหม่`,
+        confirmBtnText: "🎲 ยืนยันสุ่มจัดตารางใหม่",
+        actionFn: () => {
+          customSpinSeed += 3;
+          generateScheduleForSelectedMonth(true);
+          showToast("🎲 สร้างตารางเวรต้นฉบับใหม่เรียบร้อยแล้ว");
+        }
+      });
+    }
+
+    function calculateNextMonthFromBaselineLogic(nextYearAD, nextMonth, nextMonthName, nextYearTH) {
+      // Base schedule to calculate from (MUST BE originalSchedule, ignoring user swaps!)
+      const base = (originalSchedule && originalSchedule.weeks && originalSchedule.weeks.length > 0)
+        ? originalSchedule
+        : currentSchedule;
+
+      const cal = buildCalendarWeeksAndHolidays(nextYearAD, nextMonth);
+
+      // 1. Weekday rotation calculation from base.weeks
+      let lastWeekStartAgent = "";
+      if (base.weeks.length > 0) {
+        lastWeekStartAgent = base.weeks[base.weeks.length - 1].assignments[0]?.[0] || AGENTS[0];
+      }
+      let baseIdx = BASE_ROTATION_ORDER_INDICES.findIndex(idx => AGENTS[idx] === lastWeekStartAgent);
+      if (baseIdx === -1) baseIdx = 0;
+
+      const generatedWeeks = cal.weeks.map((w, wIdx) => {
+        const stepShift = (baseIdx + (wIdx + 1) * 3) % 20;
+        const rotatedPool = [];
+        for (let i = 0; i < 20; i++) {
+          rotatedPool.push(AGENTS[BASE_ROTATION_ORDER_INDICES[(i + stepShift) % 20]]);
+        }
+        let ptr = 0;
+        const assignments = WEEKDAY_COLUMNS.map(col => {
+          const slotNames = [];
+          for (let s = 0; s < col.slots; s++) slotNames.push(rotatedPool[ptr++]);
+          return slotNames;
+        });
+        return { label: w.label, assignments };
+      });
+
+      // 2. Weekend / Holiday quota calculation from base.holidays (from baseline only!)
+      const prevHolidayCounts = {};
+      AGENTS.forEach(a => prevHolidayCounts[a] = 0);
+      if (base.holidays) {
+        base.holidays.forEach(h => {
+          h.shifts.forEach(ag => {
+            if (prevHolidayCounts[ag] !== undefined) prevHolidayCounts[ag]++;
+          });
+        });
+      }
+
+      const lastHol = base.holidays && base.holidays.length > 0 ? base.holidays[base.holidays.length - 1] : null;
+      const lastHolAgents = lastHol ? lastHol.shifts : [];
+
+      const nextHolCounts = {};
+      AGENTS.forEach(a => nextHolCounts[a] = 0);
+
+      let prevDayAssigned = [...lastHolAgents];
+      const generatedHolidays = cal.holidays.map((h, hIdx) => {
+        const shifts = [];
+        const candidates = [...AGENTS].sort((a, b) => {
+          const totalA = (prevHolidayCounts[a] || 0) + (nextHolCounts[a] || 0);
+          const totalB = (prevHolidayCounts[b] || 0) + (nextHolCounts[b] || 0);
+          if (totalA !== totalB) return totalA - totalB;
+          return (nextHolCounts[a] || 0) - (nextHolCounts[b] || 0);
+        });
+
+        for (const cand of candidates) {
+          if (shifts.length >= 4) break;
+          if (shifts.includes(cand)) continue;
+          if (hIdx > 0 && prevDayAssigned.includes(cand)) continue;
+          if (hIdx === 0 && prevDayAssigned.includes(cand) && h.date === 1) continue;
+
+          shifts.push(cand);
+          nextHolCounts[cand]++;
+        }
+
+        if (shifts.length < 4) {
+          for (const cand of candidates) {
+            if (shifts.length >= 4) break;
+            if (!shifts.includes(cand)) {
+              shifts.push(cand);
+              nextHolCounts[cand]++;
+            }
+          }
+        }
+
+        prevDayAssigned = [...shifts];
+        return { ...h, shifts };
+      });
+
+      // Set new schedule and baseline
+      currentSchedule = { weeks: generatedWeeks, holidays: generatedHolidays };
+      originalSchedule = JSON.parse(JSON.stringify(currentSchedule));
+      swapHistory = [];
+      isViewingOriginal = false;
+
+      const nextKey = `${nextYearAD}-${nextMonth}`;
+      monthSchedules[nextKey] = {
+        schedule: currentSchedule,
+        originalSchedule: originalSchedule,
+        swapHistory: []
+      };
+      currentlyLoadedMonthKey = nextKey;
+
+      document.getElementById("yearSelect").value = nextYearAD;
+      document.getElementById("monthSelect").value = nextMonth;
+
+      renderAllViews();
+      updateSwapPermissionUI();
+
+      alert(`🎉 คำนวณตารางเวรเดือน ${nextMonthName} ${nextYearTH} สำเร็จ!\n\n` +
+            `• คำนวณต่อเนื่องจาก "ตารางต้นฉบับ" ของเดือนก่อนหน้า (ไม่นำการสลับเวรมาคิดรวม)\n` +
+            `• กะวันธรรมดาหมุนเวียนต่อเนื่องไร้รอยต่อ\n` +
+            `• เกลี่ยโควตาวันหยุดให้คนที่ได้น้อยในเดือนก่อน ได้รับสิทธิ์เพิ่มขึ้นในเดือนนี้ตามกฎรอบ 2 เดือน\n` +
+            `• ระบบได้บันทึกเป็นตารางต้นฉบับของเดือน ${nextMonthName} เรียบร้อยแล้ว (อย่าลืมกด "💾 เซฟทับไฟล์" เพื่อบันทึกลง OneDrive)`);
+    }
+
+    
+    // JD & Shift Times Management
+    function switchSettingsSubTab(subTabId, btn) {
+      document.querySelectorAll(".settings-sub-panel").forEach(p => p.style.display = "none");
+      document.querySelectorAll("#subTabBtnAgents, #subTabBtnWeekdayJD, #subTabBtnHolidayJD").forEach(b => {
+        b.className = "btn btn-outline btn-sm";
+      });
+      document.getElementById(subTabId).style.display = "block";
+      btn.className = "btn btn-primary btn-sm";
+      if (subTabId === "weekdayJdSubTab") renderWeekdayJdEditor();
+      if (subTabId === "holidayJdSubTab") renderHolidayJdEditor();
+    }
+
+    function renderWeekdayJdEditor() {
+      const container = document.getElementById("weekdayJdGrid");
+      let html = "";
+      WEEKDAY_COLUMNS.forEach((col, idx) => {
+        html += `
+          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:8px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+              <div>
+                <strong style="color:var(--primary); font-size:14px;">กะที่ ${idx+1} [รหัส: ${col.code}]</strong>
+                ${col.wfh ? '<span class="badge badge-wfh" style="margin-left:6px;">WFH</span>' : ''}
+              </div>
+              <span style="font-size:12px; color:var(--muted);">จำนวนคน: ${col.slots} คน</span>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
+              <div>
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หน้าที่งาน (Role):</label>
+                <input type="text" id="wkRole_${idx}" value="${col.role}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+              </div>
+              <div>
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาเข้า-ออกงาน:</label>
+                <input type="text" id="wkTime_${idx}" value="${col.time}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+              </div>
+              <div>
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาพักเบรก:</label>
+                <input type="text" id="wkBreak_${idx}" value="${col.breakTime}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หัวข้อ Job Description (JD):</label>
+                <button class="btn btn-outline btn-sm" type="button" onclick="addJdLine('wk', ${idx})" style="padding:2px 8px; font-size:11px; color:var(--primary); border-color:var(--primary);">+ เพิ่มหัวข้อ JD</button>
+              </div>
+              <div id="wkJdList_${idx}">
+                ${col.jd.map((line, lIdx) => `
+                  <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                    <span style="color:var(--muted); font-size:12px;">•</span>
+                    <input type="text" class="wk-jd-item-${idx}" value="${line}" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
+                    <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหัวข้อนี้">✕</button>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderHolidayJdEditor() {
+      const container = document.getElementById("holidayJdGrid");
+      let html = "";
+      HOLIDAY_SHIFT_META.forEach((meta, idx) => {
+        html += `
+          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:8px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+              <strong style="color:var(--primary); font-size:14px;">กะวันหยุดที่ ${idx+1} [${meta.time}]</strong>
+              <span class="badge badge-hol">วันหยุด / ธปท.</span>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
+              <div>
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาเข้า-ออกงาน:</label>
+                <input type="text" id="holTime_${idx}" value="${meta.time}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+              </div>
+              <div>
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาพักเบรก:</label>
+                <input type="text" id="holBreak_${idx}" value="${meta.breakTime}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หัวข้อ Job Description (JD):</label>
+                <button class="btn btn-outline btn-sm" type="button" onclick="addJdLine('hol', ${idx})" style="padding:2px 8px; font-size:11px; color:var(--primary); border-color:var(--primary);">+ เพิ่มหัวข้อ JD</button>
+              </div>
+              <div id="holJdList_${idx}">
+                ${meta.jd.map((line, lIdx) => `
+                  <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                    <span style="color:var(--muted); font-size:12px;">•</span>
+                    <input type="text" class="hol-jd-item-${idx}" value="${line}" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
+                    <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหัวข้อนี้">✕</button>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function addJdLine(type, colIdx) {
+      const container = document.getElementById(`${type}JdList_${colIdx}`);
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px;";
+      div.innerHTML = `
+        <span style="color:var(--muted); font-size:12px;">•</span>
+        <input type="text" class="${type}-jd-item-${colIdx}" value="" placeholder="ระบุข้อความ JD ใหม่" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
+        <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;">✕</button>
+      `;
+      container.appendChild(div);
+      div.querySelector("input").focus();
+    }
+
+    function saveWeekdayJdConfig() {
+      WEEKDAY_COLUMNS.forEach((col, idx) => {
+        const roleInp = document.getElementById(`wkRole_${idx}`);
+        const timeInp = document.getElementById(`wkTime_${idx}`);
+        const breakInp = document.getElementById(`wkBreak_${idx}`);
+        if (roleInp) col.role = roleInp.value.trim();
+        if (timeInp) col.time = timeInp.value.trim();
+        if (breakInp) col.breakTime = breakInp.value.trim();
+
+        const jdInputs = document.querySelectorAll(`.wk-jd-item-${idx}`);
+        const newJd = [];
+        jdInputs.forEach(inp => {
+          const v = inp.value.trim();
+          if (v) newJd.push(v);
+        });
+        col.jd = newJd;
+      });
+      renderAllViews();
+      showToast("💾 บันทึกเวลาเข้างานและ JD วันทำการเรียบร้อยแล้ว");
+    }
+
+    function saveHolidayJdConfig() {
+      HOLIDAY_SHIFT_META.forEach((meta, idx) => {
+        const timeInp = document.getElementById(`holTime_${idx}`);
+        const breakInp = document.getElementById(`holBreak_${idx}`);
+        if (timeInp) meta.time = timeInp.value.trim();
+        if (breakInp) meta.breakTime = breakInp.value.trim();
+
+        const jdInputs = document.querySelectorAll(`.hol-jd-item-${idx}`);
+        const newJd = [];
+        jdInputs.forEach(inp => {
+          const v = inp.value.trim();
+          if (v) newJd.push(v);
+        });
+        meta.jd = newJd;
+      });
+      renderAllViews();
+      showToast("💾 บันทึกเวลาเข้างานและ JD วันหยุดเรียบร้อยแล้ว");
+    }
+
+    function saveAgentNames() {
+      document.querySelectorAll(".agent-name-input").forEach(inp => {
+        const idx = parseInt(inp.dataset.idx, 10);
+        const val = inp.value.trim();
+        if (val) AGENTS[idx] = val;
+      });
+      updateAdminModeUI();
+      populateFilterDropdowns();
+      renderAllViews();
+      showToast("บันทึกรายชื่อเรียบร้อย");
+    }
+
+    function populateFilterDropdowns() {
+      const userSel = document.getElementById("userFilterSelect");
+      const cardSel = document.getElementById("cardFilterSelect");
+
+      let opts = `<option value="ALL">-- ทุกคน --</option>`;
+      AGENTS.forEach(a => { opts += `<option value="${a}">${a}</option>`; });
+
+      userSel.innerHTML = opts;
+      cardSel.innerHTML = `<option value="ALL">-- แสดงครบทุกคน (20 คน) --</option>` + opts.replace('<option value="ALL">-- ทุกคน --</option>', '');
+    }
+
+    function applyUserHighlight(val) {
+      highlightedAgent = val;
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+    }
+
+    function toggleJD() {
+      showJD = !showJD;
+      document.getElementById("jdToggleText").innerText = showJD ? "ซ่อน JD งาน" : "แสดง JD งาน";
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+    }
+
+    function switchTab(tabId, btnEl) {
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      if (btnEl) btnEl.classList.add("active");
+    }
+
+    function addCustomHolidayQuick() {
+      const dateVal = parseInt(document.getElementById("quickHolDate").value, 10);
+      const noteVal = document.getElementById("quickHolName").value.trim() || "วันหยุดพิเศษ";
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      if (!dateVal || dateVal < 1 || dateVal > 31) return;
+
+      const dt = new Date(yearAD, month - 1, dateVal);
+      const dowName = THAI_DAYS[dt.getDay()];
+      const shifts = [AGENTS[(dateVal*3)%20], AGENTS[(dateVal*3+5)%20], AGENTS[(dateVal*3+10)%20], AGENTS[(dateVal*3+15)%20]];
+      currentSchedule.holidays.push({ dayName: dowName, date: dateVal, note: noteVal, shifts });
+      currentSchedule.holidays.sort((a, b) => a.date - b.date);
+
+      document.getElementById("quickHolDate").value = "";
+      document.getElementById("quickHolName").value = "";
+      renderMasterHolidayTable();
+      showToast("เพิ่มวันหยุดพิเศษเรียบร้อยแล้ว");
+    }
+
+    function removeHoliday(idx) {
+      if (confirm("คุณต้องการลบวันหยุดนี้หรือไม่?")) {
+        currentSchedule.holidays.splice(idx, 1);
+        renderMasterHolidayTable();
+        showToast("ลบวันหยุดเรียบร้อย");
+      }
+    }
+
+    // TOAST UTILITY
+    function showToast(msg) {
+      const toast = document.getElementById("toast-msg");
+      document.getElementById("toast-text").innerText = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    // ONEDRIVE SAVE OVERWRITING SELF
+    function saveUpdatedMasterHTML() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const yearTH = yearAD + 543;
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthName = THAI_MONTHS[month];
+
+      // Sync current in-memory schedule into monthSchedules
+      const curKey = `${yearAD}-${month}`;
+      monthSchedules[curKey] = {
+        schedule: currentSchedule,
+        originalSchedule: originalSchedule,
+        swapHistory: swapHistory
+      };
+
+      const statePayload = {
+        yearAD,
+        month,
+        agents: AGENTS,
+        adminPin: currentAdminPin,
+        allowUserSwap: allowUserSwap,
+        weekdayColumns: WEEKDAY_COLUMNS,
+        holidayShiftMeta: HOLIDAY_SHIFT_META,
+        monthSchedules: monthSchedules,
+        schedule: currentSchedule,
+        originalSchedule: originalSchedule,
+        swapHistory: swapHistory
+      };
+
+      // Ensure downloaded file opens cleanly in Member Mode
+      const wasAdmin = document.body.classList.contains("is-admin");
+      document.body.classList.remove("is-admin");
+      const pinModalShow = document.getElementById("pinModal")?.classList.contains("show");
+      if (pinModalShow) document.getElementById("pinModal").classList.remove("show");
+      const changePinModalShow = document.getElementById("changePinModal")?.classList.contains("show");
+      if (changePinModalShow) document.getElementById("changePinModal").classList.remove("show");
+      const wasViewingOriginal = isViewingOriginal;
+      if (wasViewingOriginal) toggleViewOriginal();
+
+      let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+      if (wasAdmin) document.body.classList.add("is-admin");
+      if (pinModalShow) document.getElementById("pinModal").classList.add("show");
+      if (changePinModalShow) document.getElementById("changePinModal").classList.add("show");
+      if (wasViewingOriginal) toggleViewOriginal();
+      const stateScriptTag = `<` + `script id="embeddedOneDriveState">\n  window.__EMBEDDED_ONEDRIVE_STATE__ = ${JSON.stringify(statePayload, null, 2)};\n<\/script>`;
+
+      if (fullHtml.includes('id="embeddedOneDriveState"')) {
+        fullHtml = fullHtml.replace(new RegExp("<" + "script id=\"embeddedOneDriveState\">[\\s\\S]*?<" + "/script>"), stateScriptTag);
+      } else {
+        fullHtml = fullHtml.replace("</head>", stateScriptTag + "\n</head>");
+      }
+
+      const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ตารางเวร.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("💾 ดาวน์โหลดไฟล์สำเร็จ! เซฟทับใน OneDrive ได้ทันที");
+    }
+
+    // FULL EXPORT TO EXCEL (.xlsx)
+    function exportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert('กำลังเตรียมไลบรารี Excel กรุณารองรับสักครู่');
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // 1. Sheet: เวรวันทำการ
+      const wdAoa = [];
+      wdAoa.push(["ตารางเวร First Tier ประจำเดือน"]);
+      const hTime = ["สัปดาห์ / วันที่"];
+      const hBreak = [""];
+      const hRole = [""];
+      WEEKDAY_COLUMNS.forEach(c => {
+        hTime.push(c.time);
+        hBreak.push(c.breakTime);
+        hRole.push(`${c.role} (${c.code})`);
+      });
+      wdAoa.push(hTime);
+      wdAoa.push(hBreak);
+      wdAoa.push(hRole);
+
+      currentSchedule.weeks.forEach(w => {
+        let maxSlots = 1;
+        WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+          const len = (w.assignments[cIdx] || []).length;
+          if (len > maxSlots) maxSlots = len;
+        });
+
+        for (let r = 0; r < maxSlots; r++) {
+          const rowVals = [r === 0 ? w.label : ""];
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            rowVals.push((w.assignments[cIdx] || [])[r] || "");
+          });
+          wdAoa.push(rowVals);
+        }
+      });
+      const wsWd = XLSX.utils.aoa_to_sheet(wdAoa);
+      XLSX.utils.book_append_sheet(wb, wsWd, "เวรวันทำการ");
+
+      // 2. Sheet: เวรวันหยุด
+      const weAoa = [];
+      weAoa.push([`ตารางเวร First Tier วันหยุด ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]);
+      weAoa.push(["วัน", "วันที่", "หมายเหตุ (วันหยุด ธปท.)", "เวร 08.00-17.00 น.", "เวร 09.00-18.00 น.", "เวร 10.00-19.00 น.", "เวร 13.30-22.30 น."]);
+      weAoa.push(["", "", "", "พัก 13.30-14.30", "พัก 14.30-15.30", "พัก 14.00-15.00", "พัก 16.00-17.00"]);
+      currentSchedule.holidays.forEach(h => {
+        weAoa.push([h.dayName, h.date, h.note || "", h.shifts[0]||"", h.shifts[1]||"", h.shifts[2]||"", h.shifts[3]||""]);
+      });
+      const wsWe = XLSX.utils.aoa_to_sheet(weAoa);
+      XLSX.utils.book_append_sheet(wb, wsWe, "เวรวันหยุด");
+
+      // 3. Sheet: สรุปรายบุคคล
+      const sumAoa = [];
+      sumAoa.push(["ลำดับ", "ชื่อพนักงาน", "กะ Call (8C/8.3C)", "เวรวันหยุดสะสม"]);
+      AGENTS.forEach((a, idx) => {
+        let callCount = 0, holCount = 0;
+        currentSchedule.weeks.forEach(w => {
+          WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+            if ((w.assignments[cIdx] || []).includes(a) && (col.code === "8C" || col.code === "8.3C")) callCount++;
+          });
+        });
+        currentSchedule.holidays.forEach(h => { if (h.shifts.includes(a)) holCount++; });
+        sumAoa.push([idx + 1, a, callCount, holCount]);
+      });
+      const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
+      XLSX.utils.book_append_sheet(wb, wsSum, "สรุปรายบุคคล");
+
+      XLSX.writeFile(wb, "ตารางเวร_First_Tier.xlsx");
+      showToast("ส่งออกไฟล์ Excel เรียบร้อยแล้ว");
+    }
+  </script>
+  <!-- PIN Login Modal -->
+  <div class="modal-backdrop" id="pinModal">
+    <div class="modal-box">
+      <div class="modal-box-header">
+        <h3>🔒 เข้าสู่โหมดหัวหน้างาน (Admin Login)</h3>
+        <button onclick="closePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
+          กรุณากรอกรหัส PIN เพื่อปลดล็อคแท็บตั้งค่าและเครื่องมือจัดการตารางสำหรับหัวหน้า (ค่าเริ่มต้น: <strong>1234</strong>)
+        </p>
+        <div style="display:flex; justify-content:center; margin:16px 0;">
+          <input type="password" id="pinInput" maxlength="6" placeholder="รหัส PIN 4 หลัก" style="font-size:20px; letter-spacing:6px; text-align:center; width:180px; padding:8px; border:2px solid var(--primary); border-radius:8px; outline:none;" onkeyup="if(event.key==='Enter') submitAdminPin()">
+        </div>
+        <div id="pinErrorMsg" style="color:var(--danger); font-size:12px; text-align:center; display:none;">
+          ⚠️ รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-outline" onclick="closePinModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitAdminPin()">🔓 ยืนยันรหัส PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change PIN Modal -->
+  <div class="modal-backdrop" id="changePinModal">
+    <div class="modal-box">
+      <div class="modal-box-header">
+        <h3>🔑 ตั้งรหัส PIN ใหม่สำหรับหัวหน้า</h3>
+        <button onclick="closeChangePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
+          กำหนดรหัส PIN ใหม่ (ตัวเลข 4-6 หลัก) สำหรับใช้ปลดล็อคโหมดหัวหน้าในครั้งถัดไป:
+        </p>
+        <div style="display:flex; justify-content:center; margin:16px 0;">
+          <input type="password" id="newPinInput" maxlength="6" placeholder="PIN ใหม่ 4 หลัก" style="font-size:18px; letter-spacing:4px; text-align:center; width:180px; padding:8px; border:1px solid var(--border-dark); border-radius:8px; outline:none;">
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-outline" onclick="closeChangePinModal()">ยกเลิก</button>
+        <button class="btn btn-save" onclick="saveNewPin()">💾 บันทึก PIN ใหม่</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety Confirmation Modal (กันเผลอกดคืนค่าหรือคำนวณใหม่) -->
+  <div class="modal-backdrop" id="safetyConfirmModal">
+    <div class="modal-box" style="max-width: 500px; border: 2px solid #ea580c;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #9a3412, #c2410c);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span id="safetyModalIcon">⚠️</span>
+          <span id="safetyModalTitle">ยืนยันคำสั่งความปลอดภัย</span>
+        </h3>
+        <button onclick="closeSafetyModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div id="safetyModalAlertBox" style="margin-bottom: 16px;">
+          <!-- Dynamic Alert Box -->
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="safetyConfirmCheckbox" onchange="onSafetyCheckboxChange()" style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer;">
+            <span style="font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.4;" id="safetyCheckboxLabel">
+              ฉันได้อ่านและเข้าใจผลกระทบนี้ และยืนยันต้องการดำเนินการต่อ
+            </span>
+          </label>
+        </div>
+
+        <p style="font-size: 11.5px; color: var(--muted); margin: 0; text-align: center;">
+          💡 หากกดผิด หรือไม่ต้องการเปลี่ยนแปลงใดๆ ให้กดปุ่ม <strong>"✕ ยกเลิก (ปลอดภัย)"</strong>
+        </p>
+      </div>
+      <div class="modal-box-footer" style="justify-content: space-between;">
+        <button class="btn btn-outline" onclick="closeSafetyModal()" style="font-weight: 600;">
+          ✕ ยกเลิก (ปลอดภัย)
+        </button>
+        <button class="btn btn-danger" id="safetyConfirmActionBtn" onclick="executeSafetyAction()" disabled style="opacity: 0.5; cursor: not-allowed; font-weight: 700; padding: 6px 14px;">
+          💥 ยืนยันดำเนินการ
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

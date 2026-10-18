@@ -1,0 +1,9 @@
+# Operating System & Office Temporary Files
+Thumbs.db
+Desktop.ini
+~$*.xlsx
+*.tmp
+*.log
+
+# Test & Debug files
+test_*.js
