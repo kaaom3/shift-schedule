@@ -1109,21 +1109,12 @@
       <div class="brand-section">
         <div class="brand-logo">FT</div>
         <div class="brand-text">
-          <h1>
-            First Tier Shift Roster
-            <span class="brand-tag">MongoDB Cloud</span>
-          </h1>
-          <p>ระบบตารางเวรทีม IT Support • ซิงค์ฐานข้อมูล MongoDB Atlas เรียลไทม์</p>
+          <h1>First Tier Shift Roster</h1>
+          <p>ระบบจัดตารางเวร First Tier IT Support</p>
         </div>
       </div>
 
       <div class="header-controls">
-        <!-- MongoDB Atlas Sync Status Badge -->
-        <div class="mongo-sync-badge" id="mongoSyncBadge" onclick="openCloudConfigModal()" title="คลิกเพื่อดูและจัดการการเชื่อมต่อ MongoDB Atlas">
-          <span class="sync-dot" id="mongoSyncDot"></span>
-          <span id="mongoSyncText">🍃 กำลังเชื่อมต่อ MongoDB...</span>
-        </div>
-
         <div class="select-pill">
           <label>ปี:</label>
           <select id="yearSelect" onchange="generateScheduleForSelectedMonth()">
@@ -1135,18 +1126,18 @@
         <div class="select-pill">
           <label>เดือน:</label>
           <select id="monthSelect" onchange="generateScheduleForSelectedMonth()">
-            <option value="9">กันยายน (ข้อมูลจริง)</option>
-            <option value="10">ตุลาคม (ข้อมูลจริง)</option>
-            <option value="11" selected>พฤศจิกายน (ข้อมูลจริง)</option>
-            <option value="12">ธันวาคม (คำนวณตามรอบหมุนวน)</option>
-            <option value="1">มกราคม (คำนวณตามรอบหมุนวน)</option>
-            <option value="2">กุมภาพันธ์ (คำนวณตามรอบหมุนวน)</option>
-            <option value="3">มีนาคม (คำนวณตามรอบหมุนวน)</option>
-            <option value="4">เมษายน (คำนวณตามรอบหมุนวน)</option>
-            <option value="5">พฤษภาคม (คำนวณตามรอบหมุนวน)</option>
-            <option value="6">มิถุนายน (คำนวณตามรอบหมุนวน)</option>
-            <option value="7">กรกฎาคม (คำนวณตามรอบหมุนวน)</option>
-            <option value="8">สิงหาคม (คำนวณตามรอบหมุนวน)</option>
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11" selected>พฤศจิกายน</option>
+            <option value="12">ธันวาคม</option>
           </select>
         </div>
 
@@ -1246,13 +1237,13 @@
     <!-- TAB 1: ตารางรวมทั้งเดือน (Master Table) — แสดงเป็นหน้าแรกทันที -->
     <section id="masterTab" class="panel active">
 
-      <!-- Schedule Mode Switcher (Active vs Master Baseline) - Admin Only -->
-      <div class="schedule-mode-container no-print admin-only" id="scheduleModeContainer">
+      <!-- Schedule Mode Switcher (Active vs Master Baseline) - Visible to all members -->
+      <div class="schedule-mode-container no-print" id="scheduleModeContainer">
         <div class="schedule-mode-tabs">
           <button type="button" id="modeBtnActive" class="schedule-mode-btn active" onclick="setScheduleViewMode(false)">
             <span class="mode-icon">📋</span>
             <div class="mode-text">
-              <span class="mode-title">ตารางปฏิบัติงานจริง (Active)</span>
+              <span class="mode-title">ตารางปฏิบัติงานจริง (สลับเวรแล้ว)</span>
               <span class="mode-desc">ตารางปัจจุบันที่มีการสลับเวรแล้ว • ใช้ดูเวลาเข้างานจริงรายวัน</span>
             </div>
             <span class="mode-badge badge-active">ปฏิบัติงาน</span>
@@ -1261,7 +1252,7 @@
           <button type="button" id="modeBtnMaster" class="schedule-mode-btn" onclick="setScheduleViewMode(true)">
             <span class="mode-icon">📜</span>
             <div class="mode-text">
-              <span class="mode-title">ตารางต้นฉบับ Master (Baseline)</span>
+              <span class="mode-title">ตารางต้นฉบับ Master (ก่อนสลับเวร)</span>
               <span class="mode-desc">ตารางตั้งต้นตามสูตรหมุนวน (ก่อนสลับ) • ใช้เป็นฐานคำนวณเดือนถัดไป</span>
             </div>
             <span class="mode-badge badge-master">ต้นฉบับ</span>
@@ -1301,7 +1292,7 @@
           <div class="card-title">
             <span>🏢 ตารางเวรวันทำการ (จันทร์ - ศุกร์)</span>
             <span class="badge badge-early" id="weekdayMonthBadge">ประจำเดือน</span>
-            <span class="badge badge-active-mode admin-only" id="scheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง (Active)</span>
+            <span class="badge badge-active-mode" id="scheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง</span>
           </div>
           <span style="font-size: 0.8rem; color: var(--muted);" id="swapHintText">
             💡 <strong>วิธีสลับเวร:</strong> คลิกที่ชื่อคนที่ 1 แล้วคลิกชื่อคนที่ 2 เพื่อสลับเวร (หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือน)
@@ -1404,7 +1395,7 @@
             <div style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.03)); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 12px 16px;">
               <div style="font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase;">🌙 ครอบคลุมรอบวัน (All-Day)</div>
               <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">07:00 - 22:30 น.</div>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">เช้าตรู่ 2 คน • กะดึก WFH 1 คน</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">เช้าตรู่ 2 คน • กะดึก 1 คน</div>
             </div>
 
             <div style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(124,58,237,0.03)); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 16px;">
@@ -1533,7 +1524,7 @@
           </div>
           <div class="card-body">
             <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
-              💡 แก้ไขเวลาเข้างาน, เวลาพัก และหัวข้อ JD สำหรับ 4 กะของเวรวันหยุดและวันหยุดนักขัตฤกษ์ ธปท.
+              💡 แก้ไขเวลาเข้างาน, เวลาพัก และหัวข้อ JD สำหรับ 4 กะของเวรวันหยุดและวันหยุดพิเศษ
             </p>
             <div id="holidayJdGrid" style="display:flex; flex-direction:column; gap:16px;"></div>
             <div style="margin-top: 20px;">
@@ -1721,8 +1712,8 @@
       { id: 12, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Call/ECE", code: "9C", slots: 1, wfh: false, jd: ["09.00-14.00 ECE", "15.00-18.00 Call"] },
       { id: 13, time: "10.00-19.00", breakTime: "พัก 13.30", role: "ECE", code: "10", slots: 1, wfh: false, jd: ["ดู ECE 10.00 - 19.00 น."] },
       { id: 14, time: "11.00-20.00", breakTime: "พัก 14.00", role: "Call", code: "11", slots: 1, wfh: false, jd: ["รับสาย Call 11.00 - 20.00 น."] },
-      { id: 15, time: "12.00-21.00 (WFH)", breakTime: "พัก 15.00", role: "Self+Realtime/Mail/Realtime", code: "12", slots: 1, wfh: true, jd: ["12.00-15.00 Self", "16.00-21.00 Mail/Call"] },
-      { id: 16, time: "13.30-22.30 (WFH)", breakTime: "พัก 16.00", role: "Call+Mail+ECE+Self Service +Realtime", code: "13", slots: 1, wfh: true, jd: ["13.30 ECE", "14.30-21 Call", "21-22.30 ALL"] }
+      { id: 15, time: "12.00-21.00", breakTime: "พัก 15.00", role: "Self+Realtime/Mail/Realtime", code: "12", slots: 1, wfh: false, jd: ["12.00-15.00 Self", "16.00-21.00 Mail/Call"] },
+      { id: 16, time: "13.30-22.30", breakTime: "พัก 16.00", role: "Call+Mail+ECE+Self Service +Realtime", code: "13", slots: 1, wfh: false, jd: ["13.30 ECE", "14.30-21 Call", "21-22.30 ALL"] }
     ];
 
     let HOLIDAY_SHIFT_META = [
@@ -1733,7 +1724,7 @@
     ];
 
     // Real historical schedules for September and October
-    const HISTORICAL_SCHEDULES = {"2026-9": {"weeks": [{"label": "1 - 4 ก.ย. 69", "assignments": [["chadaporn.sa"], ["mallika.to"], ["pornpoom.t", "nutchanat.p"], ["yasumin.t"], ["pattaraporn.n"], ["kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["siriyakorn.y"], ["parinya.si", "theerawut.b", "panisara.n", "kittipa.j"], ["sawitree.ton"], ["mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["anusit.k"]]}, {"label": "7 - 11 ก.ย. 69", "assignments": [["mewika.p"], ["komkrit.pr"], ["nutchanat.p", "jutharat.ka"], ["parinya.si"], ["chadaporn.sa"], ["siriyakorn.y"], ["anusit.k"], ["pattaraporn.n"], ["theerawut.b"], ["nithus.d", "yasumin.t", "kittiyakorn.h", "pornpoom.t"], ["suriya.r"], ["sawitree.ton"], ["pantip.to"], ["panisara.n"], ["kittipa.j"], ["mallika.to"]]}, {"label": "14 - 18 ก.ย. 69", "assignments": [["pattaraporn.n"], ["nithus.d"], ["suriya.r", "sawitree.ton"], ["pantip.to"], ["panisara.n"], ["jutharat.ka"], ["nutchanat.p"], ["kittiyakorn.h"], ["mewika.p"], ["mallika.to", "chadaporn.sa", "anusit.k", "pornpoom.t"], ["kittipa.j"], ["theerawut.b"], ["siriyakorn.y"], ["yasumin.t"], ["komkrit.pr"], ["parinya.si"]]}, {"label": "21 - 25 ก.ย. 69", "assignments": [["pantip.to"], ["chadaporn.sa"], ["kittiyakorn.h", "siriyakorn.y"], ["mallika.to"], ["yasumin.t"], ["theerawut.b"], ["komkrit.pr"], ["parinya.si"], ["pattaraporn.n"], ["suriya.r", "panisara.n", "jutharat.ka", "sawitree.ton"], ["pornpoom.t"], ["nithus.d"], ["kittipa.j"], ["anusit.k"], ["mewika.p"], ["nutchanat.p"]]}, {"label": "28 - 30 ก.ย. 69", "assignments": [["yasumin.t"], ["anusit.k"], ["nutchanat.p", "pattaraporn.n"], ["kittiyakorn.h"], ["kittipa.j"], ["pantip.to"], ["panisara.n"], ["nithus.d"], ["jutharat.ka"], ["komkrit.pr", "theerawut.b", "siriyakorn.y", "mewika.p"], ["parinya.si"], ["chadaporn.sa"], ["sawitree.ton"], ["mallika.to"], ["pornpoom.t"], ["suriya.r"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "", "shifts": ["mewika.p", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 12, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 19, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-10": {"weeks": [{"label": "5 - 9 ต.ค. 69", "assignments": [["nutchanat.p"], ["jutharat.ka"], ["nithus.d", "pantip.to"], ["komkrit.pr"], ["mewika.p"], ["kittipa.j"], ["chadaporn.sa"], ["suriya.r"], ["anusit.k"], ["pattaraporn.n", "pornpoom.t", "kittiyakorn.h", "yasumin.t"], ["mallika.to"], ["panisara.n"], ["theerawut.b"], ["parinya.si"], ["sawitree.ton"], ["siriyakorn.y"]]}, {"label": "12 - 16 ต.ค. 69", "assignments": [["suriya.r"], ["pantip.to"], ["kittipa.j", "panisara.n"], ["chadaporn.sa"], ["pattaraporn.n"], ["mallika.to"], ["kittiyakorn.h"], ["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "sawitree.ton", "parinya.si", "mewika.p"], ["anusit.k"], ["komkrit.pr"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["nithus.d"]]}, {"label": "19 - 22 ต.ค. 69", "assignments": [["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "komkrit.pr"], ["mewika.p"], ["nithus.d"], ["kittiyakorn.h"], ["yasumin.t"], ["nutchanat.p"], ["pantip.to"], ["mallika.to", "suriya.r", "chadaporn.sa", "anusit.k"], ["jutharat.ka"], ["kittipa.j"], ["parinya.si"], ["pattaraporn.n"], ["panisara.n"], ["sawitree.ton"]]}, {"label": "26 - 30 ต.ค. 69", "assignments": [["mallika.to"], ["suriya.r"], ["jutharat.ka", "parinya.si"], ["nutchanat.p"], ["sawitree.ton"], ["komkrit.pr"], ["mewika.p"], ["anusit.k"], ["kittipa.j"], ["panisara.n", "nithus.d", "pornpoom.t", "kittiyakorn.h"], ["yasumin.t"], ["siriyakorn.y"], ["pattaraporn.n"], ["theerawut.b"], ["chadaporn.sa"], ["pantip.to"]]}], "holidays": [{"dayName": "เสาร์", "date": 3, "note": "", "shifts": ["pornpoom.t", "pattaraporn.n", "theerawut.b", "mewika.p"]}, {"dayName": "อาทิตย์", "date": 4, "note": "", "shifts": ["kittiyakorn.h", "siriyakorn.y", "panisara.n", "sawitree.ton"]}, {"dayName": "เสาร์", "date": 10, "note": "", "shifts": ["nutchanat.p", "nithus.d", "suriya.r", "chadaporn.sa"]}, {"dayName": "อาทิตย์", "date": 11, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "kittipa.j", "parinya.si"]}, {"dayName": "อังคาร", "date": 13, "note": "วันหยุด ธปท.: วันนวมินทรมหาราช", "isBankHoliday": true, "holidayName": "วันนวมินทรมหาราช", "shifts": ["pantip.to", "kittiyakorn.h", "mallika.to", "theerawut.b"]}, {"dayName": "เสาร์", "date": 17, "note": "", "shifts": ["jutharat.ka", "nutchanat.p", "pattaraporn.n", "panisara.n"]}, {"dayName": "อาทิตย์", "date": 18, "note": "", "shifts": ["komkrit.pr", "yasumin.t", "siriyakorn.y", "suriya.r"]}, {"dayName": "ศุกร์", "date": 23, "note": "วันหยุด ธปท.: วันปิยมหาราช", "isBankHoliday": true, "holidayName": "วันปิยมหาราช", "shifts": ["anusit.k", "pantip.to", "nithus.d", "kittipa.j"]}, {"dayName": "เสาร์", "date": 24, "note": "", "shifts": ["mewika.p", "jutharat.ka", "pornpoom.t", "mallika.to"]}, {"dayName": "อาทิตย์", "date": 25, "note": "", "shifts": ["sawitree.ton", "komkrit.pr", "kittiyakorn.h", "pattaraporn.n"]}, {"dayName": "เสาร์", "date": 31, "note": "", "shifts": ["chadaporn.sa", "anusit.k", "nutchanat.p", "siriyakorn.y"]}, {"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}]}, "2026-11": {"weeks": [{"label": "2 - 6 พ.ย. 69", "assignments": [["kittiyakorn.h"], ["panisara.n"], ["kittipa.j", "pattaraporn.n", "komkrit.pr"], ["anusit.k"], ["mewika.p"], ["pornpoom.t"], ["nithus.d"], ["sawitree.ton"], ["parinya.si"], ["mallika.to", "suriya.r", "siriyakorn.y"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["pantip.to"], ["theerawut.b"], ["chadaporn.sa"]]}, {"label": "9 - 13 พ.ย. 69", "assignments": [["sawitree.ton"], ["nutchanat.p"], ["parinya.si", "suriya.r", "pantip.to"], ["nithus.d"], ["theerawut.b"], ["mewika.p"], ["siriyakorn.y"], ["yasumin.t"], ["panisara.n"], ["chadaporn.sa", "jutharat.ka", "pornpoom.t"], ["pattaraporn.n"], ["anusit.k"], ["mallika.to"], ["komkrit.pr"], ["kittiyakorn.h"], ["kittipa.j"]]}, {"label": "16 - 20 พ.ย. 69", "assignments": [["anusit.k"], ["theerawut.b"], ["kittipa.j", "panisara.n", "yasumin.t"], ["siriyakorn.y"], ["kittiyakorn.h"], ["pattaraporn.n"], ["sawitree.ton"], ["pornpoom.t"], ["chadaporn.sa"], ["komkrit.pr", "mallika.to", "pantip.to"], ["mewika.p"], ["parinya.si"], ["suriya.r"], ["nithus.d"], ["nutchanat.p"], ["jutharat.ka"]]}, {"label": "23 - 27 พ.ย. 69", "assignments": [["jutharat.ka"], ["pattaraporn.n"], ["mallika.to", "nithus.d", "pantip.to"], ["panisara.n"], ["anusit.k"], ["parinya.si"], ["kittipa.j"], ["mewika.p"], ["nutchanat.p"], ["kittiyakorn.h", "yasumin.t", "komkrit.pr"], ["chadaporn.sa"], ["suriya.r"], ["pornpoom.t"], ["sawitree.ton"], ["siriyakorn.y"], ["theerawut.b"]]}, {"label": "30 พ.ย. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}], "holidays": [{"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}, {"dayName": "เสาร์", "date": 7, "note": "", "shifts": ["theerawut.b", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 8, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 14, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 15, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 21, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 22, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 28, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 29, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-12": {"weeks": [{"label": "1 - 4 ธ.ค. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}, {"label": "8 - 11 ธ.ค. 69 (หยุด 7, 10 ธ.ค.)", "assignments": [["pornpoom.t"], ["kittipa.j"], ["yasumin.t", "siriyakorn.y", "pantip.to"], ["sawitree.ton"], ["parinya.si"], ["nithus.d"], ["jutharat.ka"], ["theerawut.b"], ["suriya.r"], ["chadaporn.sa", "panisara.n", "mewika.p"], ["komkrit.pr"], ["mallika.to"], ["anusit.k"], ["nutchanat.p"], ["pattaraporn.n"], ["kittiyakorn.h"]]}, {"label": "14 - 18 ธ.ค. 69", "assignments": [["kittipa.j"], ["yasumin.t"], ["jutharat.ka", "theerawut.b", "mewika.p"], ["pornpoom.t"], ["suriya.r"], ["anusit.k"], ["pantip.to"], ["mallika.to"], ["komkrit.pr"], ["nutchanat.p", "nithus.d", "sawitree.ton"], ["siriyakorn.y"], ["pattaraporn.n"], ["chadaporn.sa"], ["kittiyakorn.h"], ["parinya.si"], ["panisara.n"]]}, {"label": "21 - 25 ธ.ค. 69", "assignments": [["parinya.si"], ["siriyakorn.y"], ["mallika.to", "nutchanat.p", "suriya.r"], ["theerawut.b"], ["jutharat.ka"], ["sawitree.ton"], ["pattaraporn.n"], ["komkrit.pr"], ["kittipa.j"], ["panisara.n", "yasumin.t", "anusit.k"], ["kittiyakorn.h"], ["pornpoom.t"], ["nithus.d"], ["chadaporn.sa"], ["pantip.to"], ["mewika.p"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "วันหยุด ธปท.: วันพ่อแห่งชาติ / วันชาติ", "isBankHoliday": true, "holidayName": "วันพ่อแห่งชาติ / วันชาติ", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["pantip.to", "siriyakorn.y", "sawitree.ton", "komkrit.pr"]}, {"dayName": "จันทร์", "date": 7, "note": "วันหยุด ธปท.: ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "isBankHoliday": true, "holidayName": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "shifts": ["jutharat.ka", "mallika.to", "kittipa.j", "anusit.k"]}, {"dayName": "พฤหัสบดี", "date": 10, "note": "วันหยุด ธปท.: วันรัฐธรรมนูญ", "isBankHoliday": true, "holidayName": "วันรัฐธรรมนูญ", "shifts": ["pornpoom.t", "mewika.p", "yasumin.t", "parinya.si"]}, {"dayName": "เสาร์", "date": 12, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["nithus.d", "suriya.r", "chadaporn.sa", "pattaraporn.n"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["theerawut.b", "kittiyakorn.h", "panisara.n", "nutchanat.p"]}, {"dayName": "เสาร์", "date": 19, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["sawitree.ton", "pantip.to", "siriyakorn.y", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["kittipa.j", "jutharat.ka", "mallika.to", "anusit.k"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "mewika.p", "parinya.si"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["chadaporn.sa", "nithus.d", "suriya.r", "pattaraporn.n"]}, {"dayName": "พฤหัสบดี", "date": 31, "note": "วันหยุด ธปท.: วันสิ้นปี", "isBankHoliday": true, "holidayName": "วันสิ้นปี", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}]}};
+    const HISTORICAL_SCHEDULES = {"2026-9": {"weeks": [{"label": "1 - 4 ก.ย. 69", "assignments": [["chadaporn.sa"], ["mallika.to"], ["pornpoom.t", "nutchanat.p"], ["yasumin.t"], ["pattaraporn.n"], ["kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["siriyakorn.y"], ["parinya.si", "theerawut.b", "panisara.n", "kittipa.j"], ["sawitree.ton"], ["mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["anusit.k"]]}, {"label": "7 - 11 ก.ย. 69", "assignments": [["mewika.p"], ["komkrit.pr"], ["nutchanat.p", "jutharat.ka"], ["parinya.si"], ["chadaporn.sa"], ["siriyakorn.y"], ["anusit.k"], ["pattaraporn.n"], ["theerawut.b"], ["nithus.d", "yasumin.t", "kittiyakorn.h", "pornpoom.t"], ["suriya.r"], ["sawitree.ton"], ["pantip.to"], ["panisara.n"], ["kittipa.j"], ["mallika.to"]]}, {"label": "14 - 18 ก.ย. 69", "assignments": [["pattaraporn.n"], ["nithus.d"], ["suriya.r", "sawitree.ton"], ["pantip.to"], ["panisara.n"], ["jutharat.ka"], ["nutchanat.p"], ["kittiyakorn.h"], ["mewika.p"], ["mallika.to", "chadaporn.sa", "anusit.k", "pornpoom.t"], ["kittipa.j"], ["theerawut.b"], ["siriyakorn.y"], ["yasumin.t"], ["komkrit.pr"], ["parinya.si"]]}, {"label": "21 - 25 ก.ย. 69", "assignments": [["pantip.to"], ["chadaporn.sa"], ["kittiyakorn.h", "siriyakorn.y"], ["mallika.to"], ["yasumin.t"], ["theerawut.b"], ["komkrit.pr"], ["parinya.si"], ["pattaraporn.n"], ["suriya.r", "panisara.n", "jutharat.ka", "sawitree.ton"], ["pornpoom.t"], ["nithus.d"], ["kittipa.j"], ["anusit.k"], ["mewika.p"], ["nutchanat.p"]]}, {"label": "28 - 30 ก.ย. 69", "assignments": [["yasumin.t"], ["anusit.k"], ["nutchanat.p", "pattaraporn.n"], ["kittiyakorn.h"], ["kittipa.j"], ["pantip.to"], ["panisara.n"], ["nithus.d"], ["jutharat.ka"], ["komkrit.pr", "theerawut.b", "siriyakorn.y", "mewika.p"], ["parinya.si"], ["chadaporn.sa"], ["sawitree.ton"], ["mallika.to"], ["pornpoom.t"], ["suriya.r"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "", "shifts": ["mewika.p", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 12, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 19, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-10": {"weeks": [{"label": "5 - 9 ต.ค. 69", "assignments": [["nutchanat.p"], ["jutharat.ka"], ["nithus.d", "pantip.to"], ["komkrit.pr"], ["mewika.p"], ["kittipa.j"], ["chadaporn.sa"], ["suriya.r"], ["anusit.k"], ["pattaraporn.n", "pornpoom.t", "kittiyakorn.h", "yasumin.t"], ["mallika.to"], ["panisara.n"], ["theerawut.b"], ["parinya.si"], ["sawitree.ton"], ["siriyakorn.y"]]}, {"label": "12 - 16 ต.ค. 69", "assignments": [["suriya.r"], ["pantip.to"], ["kittipa.j", "panisara.n"], ["chadaporn.sa"], ["pattaraporn.n"], ["mallika.to"], ["kittiyakorn.h"], ["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "sawitree.ton", "parinya.si", "mewika.p"], ["anusit.k"], ["komkrit.pr"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["nithus.d"]]}, {"label": "19 - 22 ต.ค. 69", "assignments": [["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "komkrit.pr"], ["mewika.p"], ["nithus.d"], ["kittiyakorn.h"], ["yasumin.t"], ["nutchanat.p"], ["pantip.to"], ["mallika.to", "suriya.r", "chadaporn.sa", "anusit.k"], ["jutharat.ka"], ["kittipa.j"], ["parinya.si"], ["pattaraporn.n"], ["panisara.n"], ["sawitree.ton"]]}, {"label": "26 - 30 ต.ค. 69", "assignments": [["mallika.to"], ["suriya.r"], ["jutharat.ka", "parinya.si"], ["nutchanat.p"], ["sawitree.ton"], ["komkrit.pr"], ["mewika.p"], ["anusit.k"], ["kittipa.j"], ["panisara.n", "nithus.d", "pornpoom.t", "kittiyakorn.h"], ["yasumin.t"], ["siriyakorn.y"], ["pattaraporn.n"], ["theerawut.b"], ["chadaporn.sa"], ["pantip.to"]]}], "holidays": [{"dayName": "เสาร์", "date": 3, "note": "", "shifts": ["pornpoom.t", "pattaraporn.n", "theerawut.b", "mewika.p"]}, {"dayName": "อาทิตย์", "date": 4, "note": "", "shifts": ["kittiyakorn.h", "siriyakorn.y", "panisara.n", "sawitree.ton"]}, {"dayName": "เสาร์", "date": 10, "note": "", "shifts": ["nutchanat.p", "nithus.d", "suriya.r", "chadaporn.sa"]}, {"dayName": "อาทิตย์", "date": 11, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "kittipa.j", "parinya.si"]}, {"dayName": "อังคาร", "date": 13, "note": "วันนวมินทรมหาราช", "isBankHoliday": true, "holidayName": "วันนวมินทรมหาราช", "shifts": ["pantip.to", "kittiyakorn.h", "mallika.to", "theerawut.b"]}, {"dayName": "เสาร์", "date": 17, "note": "", "shifts": ["jutharat.ka", "nutchanat.p", "pattaraporn.n", "panisara.n"]}, {"dayName": "อาทิตย์", "date": 18, "note": "", "shifts": ["komkrit.pr", "yasumin.t", "siriyakorn.y", "suriya.r"]}, {"dayName": "ศุกร์", "date": 23, "note": "วันปิยมหาราช", "isBankHoliday": true, "holidayName": "วันปิยมหาราช", "shifts": ["anusit.k", "pantip.to", "nithus.d", "kittipa.j"]}, {"dayName": "เสาร์", "date": 24, "note": "", "shifts": ["mewika.p", "jutharat.ka", "pornpoom.t", "mallika.to"]}, {"dayName": "อาทิตย์", "date": 25, "note": "", "shifts": ["sawitree.ton", "komkrit.pr", "kittiyakorn.h", "pattaraporn.n"]}, {"dayName": "เสาร์", "date": 31, "note": "", "shifts": ["chadaporn.sa", "anusit.k", "nutchanat.p", "siriyakorn.y"]}, {"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}]}, "2026-11": {"weeks": [{"label": "2 - 6 พ.ย. 69", "assignments": [["kittiyakorn.h"], ["panisara.n"], ["kittipa.j", "pattaraporn.n", "komkrit.pr"], ["anusit.k"], ["mewika.p"], ["pornpoom.t"], ["nithus.d"], ["sawitree.ton"], ["parinya.si"], ["mallika.to", "suriya.r", "siriyakorn.y"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["pantip.to"], ["theerawut.b"], ["chadaporn.sa"]]}, {"label": "9 - 13 พ.ย. 69", "assignments": [["sawitree.ton"], ["nutchanat.p"], ["parinya.si", "suriya.r", "pantip.to"], ["nithus.d"], ["theerawut.b"], ["mewika.p"], ["siriyakorn.y"], ["yasumin.t"], ["panisara.n"], ["chadaporn.sa", "jutharat.ka", "pornpoom.t"], ["pattaraporn.n"], ["anusit.k"], ["mallika.to"], ["komkrit.pr"], ["kittiyakorn.h"], ["kittipa.j"]]}, {"label": "16 - 20 พ.ย. 69", "assignments": [["anusit.k"], ["theerawut.b"], ["kittipa.j", "panisara.n", "yasumin.t"], ["siriyakorn.y"], ["kittiyakorn.h"], ["pattaraporn.n"], ["sawitree.ton"], ["pornpoom.t"], ["chadaporn.sa"], ["komkrit.pr", "mallika.to", "pantip.to"], ["mewika.p"], ["parinya.si"], ["suriya.r"], ["nithus.d"], ["nutchanat.p"], ["jutharat.ka"]]}, {"label": "23 - 27 พ.ย. 69", "assignments": [["jutharat.ka"], ["pattaraporn.n"], ["mallika.to", "nithus.d", "pantip.to"], ["panisara.n"], ["anusit.k"], ["parinya.si"], ["kittipa.j"], ["mewika.p"], ["nutchanat.p"], ["kittiyakorn.h", "yasumin.t", "komkrit.pr"], ["chadaporn.sa"], ["suriya.r"], ["pornpoom.t"], ["sawitree.ton"], ["siriyakorn.y"], ["theerawut.b"]]}, {"label": "30 พ.ย. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}], "holidays": [{"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}, {"dayName": "เสาร์", "date": 7, "note": "", "shifts": ["theerawut.b", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 8, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 14, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 15, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 21, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 22, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 28, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 29, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-12": {"weeks": [{"label": "1 - 4 ธ.ค. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}, {"label": "8 - 11 ธ.ค. 69 (หยุด 7, 10 ธ.ค.)", "assignments": [["pornpoom.t"], ["kittipa.j"], ["yasumin.t", "siriyakorn.y", "pantip.to"], ["sawitree.ton"], ["parinya.si"], ["nithus.d"], ["jutharat.ka"], ["theerawut.b"], ["suriya.r"], ["chadaporn.sa", "panisara.n", "mewika.p"], ["komkrit.pr"], ["mallika.to"], ["anusit.k"], ["nutchanat.p"], ["pattaraporn.n"], ["kittiyakorn.h"]]}, {"label": "14 - 18 ธ.ค. 69", "assignments": [["kittipa.j"], ["yasumin.t"], ["jutharat.ka", "theerawut.b", "mewika.p"], ["pornpoom.t"], ["suriya.r"], ["anusit.k"], ["pantip.to"], ["mallika.to"], ["komkrit.pr"], ["nutchanat.p", "nithus.d", "sawitree.ton"], ["siriyakorn.y"], ["pattaraporn.n"], ["chadaporn.sa"], ["kittiyakorn.h"], ["parinya.si"], ["panisara.n"]]}, {"label": "21 - 25 ธ.ค. 69", "assignments": [["parinya.si"], ["siriyakorn.y"], ["mallika.to", "nutchanat.p", "suriya.r"], ["theerawut.b"], ["jutharat.ka"], ["sawitree.ton"], ["pattaraporn.n"], ["komkrit.pr"], ["kittipa.j"], ["panisara.n", "yasumin.t", "anusit.k"], ["kittiyakorn.h"], ["pornpoom.t"], ["nithus.d"], ["chadaporn.sa"], ["pantip.to"], ["mewika.p"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "วันพ่อแห่งชาติ / วันชาติ", "isBankHoliday": true, "holidayName": "วันพ่อแห่งชาติ / วันชาติ", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["pantip.to", "siriyakorn.y", "sawitree.ton", "komkrit.pr"]}, {"dayName": "จันทร์", "date": 7, "note": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "isBankHoliday": true, "holidayName": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "shifts": ["jutharat.ka", "mallika.to", "kittipa.j", "anusit.k"]}, {"dayName": "พฤหัสบดี", "date": 10, "note": "วันรัฐธรรมนูญ", "isBankHoliday": true, "holidayName": "วันรัฐธรรมนูญ", "shifts": ["pornpoom.t", "mewika.p", "yasumin.t", "parinya.si"]}, {"dayName": "เสาร์", "date": 12, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["nithus.d", "suriya.r", "chadaporn.sa", "pattaraporn.n"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["theerawut.b", "kittiyakorn.h", "panisara.n", "nutchanat.p"]}, {"dayName": "เสาร์", "date": 19, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["sawitree.ton", "pantip.to", "siriyakorn.y", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["kittipa.j", "jutharat.ka", "mallika.to", "anusit.k"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "mewika.p", "parinya.si"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["chadaporn.sa", "nithus.d", "suriya.r", "pattaraporn.n"]}, {"dayName": "พฤหัสบดี", "date": 31, "note": "วันสิ้นปี", "isBankHoliday": true, "holidayName": "วันสิ้นปี", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}]}};
 
     const BASE_ROTATION_ORDER_INDICES = [12, 9, 2, 6, 18, 1, 4, 0, 5, 11, 10, 15, 16, 17, 19, 14, 13, 7, 3, 8];
 
@@ -2047,7 +2038,7 @@
 
       // 2026 (พ.ศ. 2569)
       "2026-1-1": "วันขึ้นปีใหม่",
-      "2026-1-2": "วันหยุดพิเศษ (ธปท.)",
+      "2026-1-2": "วันหยุดพิเศษ",
       "2026-3-3": "วันมาฆบูชา",
       "2026-4-6": "วันจักรี",
       "2026-4-13": "วันสงกรานต์",
@@ -2128,9 +2119,14 @@
     function getCodeBadge(code) {
       if (code.startsWith("7")) return `<span class="badge badge-early">${code}</span>`;
       if (code === "8C" || code === "8.3C") return `<span class="badge badge-call">${code}</span>`;
-      if (code === "12" || code === "13") return `<span class="badge badge-wfh">${code} WFH</span>`;
+      if (code === "12" || code === "13") return `<span class="badge badge-late">${code}</span>`;
       if (code === "10" || code === "11") return `<span class="badge badge-late">${code}</span>`;
       return `<span class="badge badge-spec">${code}</span>`;
+    }
+
+    function formatWeekLabel(label) {
+      if (!label) return "";
+      return label.replace(/\s*(\(หยุด[^\)]+\))/g, '<br><span style="display:inline-block; margin-top:3px; font-size:11px; font-weight:600; color:#dc2626; line-height:1.2;">$1</span>');
     }
 
     function buildCalendarWeeksAndHolidays(yearAD, month) {
@@ -2159,7 +2155,7 @@
           holidays.push({
             dayName: THAI_DAYS[dow],
             date: d,
-            note: botName ? `วันหยุด ธปท.: ${botName}` : "",
+            note: botName || "",
             isBankHoliday: !!botName,
             holidayName: botName || ""
           });
@@ -2168,7 +2164,7 @@
           holidays.push({
             dayName: THAI_DAYS[dow],
             date: d,
-            note: `วันหยุด ธปท.: ${botName}`,
+            note: botName,
             isBankHoliday: true,
             holidayName: botName
           });
@@ -2358,7 +2354,7 @@
             ${WEEKDAY_COLUMNS.map((c, idx) => `<th>ช่องที่ ${idx + 1}</th>`).join("")}
           </tr>
           <tr>
-            ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}${c.wfh ? ' <span class="badge badge-wfh" style="font-size:9.5px; padding:1px 4px;">WFH</span>' : ''}</th>`).join("")}
+            ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}</th>`).join("")}
           </tr>
           <tr>
             ${WEEKDAY_COLUMNS.map(c => `<th>${c.breakTime}</th>`).join("")}
@@ -2375,7 +2371,7 @@
 
       sched.weeks.forEach((w, wIdx) => {
         html += `<tr>`;
-        html += `<td class="week-col-badge" rowspan="${showJD ? 2 : 1}">${w.label}</td>`;
+        html += `<td class="week-col-badge" rowspan="${showJD ? 2 : 1}">${formatWeekLabel(w.label)}</td>`;
 
         WEEKDAY_COLUMNS.forEach((col, cIdx) => {
           const names = w.assignments[cIdx] || [];
@@ -2400,14 +2396,14 @@
             return `<span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>`;
           }).join("<br>");
 
-          html += `<td class="${col.wfh ? 'wfh-bg' : ''}">${tagsHTML || "-"}</td>`;
+          html += `<td>${tagsHTML || "-"}</td>`;
         });
         html += `</tr>`;
 
         if (showJD) {
           html += `<tr class="jd-row">`;
           WEEKDAY_COLUMNS.forEach(col => {
-            html += `<td class="${col.wfh ? 'wfh-bg' : ''}">${col.jd.map(l => `• ${l}`).join("<br>")}</td>`;
+            html += `<td>${col.jd.map(l => `• ${l}`).join("<br>")}</td>`;
           });
           html += `</tr>`;
         }
@@ -2446,8 +2442,8 @@
 
         let holidayNoteHTML = "";
         if (h.isBankHoliday || h.note) {
-          const title = h.note || (h.holidayName ? `วันหยุด ธปท.: ${h.holidayName}` : 'วันหยุด ธปท.');
-          holidayNoteHTML = `<div style="font-size: 10px; color: #b45309; font-weight: 700; margin-top: 3px; line-height: 1.2;">🏦 ${title}</div>`;
+          const cleanHolidayName = (h.note || h.holidayName || 'วันหยุดพิเศษ').replace(/^วันหยุด\s*ธปท\.?\s*:\s*/i, '').replace(/\(ธปท\.?\)/i, '').trim();
+          holidayNoteHTML = `<div style="font-size: 10px; color: #b45309; font-weight: 700; margin-top: 3px; line-height: 1.2;">🏦 ${cleanHolidayName}</div>`;
         }
 
         html += `<tr>`;
@@ -2636,9 +2632,6 @@
 
           workingWeeksCount++;
           const cleanTime = matchedCol.time.replace(" (WFH)", "");
-          const locBadge = matchedCol.wfh
-            ? `<span style="display:inline-flex; align-items:center; gap:2px; font-size:10.5px; font-weight:700; color:#4338ca; background:#e0e7ff; border:1px solid #c7d2fe; padding:2px 7px; border-radius:999px;">🏠 WFH</span>`
-            : "";
 
           const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)
             ? `<div style="font-size:10.5px; color:#64748b; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:4px; line-height:1.4;">
@@ -2650,7 +2643,6 @@
             <div class="shift-box">
               <div class="shift-box-top">
                 <span class="shift-box-week">📅 สัปดาห์ ${w.label}</span>
-                ${locBadge}
               </div>
               <div class="shift-box-details" style="margin-top: 4px;">
                 <span>⏰ <strong>${cleanTime} น.</strong></span>
@@ -2722,7 +2714,6 @@
               <div class="agent-card-stats">
                 <span class="agent-stat-chip" title="จำนวนเวรวันหยุดในเดือนนี้">🏖️ ${holCount} วัน</span>
                 ${callCount > 0 ? `<span class="agent-stat-chip" style="background:rgba(234,179,8,0.2); border-color:rgba(250,204,21,0.35); color:#fef08a;" title="กะรับสาย Call">📞 ${callCount} สัปดาห์</span>` : ''}
-                ${wfhCount > 0 ? `<span class="agent-stat-chip" style="background:rgba(129,140,248,0.2); border-color:rgba(165,180,252,0.35); color:#e0e7ff;" title="กะ WFH">🏠 ${wfhCount} สัปดาห์</span>` : ''}
               </div>
             </div>
 
@@ -2858,8 +2849,8 @@
       { name: "รับสาย 16 (09.00 C+Ef)", colIdx: 11, slotIdx: 0, timeStr: "09.00-18.00", breakStr: "พัก 14.00-15.00", start: 9.0, end: 18.0, bStart: 14.0, bEnd: 15.0 },
       { name: "รับสาย 17 (10.00)", colIdx: 12, slotIdx: 0, timeStr: "10.00-19.00", breakStr: "พัก 13.30-14.30", start: 10.0, end: 19.0, bStart: 13.5, bEnd: 14.5 },
       { name: "รับสาย 18 (11.00)", colIdx: 13, slotIdx: 0, timeStr: "11.00-20.00", breakStr: "พัก 14.00-15.00", start: 11.0, end: 20.0, bStart: 14.0, bEnd: 15.0 },
-      { name: "รับสาย 19 (12.00 WFH)", colIdx: 14, slotIdx: 0, timeStr: "12.00-21.00", breakStr: "พัก 15.00-16.00", start: 12.0, end: 21.0, bStart: 15.0, bEnd: 16.0 },
-      { name: "รับสาย 20 (13.30 WFH)", colIdx: 15, slotIdx: 0, timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0 }
+      { name: "รับสาย 19 (12.00)", colIdx: 14, slotIdx: 0, timeStr: "12.00-21.00", breakStr: "พัก 15.00-16.00", start: 12.0, end: 21.0, bStart: 15.0, bEnd: 16.0 },
+      { name: "รับสาย 20 (13.30)", colIdx: 15, slotIdx: 0, timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0 }
     ];
 
     function renderHourlyHeadcountTable() {
@@ -3098,7 +3089,7 @@
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
 
       let headHTML = `<tr><th style="width:40px;">#</th><th style="text-align:left; width:130px;">ชื่อพนักงาน</th>`;
-      sched.weeks.forEach(w => { headHTML += `<th>${w.label}</th>`; });
+      sched.weeks.forEach(w => { headHTML += `<th>${formatWeekLabel(w.label)}</th>`; });
       headHTML += `<th>รวมกะ Call<br><span style="font-size:10.5px; font-weight:normal; color:#fde047;">(ต้นฉบับ | ปัจจุบัน)</span></th><th>รวมเวรวันหยุด<br><span style="font-size:10.5px; font-weight:normal; color:#fde047;">(ต้นฉบับ | ปัจจุบัน)</span></th></tr>`;
       thead.innerHTML = headHTML;
 
@@ -3542,7 +3533,6 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
               <div>
                 <strong style="color:var(--primary); font-size:14px;">กะที่ ${idx+1} [รหัส: ${col.code}]</strong>
-                ${col.wfh ? '<span class="badge badge-wfh" style="margin-left:6px;">WFH</span>' : ''}
               </div>
               <span style="font-size:12px; color:var(--muted);">จำนวนคน: ${col.slots} คน</span>
             </div>
@@ -3589,7 +3579,7 @@
           <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:8px; padding:14px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
               <strong style="color:var(--primary); font-size:14px;">กะวันหยุดที่ ${idx+1} [${meta.time}]</strong>
-              <span class="badge badge-hol">วันหยุด / ธปท.</span>
+              <span class="badge badge-hol">วันหยุดพิเศษ</span>
             </div>
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
               <div>
@@ -3868,7 +3858,7 @@
       // 2. Sheet: เวรวันหยุด
       const weAoa = [];
       weAoa.push([`ตารางเวร First Tier วันหยุด ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]);
-      weAoa.push(["วัน", "วันที่", "หมายเหตุ (วันหยุด ธปท.)", "เวร 08.00-17.00 น.", "เวร 09.00-18.00 น.", "เวร 10.00-19.00 น.", "เวร 13.30-22.30 น."]);
+      weAoa.push(["วัน", "วันที่", "หมายเหตุ (วันหยุดพิเศษ)", "เวร 08.00-17.00 น.", "เวร 09.00-18.00 น.", "เวร 10.00-19.00 น.", "เวร 13.30-22.30 น."]);
       weAoa.push(["", "", "", "พัก 13.30-14.30", "พัก 14.30-15.30", "พัก 14.00-15.00", "พัก 16.00-17.00"]);
       currentSchedule.holidays.forEach(h => {
         weAoa.push([h.dayName, h.date, h.note || "", h.shifts[0]||"", h.shifts[1]||"", h.shifts[2]||"", h.shifts[3]||""]);
