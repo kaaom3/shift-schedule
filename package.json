@@ -1,0 +1,15 @@
+{
+  "name": "shift-schedule",
+  "version": "1.0.0",
+  "description": "ระบบจัดการตารางเวร First Tier IT Support พร้อมระบบซิงค์ MongoDB Atlas",
+  "main": "api/schedule.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.21.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

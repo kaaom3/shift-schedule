@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบจัดตารางเวร First Tier (OneDrive Edition)</title>
+  <title>ระบบจัดตารางเวร First Tier (MongoDB Cloud Edition)</title>
   <!-- Google Fonts: Prompt & Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1050,6 +1050,55 @@
         margin: 0.8cm;
       }
     }
+
+    /* MongoDB Atlas Cloud Sync Badge & Dot */
+    .mongo-sync-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 12px;
+      border-radius: 20px;
+      color: #ffffff;
+      font-size: 0.775rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      backdrop-filter: blur(4px);
+    }
+    .mongo-sync-badge:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.55);
+      transform: translateY(-1px);
+    }
+    .sync-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #94a3b8;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+    .sync-dot.connected {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .sync-dot.syncing {
+      background: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: pulseSyncDot 1s infinite alternate;
+    }
+    .sync-dot.error {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    @keyframes pulseSyncDot {
+      from { transform: scale(0.8); opacity: 0.7; }
+      to { transform: scale(1.2); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -1062,13 +1111,19 @@
         <div class="brand-text">
           <h1>
             First Tier Shift Roster
-            <span class="brand-tag">OneDrive Edition</span>
+            <span class="brand-tag">MongoDB Cloud</span>
           </h1>
-          <p>ระบบตารางเวรทีม IT Support • คลิกที่ชื่อเพื่อสลับเวรได้ทันที</p>
+          <p>ระบบตารางเวรทีม IT Support • ซิงค์ฐานข้อมูล MongoDB Atlas เรียลไทม์</p>
         </div>
       </div>
 
       <div class="header-controls">
+        <!-- MongoDB Atlas Sync Status Badge -->
+        <div class="mongo-sync-badge" id="mongoSyncBadge" onclick="openCloudConfigModal()" title="คลิกเพื่อดูและจัดการการเชื่อมต่อ MongoDB Atlas">
+          <span class="sync-dot" id="mongoSyncDot"></span>
+          <span id="mongoSyncText">🍃 กำลังเชื่อมต่อ MongoDB...</span>
+        </div>
+
         <div class="select-pill">
           <label>ปี:</label>
           <select id="yearSelect" onchange="generateScheduleForSelectedMonth()">
@@ -1658,6 +1713,209 @@
     const THAI_MONTHS_SHORT = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
+    // =========================================================================
+    // MONGODB ATLAS CLOUD SYNC ENGINE
+    // =========================================================================
+    let mongoApiEndpoint = localStorage.getItem("ft_mongo_api_endpoint") || "/api/schedule";
+    let mongoSyncStatus = "disconnected"; // connected, syncing, error, disconnected
+    let lastMongoSyncTime = null;
+    let mongoAutoSyncTimer = null;
+
+    function updateMongoSyncBadge(status, text, detail = "") {
+      mongoSyncStatus = status;
+      const badge = document.getElementById("mongoSyncBadge");
+      const dot = document.getElementById("mongoSyncDot");
+      const textEl = document.getElementById("mongoSyncText");
+      if (!badge || !dot || !textEl) return;
+
+      dot.className = "sync-dot " + status;
+      textEl.innerText = text;
+      if (detail) badge.title = detail;
+    }
+
+    function buildSystemPayload(lastAction = "") {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curKey = `${yearAD}-${month}`;
+      monthSchedules[curKey] = {
+        schedule: currentSchedule,
+        originalSchedule: originalSchedule,
+        swapHistory: swapHistory
+      };
+
+      return {
+        yearAD: yearAD,
+        month: month,
+        monthSchedules: monthSchedules,
+        agents: AGENTS,
+        adminPin: currentAdminPin,
+        allowUserSwap: allowUserSwap,
+        weekdayColumns: WEEKDAY_COLUMNS,
+        holidayShiftMeta: HOLIDAY_SHIFT_META,
+        lastAction: lastAction,
+        clientTimestamp: new Date().toISOString()
+      };
+    }
+
+    async function initMongoCloudSync() {
+      updateMongoSyncBadge("syncing", "กำลังเชื่อมต่อ MongoDB...");
+      try {
+        const res = await fetch(mongoApiEndpoint, { method: "GET" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        const result = await res.json();
+
+        if (result && result.success) {
+          if (result.data) {
+            const cloudData = result.data;
+            if (cloudData.monthSchedules && typeof cloudData.monthSchedules === 'object') {
+              monthSchedules = cloudData.monthSchedules;
+            }
+            if (Array.isArray(cloudData.agents) && cloudData.agents.length > 0) {
+              AGENTS = cloudData.agents;
+            }
+            if (Array.isArray(cloudData.weekdayColumns)) {
+              WEEKDAY_COLUMNS = cloudData.weekdayColumns;
+            }
+            if (Array.isArray(cloudData.holidayShiftMeta)) {
+              HOLIDAY_SHIFT_META = cloudData.holidayShiftMeta;
+            }
+            if (cloudData.adminPin) {
+              currentAdminPin = cloudData.adminPin;
+            }
+            if (cloudData.allowUserSwap !== undefined) {
+              allowUserSwap = cloudData.allowUserSwap;
+            }
+
+            const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+            const month = parseInt(document.getElementById("monthSelect").value, 10);
+            const curData = getOrInitMonthSchedule(yearAD, month);
+            currentSchedule = curData.schedule;
+            originalSchedule = curData.originalSchedule;
+            swapHistory = curData.swapHistory || [];
+
+            renderAgentsEditor();
+            renderWeekdayJdEditor();
+            renderHolidayJdEditor();
+            populateFilterDropdowns();
+            renderAllViews();
+          } else {
+            await saveScheduleToCloud("Initial Schedule Baseline Seed");
+          }
+
+          lastMongoSyncTime = new Date();
+          const timeStr = lastMongoSyncTime.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+          updateMongoSyncBadge("connected", `MongoDB พร้อมใช้งาน (${timeStr})`, `เชื่อมต่อกับ MongoDB Atlas แล้ว • ซิงค์ล่าสุด: ${timeStr}`);
+        } else {
+          throw new Error(result.error || "Unknown server response");
+        }
+      } catch (err) {
+        console.warn("MongoDB Atlas Sync Notice:", err);
+        updateMongoSyncBadge("error", "MongoDB ออฟไลน์ (ข้อมูลเครื่อง)", `ไม่สามารถเชื่อมต่อ MongoDB API (${err.message}) • กำลังใช้ข้อมูลในเครื่อง`);
+      }
+    }
+
+    async function saveScheduleToCloud(actionDetail = "") {
+      updateMongoSyncBadge("syncing", "กำลังบันทึกลง MongoDB...");
+      try {
+        const payload = buildSystemPayload(actionDetail);
+        const res = await fetch(mongoApiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (result && result.success) {
+          lastMongoSyncTime = new Date();
+          const timeStr = lastMongoSyncTime.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+          updateMongoSyncBadge("connected", `บันทึก MongoDB แล้ว (${timeStr})`, `บันทึกสำเร็จเมื่อ ${timeStr}`);
+        } else {
+          throw new Error(result.error || "Save failed");
+        }
+      } catch (err) {
+        console.error("Save to MongoDB failed:", err);
+        updateMongoSyncBadge("error", "บันทึก MongoDB ไม่สำเร็จ", `ข้อผิดพลาด: ${err.message}`);
+      }
+    }
+
+    function triggerAutoSaveToCloud(actionDetail = "") {
+      if (mongoAutoSyncTimer) clearTimeout(mongoAutoSyncTimer);
+      mongoAutoSyncTimer = setTimeout(() => {
+        saveScheduleToCloud(actionDetail);
+      }, 400);
+    }
+
+    function openCloudConfigModal() {
+      const modal = document.getElementById("cloudConfigModal");
+      const input = document.getElementById("cloudApiEndpointInput");
+      if (input) input.value = mongoApiEndpoint;
+      updateCloudModalStatus();
+      if (modal) modal.classList.add("show");
+    }
+
+    function closeCloudConfigModal() {
+      const modal = document.getElementById("cloudConfigModal");
+      if (modal) modal.classList.remove("show");
+    }
+
+    function updateCloudModalStatus() {
+      const dot = document.getElementById("cloudModalStatusDot");
+      const title = document.getElementById("cloudModalStatusTitle");
+      const detail = document.getElementById("cloudModalStatusDetail");
+      if (!dot || !title || !detail) return;
+
+      dot.className = "sync-dot " + mongoSyncStatus;
+      if (mongoSyncStatus === "connected") {
+        title.innerText = "สถานะ: เชื่อมต่อ MongoDB Atlas สำเร็จ 🟢";
+        const timeStr = lastMongoSyncTime ? lastMongoSyncTime.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "-";
+        detail.innerHTML = `เชื่อมต่อกับคลัสเตอร์เรียบร้อยแล้ว • ซิงค์ล่าสุด: <strong>${timeStr} น.</strong><br>Database: <code>shift_schedule</code> | Collection: <code>system_state</code>`;
+      } else if (mongoSyncStatus === "syncing") {
+        title.innerText = "สถานะ: กำลังซิงค์ข้อมูลกับ MongoDB... 🟡";
+        detail.innerText = "ระบบกำลังรับ-ส่งข้อมูลกับ MongoDB Atlas กรุณารอสักครู่";
+      } else {
+        title.innerText = "สถานะ: ออฟไลน์ / ไม่สามารถติดต่อ API ได้ 🔴";
+        detail.innerHTML = `กำลังใช้งานข้อมูลสำรองในเครื่อง (Offline Mode)<br>หากใช้งานบน GitHub Pages โปรดตรวจสอบว่าได้ใส่ URL ของ Vercel API แล้วหรือยัง`;
+      }
+    }
+
+    function saveCloudConfigEndpoint() {
+      const input = document.getElementById("cloudApiEndpointInput");
+      if (!input) return;
+      const val = input.value.trim() || "/api/schedule";
+      mongoApiEndpoint = val;
+      localStorage.setItem("ft_mongo_api_endpoint", val);
+      showToast("💾 บันทึก API Endpoint เรียบร้อยแล้ว");
+      initMongoCloudSync();
+      setTimeout(updateCloudModalStatus, 600);
+    }
+
+    async function testMongoConnectionModal() {
+      showToast("🔄 กำลังทดสอบการเชื่อมต่อ...");
+      const healthUrl = mongoApiEndpoint.replace(/\/schedule\/?$/, "/health");
+      try {
+        const res = await fetch(healthUrl);
+        const data = await res.json();
+        if (data.status === "connected") {
+          alert(`✅ เชื่อมต่อ MongoDB Atlas สำเร็จสมบูรณ์!\n\n` +
+                `• สถานะ: ${data.message}\n` +
+                `• Database: shift_schedule\n` +
+                `• Ping: ${JSON.stringify(data.ping)}`);
+          mongoSyncStatus = "connected";
+          lastMongoSyncTime = new Date();
+        } else if (data.status === "unconfigured") {
+          alert(`⚠️ API ทำงานได้ แต่ยังไม่ได้ตั้งค่า MONGODB_URI ใน Environment Variables\n\n` +
+                `กรุณานำ Connection String (mongodb+srv://...) ไปใส่ใน Environment Variables ของ Vercel`);
+          mongoSyncStatus = "error";
+        } else {
+          alert(`❌ เชื่อมต่อ MongoDB ไม่สำเร็จ:\n${data.message}`);
+          mongoSyncStatus = "error";
+        }
+      } catch (e) {
+        alert(`❌ ไม่สามารถเรียก API ได้ (${e.message})\n\nหากเปิดเว็บจาก GitHub Pages ต้องใส่ URL เต็มของ Vercel เช่น https://...vercel.app/api/schedule`);
+        mongoSyncStatus = "error";
+      }
+      updateCloudModalStatus();
+    }
+
     // App Initialization
     function initApp() {
       const embeddedState = window.__EMBEDDED_ONEDRIVE_STATE__;
@@ -1708,6 +1966,9 @@
       renderWeekdayJdEditor();
       renderHolidayJdEditor();
       renderAllViews();
+
+      // Launch MongoDB Atlas Cloud Sync
+      initMongoCloudSync();
     }
 
     window.onload = initApp;
@@ -2280,6 +2541,7 @@
       cancelPendingSwap();
       renderAllViews();
       showToast(`สลับเวรสำเร็จ: คุณ${nameA} ⇄ คุณ${nameB} (${swapTag})`);
+      triggerAutoSaveToCloud(detail);
     }
 
     // TAB 2: INDIVIDUAL CARDS (Redesigned without '1. คุณ' prefix)
@@ -3008,6 +3270,7 @@
           if (pendingSwapSlot) cancelPendingSwap();
           renderAllViews();
           showToast("🔄 คืนค่าสู่ตารางต้นฉบับเรียบร้อยแล้ว (การสลับเวรถูกรีเซ็ต)");
+          triggerAutoSaveToCloud("คืนค่าสู่ตารางต้นฉบับ");
         }
       });
     }
@@ -3199,7 +3462,8 @@
             `• คำนวณต่อเนื่องจาก "ตารางต้นฉบับ" ของเดือนก่อนหน้า (ไม่นำการสลับเวรมาคิดรวม)\n` +
             `• กะวันธรรมดาหมุนเวียนต่อเนื่องไร้รอยต่อ\n` +
             `• เกลี่ยโควตาวันหยุดให้คนที่ได้น้อยในเดือนก่อน ได้รับสิทธิ์เพิ่มขึ้นในเดือนนี้ตามกฎรอบ 2 เดือน\n` +
-            `• ระบบได้บันทึกเป็นตารางต้นฉบับของเดือน ${nextMonthName} เรียบร้อยแล้ว (อย่าลืมกด "💾 เซฟทับไฟล์" เพื่อบันทึกลง OneDrive)`);
+            `• ระบบได้บันทึกเป็นตารางต้นฉบับของเดือน ${nextMonthName} และซิงค์ขึ้น MongoDB Atlas เรียบร้อยแล้ว`);
+      triggerAutoSaveToCloud(`คำนวณเดือน ${nextMonthName} ${nextYearTH}`);
     }
 
     
@@ -3336,6 +3600,7 @@
       });
       renderAllViews();
       showToast("💾 บันทึกเวลาเข้างานและ JD วันทำการเรียบร้อยแล้ว");
+      triggerAutoSaveToCloud("บันทึกการตั้งค่า JD วันทำการ");
     }
 
     function saveHolidayJdConfig() {
@@ -3355,6 +3620,7 @@
       });
       renderAllViews();
       showToast("💾 บันทึกเวลาเข้างานและ JD วันหยุดเรียบร้อยแล้ว");
+      triggerAutoSaveToCloud("บันทึกการตั้งค่า JD วันหยุด");
     }
 
     function saveAgentNames() {
@@ -3367,6 +3633,7 @@
       populateFilterDropdowns();
       renderAllViews();
       showToast("บันทึกรายชื่อเรียบร้อย");
+      triggerAutoSaveToCloud("บันทึกรายชื่อเจ้าหน้าที่");
     }
 
     function populateFilterDropdowns() {
@@ -3417,6 +3684,7 @@
       document.getElementById("quickHolName").value = "";
       renderMasterHolidayTable();
       showToast("เพิ่มวันหยุดพิเศษเรียบร้อยแล้ว");
+      triggerAutoSaveToCloud("เพิ่มวันหยุดพิเศษ");
     }
 
     function removeHoliday(idx) {
@@ -3424,6 +3692,7 @@
         currentSchedule.holidays.splice(idx, 1);
         renderMasterHolidayTable();
         showToast("ลบวันหยุดเรียบร้อย");
+        triggerAutoSaveToCloud("ลบวันหยุด");
       }
     }
 
@@ -3655,6 +3924,56 @@
         <button class="btn btn-danger" id="safetyConfirmActionBtn" onclick="executeSafetyAction()" disabled style="opacity: 0.5; cursor: not-allowed; font-weight: 700; padding: 6px 14px;">
           💥 ยืนยันดำเนินการ
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MongoDB Atlas Cloud Sync Settings Modal -->
+  <div class="modal-backdrop" id="cloudConfigModal">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0f766e, #0d9488);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🍃</span>
+          <span>การเชื่อมต่อฐานข้อมูล MongoDB Atlas</span>
+        </h3>
+        <button onclick="closeCloudConfigModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div id="cloudStatusCard" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-weight: 700; color: #166534; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+            <span id="cloudModalStatusDot" class="sync-dot connected"></span>
+            <span id="cloudModalStatusTitle">สถานะ: กำลังตรวจสอบ</span>
+          </div>
+          <div id="cloudModalStatusDetail" style="font-size: 12px; color: #374151; margin-top: 4px;">
+            ระบบพร้อมซิงค์ข้อมูลกับ MongoDB Atlas
+          </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-weight: 700; font-size: 12.5px; color: var(--secondary); display: block; margin-bottom: 4px;">
+            API Endpoint URL:
+          </label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="cloudApiEndpointInput" placeholder="/api/schedule หรือ https://shift-schedule.vercel.app/api/schedule" style="flex: 1; padding: 7px 10px; border: 1px solid var(--border-dark); border-radius: 6px; font-size: 12.5px; font-family: monospace;">
+            <button class="btn btn-outline btn-sm" onclick="saveCloudConfigEndpoint()">💾 บันทึก URL</button>
+          </div>
+          <p style="font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4;">
+            💡 หากรันบน Vercel ให้ใช้ <code>/api/schedule</code> (ค่าเริ่มต้น)<br>
+            💡 หากเปิดผ่าน GitHub Pages ให้นำ URL ของ Vercel มาใส่ เช่น <code>https://shift-schedule-xxx.vercel.app/api/schedule</code>
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--secondary); margin-bottom: 6px;">การดำเนินการทันที:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <button class="btn btn-outline btn-sm" onclick="testMongoConnectionModal()">🔄 ทดสอบการเชื่อมต่อ (Ping)</button>
+            <button class="btn btn-outline btn-sm" onclick="saveScheduleToCloud('Manual Admin Sync'); showToast('กำลังส่งข้อมูลขึ้น MongoDB...');">⬆️ บันทึกขึ้น MongoDB ทันที</button>
+            <button class="btn btn-outline btn-sm" onclick="initMongoCloudSync(); showToast('กำลังดึงข้อมูลล่าสุดจาก MongoDB...');">⬇️ ดึงข้อมูลล่าสุดจาก MongoDB</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-primary" onclick="closeCloudConfigModal()">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>

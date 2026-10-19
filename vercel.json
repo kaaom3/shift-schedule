@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/schedule",
+      "destination": "/api/schedule.js"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/health.js"
+    }
+  ]
+}
