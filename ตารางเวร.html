@@ -1708,21 +1708,21 @@
     // 16 Weekday Column Definitions
     let WEEKDAY_COLUMNS = [
       { id: 1, time: "07.00-16.00", breakTime: "พัก 11.00", role: "Call/ECE", code: "7C", slots: 1, wfh: false, jd: ["7.00 - 08.00 Call+ECE", "8.00 - 16.00 น. Call"] },
-      { id: 2, time: "07.00-16.00", breakTime: "พัก 12.00", role: "Mail K-Helps/Self/Realtime", code: "7A", slots: 1, wfh: false, jd: ["7.00 - 08.00 Mail All", "09.00 - 16.00 Self ท้าย 0-3"] },
+      { id: 2, time: "07.00-16.00", breakTime: "พัก 12.00", role: "Mail K-Helps/Self/Realtime", code: "7A", slots: 1, wfh: false, jd: ["7.00 - 08.00 Mail All", "09.00 - 16.00 Self ตู้ 0-3"] },
       { id: 3, time: "08.00-17.00", breakTime: "พัก 11.30", role: "Call", code: "8C", slots: 3, wfh: false, jd: ["รับสาย Call 08.00 - 17.00 น."] },
-      { id: 4, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Self Service", code: "8A", slots: 1, wfh: false, jd: ["09.00 - 17.00 Self ท้าย 4-6"] },
-      { id: 5, time: "08.00-17.00", breakTime: "พัก 12.00", role: "ECE", code: "8E", slots: 1, wfh: false, jd: ["ทำ ECE รอบ 08.00 - 17.00 น."] },
-      { id: 6, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Mail K-Helps/Realtime", code: "8M", slots: 1, wfh: false, jd: ["08.00 – 17.00 ทำ Mail All"] },
-      { id: 7, time: "08.30-17.30", breakTime: "พัก 12.30", role: "Aging/16App/Follow SR (คู่)", code: "Agingคู่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคู่", "13.30-14.30 All"] },
-      { id: 8, time: "08.30-17.30", breakTime: "พัก 13.00", role: "ECE", code: "8.3E", slots: 1, wfh: false, jd: ["ทำ ECE 08.30 - 17.30 น."] },
-      { id: 9, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Aging/16App/Follow SR (คี่)", code: "Agingคี่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคี่", "12.30-13.30 All"] },
-      { id: 10, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Call", code: "8.3C", slots: 3, wfh: false, jd: ["รับสาย Call 08.30 - 17.30 น."] },
-      { id: 11, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Self Service", code: "9A", slots: 1, wfh: false, jd: ["09.00-17.00 Self ท้าย 7-9"] },
+      { id: 4, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Self Service", code: "8A", slots: 1, wfh: false, jd: ["09.00 - 17.00 Self ตู้ 4-6"] },
+      { id: 5, time: "08.00-17.00", breakTime: "พัก 12.00", role: "ECE", code: "8E", slots: 1, wfh: false, jd: ["ดู ECE รอบ 08.00 - 17.00 น."] },
+      { id: 6, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Mail K-Helps/Realtime", code: "8M", slots: 1, wfh: false, jd: ["08.00 – 17.00 น Mail All"] },
+      { id: 7, time: "08.30-17.30", breakTime: "พัก 12.30", role: "Aging/16App/Follow SOS/Follow SR", code: "Agingคู่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคู่", "13.30-14.30 All"] },
+      { id: 8, time: "08.30-17.30", breakTime: "พัก 13.00", role: "ECE", code: "8.3E", slots: 1, wfh: false, jd: ["ดู ECE 08.30 - 17.30 น."] },
+      { id: 9, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Aging/16App/Follow SOS/Follow SR", code: "Agingคี่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคี่", "12.30-13.30 All"] },
+      { id: 10, time: "08.30-17.30", breakTime: "พัก 13.00 / 13.30", role: "Call", code: "8.3C", slots: 3, wfh: false, jd: ["รับสาย Call 08.30 - 17.30 น."] },
+      { id: 11, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Self Service", code: "9A", slots: 1, wfh: false, jd: ["09.00-17.00 Self ตู้ 7-9"] },
       { id: 12, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Call/ECE", code: "9C", slots: 1, wfh: false, jd: ["09.00-14.00 ECE", "15.00-18.00 Call"] },
-      { id: 13, time: "10.00-19.00", breakTime: "พัก 13.30", role: "Self/Real Time", code: "10", slots: 1, wfh: false, jd: ["ทำ ECE 10.00 - 19.00 น."] },
+      { id: 13, time: "10.00-19.00", breakTime: "พัก 13.30", role: "ECE", code: "10", slots: 1, wfh: false, jd: ["ดู ECE 10.00 - 19.00 น."] },
       { id: 14, time: "11.00-20.00", breakTime: "พัก 14.00", role: "Call", code: "11", slots: 1, wfh: false, jd: ["รับสาย Call 11.00 - 20.00 น."] },
-      { id: 15, time: "12.00-21.00 (WFH)", breakTime: "พัก 15.00", role: "Call/Mail/ECE+Self", code: "12", slots: 1, wfh: true, jd: ["12.00-15.00 Self", "16.00-21.00 Mail/Call"] },
-      { id: 16, time: "13.30-22.30 (WFH)", breakTime: "พัก 16.00", role: "Call/Mail/ECE+Self", code: "13", slots: 1, wfh: true, jd: ["13.30 ECE", "14.30-21 Call", "21-22.30 ALL"] }
+      { id: 15, time: "12.00-21.00 (WFH)", breakTime: "พัก 15.00", role: "Self+Realtime/Mail/Realtime", code: "12", slots: 1, wfh: true, jd: ["12.00-15.00 Self", "16.00-21.00 Mail/Call"] },
+      { id: 16, time: "13.30-22.30 (WFH)", breakTime: "พัก 16.00", role: "Call+Mail+ECE+Self Service +Realtime", code: "13", slots: 1, wfh: true, jd: ["13.30 ECE", "14.30-21 Call", "21-22.30 ALL"] }
     ];
 
     let HOLIDAY_SHIFT_META = [
@@ -2354,8 +2354,11 @@
       let html = `
         <thead>
           <tr>
-            <th rowspan="3" style="width: 100px;">สัปดาห์</th>
-            ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}</th>`).join("")}
+            <th rowspan="4" style="width: 100px;">สัปดาห์</th>
+            ${WEEKDAY_COLUMNS.map((c, idx) => `<th>ช่องที่ ${idx + 1}</th>`).join("")}
+          </tr>
+          <tr>
+            ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}${c.wfh ? ' <span class="badge badge-wfh" style="font-size:9.5px; padding:1px 4px;">WFH</span>' : ''}</th>`).join("")}
           </tr>
           <tr>
             ${WEEKDAY_COLUMNS.map(c => `<th>${c.breakTime}</th>`).join("")}
@@ -2635,7 +2638,7 @@
           const cleanTime = matchedCol.time.replace(" (WFH)", "");
           const locBadge = matchedCol.wfh
             ? `<span style="display:inline-flex; align-items:center; gap:2px; font-size:10.5px; font-weight:700; color:#4338ca; background:#e0e7ff; border:1px solid #c7d2fe; padding:2px 7px; border-radius:999px;">🏠 WFH</span>`
-            : `<span style="display:inline-flex; align-items:center; gap:2px; font-size:10.5px; font-weight:700; color:#0369a1; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 7px; border-radius:999px;">🏢 Onsite</span>`;
+            : "";
 
           const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)
             ? `<div style="font-size:10.5px; color:#64748b; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:4px; line-height:1.4;">
