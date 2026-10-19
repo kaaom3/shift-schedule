@@ -1099,6 +1099,184 @@
       from { transform: scale(0.8); opacity: 0.7; }
       to { transform: scale(1.2); opacity: 1; }
     }
+
+    /* Interactive JD Popover Tooltip */
+    .jd-hover-tooltip {
+      position: fixed;
+      z-index: 999999;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15);
+      max-width: 340px;
+      min-width: 260px;
+      pointer-events: none;
+      font-size: 12px;
+      line-height: 1.45;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(8px) scale(0.96);
+      transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+    }
+    .jd-hover-tooltip.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+    .jd-tip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 7px;
+      margin-bottom: 8px;
+    }
+    .jd-tip-title {
+      font-weight: 800;
+      color: #38bdf8;
+      font-size: 13px;
+    }
+    .jd-tip-time {
+      font-weight: 700;
+      color: #fde047;
+      font-size: 11.5px;
+    }
+    .jd-tip-role {
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .jd-tip-agent {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 6px;
+      padding: 4px 8px;
+      margin-bottom: 8px;
+      font-size: 11.5px;
+      color: #7dd3fc;
+    }
+    .jd-tip-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .jd-tip-list li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 5px;
+      color: #f1f5f9;
+      font-size: 11.5px;
+    }
+    .jd-tip-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #38bdf8;
+      font-weight: bold;
+    }
+    .jd-tip-leave {
+      background: rgba(249, 115, 22, 0.2);
+      border: 1px solid rgba(249, 115, 22, 0.4);
+      color: #fed7aa;
+      padding: 3px 7px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Leave Tags & Badges */
+    .leave-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-top: 3px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .leave-chip.leave-vacation {
+      background: #fed7aa;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
+    .leave-chip.leave-sick {
+      background: #fecdd3;
+      color: #9f1239;
+      border: 1px solid #fda4af;
+    }
+    .leave-chip.leave-business {
+      background: #e9d5ff;
+      color: #6b21a8;
+      border: 1px solid #d8b4fe;
+    }
+    .leave-chip.leave-training {
+      background: #cffafe;
+      color: #155e75;
+      border: 1px solid #a5f3fc;
+    }
+    .leave-chip.leave-other {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .name-tag.has-leave {
+      border-style: dashed !important;
+      background: #fff7ed !important;
+      color: #c2410c !important;
+      border-color: #f97316 !important;
+    }
+    .btn-leave-add {
+      display: inline-block;
+      cursor: pointer;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(234, 88, 12, 0.12);
+      color: #ea580c;
+      margin-left: 3px;
+      vertical-align: middle;
+      transition: all 0.15s;
+      border: 1px dashed rgba(234, 88, 12, 0.4);
+      line-height: 1.2;
+    }
+    .btn-leave-add:hover {
+      background: #ea580c;
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    /* Week Custom Time Badge */
+    .week-custom-badge {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #c2410c;
+      background: #ffedd5;
+      border: 1px solid #fed7aa;
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-top: 3px;
+      line-height: 1.2;
+    }
+
+    /* Line Brief Button */
+    .btn-line-brief {
+      background: linear-gradient(135deg, #06c755 0%, #05a346 100%);
+      color: white;
+      border: 1px solid #047857;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(6, 199, 85, 0.3);
+    }
+    .btn-line-brief:hover {
+      background: linear-gradient(135deg, #05b24c 0%, #04883a 100%);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -1145,6 +1323,10 @@
           🔒 โหมดหัวหน้า (Admin)
         </button>
 
+        <button class="btn btn-line-brief" onclick="openLineBriefModal()">
+          📲 สรุปส่ง LINE
+        </button>
+
         <button class="btn btn-header-outline" onclick="exportToExcel()">
           📊 ส่งออก Excel
         </button>
@@ -1180,7 +1362,7 @@
 
       <div class="tab-tools">
         <button class="btn btn-outline btn-sm" onclick="toggleJD()">
-          👁️ <span id="jdToggleText">ซ่อน JD งาน</span>
+          👁️ <span id="jdToggleText">แสดง JD ในแถว</span>
         </button>
         <div style="display: flex; align-items: center; gap: 6px;">
           <label style="font-size: 0.775rem; color: var(--muted); font-weight: 600;">เน้นชื่อ:</label>
@@ -1739,7 +1921,7 @@
     let monthSchedules = {}; // Stores multi-month state: { "2026-9": { schedule, originalSchedule, swapHistory }, "2026-10": ... }
     let allowUserSwap = true;
     let isViewingOriginal = false;
-    let showJD = true;
+    let showJD = false;
     let customSpinSeed = 0;
     let swapHistory = [];
     let pendingSwapSlot = null;
@@ -1777,10 +1959,12 @@
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const curKey = `${yearAD}-${month}`;
+      const existingLeaves = (monthSchedules[curKey] && monthSchedules[curKey].leaves) || {};
       monthSchedules[curKey] = {
         schedule: currentSchedule,
         originalSchedule: originalSchedule,
-        swapHistory: swapHistory
+        swapHistory: swapHistory,
+        leaves: existingLeaves
       };
 
       return {
@@ -2203,13 +2387,15 @@
     function getOrInitMonthSchedule(yearAD, month) {
       const key = `${yearAD}-${month}`;
       if (monthSchedules[key]) {
+        if (!monthSchedules[key].leaves) monthSchedules[key].leaves = {};
         return monthSchedules[key];
       }
       if (HISTORICAL_SCHEDULES[key]) {
         monthSchedules[key] = {
           schedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
           originalSchedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
-          swapHistory: []
+          swapHistory: [],
+          leaves: {}
         };
         return monthSchedules[key];
       }
@@ -2248,7 +2434,8 @@
       monthSchedules[key] = {
         schedule: sched,
         originalSchedule: JSON.parse(JSON.stringify(sched)),
-        swapHistory: []
+        swapHistory: [],
+        leaves: {}
       };
       return monthSchedules[key];
     }
@@ -2265,7 +2452,8 @@
         monthSchedules[currentlyLoadedMonthKey] = {
           schedule: currentSchedule,
           originalSchedule: originalSchedule,
-          swapHistory: swapHistory
+          swapHistory: swapHistory,
+          leaves: (monthSchedules[currentlyLoadedMonthKey] && monthSchedules[currentlyLoadedMonthKey].leaves) || {}
         };
       }
 
@@ -2342,7 +2530,571 @@
       }
     }
 
+    // =========================================================================
+    // LEAVE & OVERRIDE STATE HELPERS
+    // =========================================================================
+    function getMonthLeaves(yearAD, month) {
+      const key = `${yearAD}-${month}`;
+      if (!monthSchedules[key]) return {};
+      if (!monthSchedules[key].leaves) monthSchedules[key].leaves = {};
+      return monthSchedules[key].leaves;
+    }
+
+    function getSlotLeave(yearAD, month, slotKey) {
+      const leaves = getMonthLeaves(yearAD, month);
+      return leaves[slotKey] || null;
+    }
+
+    function setSlotLeave(yearAD, month, slotKey, leaveData) {
+      const leaves = getMonthLeaves(yearAD, month);
+      if (leaveData) {
+        leaves[slotKey] = leaveData;
+      } else {
+        delete leaves[slotKey];
+      }
+    }
+
+    function getLeaveIcon(type) {
+      switch(type) {
+        case "ลาพักร้อน": return "🏖️";
+        case "ลาป่วย": return "🤒";
+        case "ลากิจ": return "💼";
+        case "อบรม": return "📚";
+        default: return "🏖️";
+      }
+    }
+
+    function getLeaveClass(type) {
+      switch(type) {
+        case "ลาพักร้อน": return "vacation";
+        case "ลาป่วย": return "sick";
+        case "ลากิจ": return "business";
+        case "อบรม": return "training";
+        default: return "other";
+      }
+    }
+
+    // =========================================================================
+    // INTERACTIVE JD HOVER POPOVER TOOLTIP
+    // =========================================================================
+    let jdTooltipEl = null;
+
+    function getJdTooltipEl() {
+      if (!jdTooltipEl) jdTooltipEl = document.getElementById("jdHoverTooltip");
+      return jdTooltipEl;
+    }
+
+    function showJdTooltip(event, wIdx, cIdx) {
+      const el = getJdTooltipEl();
+      if (!el) return;
+
+      const col = WEEKDAY_COLUMNS[cIdx];
+      if (!col) return;
+
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const week = sched.weeks && sched.weeks[wIdx];
+      const assigned = (week && week.assignments && week.assignments[cIdx]) || [];
+      
+      const custom = week && week.customTimes && week.customTimes[cIdx];
+      const shiftTime = custom ? custom.time : col.time;
+      const breakTime = custom ? custom.breakTime : col.breakTime;
+      const isCustomTime = !!custom;
+
+      const agentNames = assigned.map(a => {
+        const th = AGENT_NAME_MAP[a] ? ` (${AGENT_NAME_MAP[a]})` : "";
+        return `${a}${th}`;
+      }).join(", ") || "ไม่มีผู้ปฏิบัติงาน";
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const leaves = getMonthLeaves(yearAD, month);
+      const leaveInfos = [];
+      assigned.forEach((a, sIdx) => {
+        const lKey = `W_${wIdx}_${cIdx}_${sIdx}`;
+        if (leaves[lKey]) {
+          leaveInfos.push(`🏖️ คุณ${a}: ${leaves[lKey].leaveType} ${leaves[lKey].note ? `(${leaves[lKey].note})` : ''}`);
+        }
+      });
+
+      const jdItemsHtml = (col.jd && col.jd.length > 0)
+        ? col.jd.map(item => `<li>${item}</li>`).join("")
+        : `<li>ปฏิบัติหน้าที่ตามที่ได้รับมอบหมาย</li>`;
+
+      el.innerHTML = `
+        <div class="jd-tip-header">
+          <span class="jd-tip-title">ช่องที่ ${cIdx + 1} (${col.code}) • ${col.role}</span>
+          <span class="jd-tip-time">${shiftTime}</span>
+        </div>
+        <div class="jd-tip-role">
+          <span>☕ เวลาพัก: ${breakTime}</span>
+          ${isCustomTime ? `<span style="color:#fdba74; font-size:10px; margin-left:6px; font-weight:700;">(⚡ เวลาเฉพาะสัปดาห์นี้)</span>` : ''}
+        </div>
+        <div class="jd-tip-agent">
+          <strong>👤 ผู้ปฏิบัติงาน:</strong> ${agentNames}
+        </div>
+        ${leaveInfos.length > 0 ? `<div class="jd-tip-leave">${leaveInfos.join("<br>")}</div>` : ''}
+        <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">ภาระหน้าที่ (Job Description):</div>
+        <ul class="jd-tip-list">
+          ${jdItemsHtml}
+        </ul>
+      `;
+
+      moveJdTooltip(event);
+      el.classList.add("visible");
+    }
+
+    function showHolidayJdTooltip(event, hIdx, sIdx) {
+      const el = getJdTooltipEl();
+      if (!el) return;
+
+      const meta = HOLIDAY_SHIFT_META[sIdx];
+      if (!meta) return;
+
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const hol = sched.holidays && sched.holidays[hIdx];
+      const assigned = (hol && hol.shifts && hol.shifts[sIdx]) || "-";
+      const th = AGENT_NAME_MAP[assigned] ? ` (${AGENT_NAME_MAP[assigned]})` : "";
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const leaves = getMonthLeaves(yearAD, month);
+      const lKey = `H_${hIdx}_${sIdx}`;
+      const leaveInfo = leaves[lKey] ? `🏖️ คุณ${assigned}: ${leaves[lKey].leaveType} ${leaves[lKey].note ? `(${leaves[lKey].note})` : ''}` : "";
+
+      const jdItemsHtml = (meta.jd && meta.jd.length > 0)
+        ? meta.jd.map(item => `<li>${item}</li>`).join("")
+        : `<li>ปฏิบัติหน้าที่ประจำเวรวันหยุด</li>`;
+
+      el.innerHTML = `
+        <div class="jd-tip-header">
+          <span class="jd-tip-title">เวร ${meta.time}</span>
+          <span class="jd-tip-time">${hol ? hol.dayName + ' ที่ ' + hol.date : ''}</span>
+        </div>
+        <div class="jd-tip-role">
+          <span>☕ เวลาพัก: ${meta.breakTime}</span>
+        </div>
+        <div class="jd-tip-agent">
+          <strong>👤 ผู้ปฏิบัติงาน:</strong> ${assigned}${th}
+        </div>
+        ${leaveInfo ? `<div class="jd-tip-leave">${leaveInfo}</div>` : ''}
+        <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">ภาระหน้าที่ (Job Description):</div>
+        <ul class="jd-tip-list">
+          ${jdItemsHtml}
+        </ul>
+      `;
+
+      moveJdTooltip(event);
+      el.classList.add("visible");
+    }
+
+    function moveJdTooltip(event) {
+      const el = getJdTooltipEl();
+      if (!el || !el.classList.contains("visible")) return;
+
+      const x = event.clientX;
+      const y = event.clientY;
+      const tipWidth = el.offsetWidth || 300;
+      const tipHeight = el.offsetHeight || 220;
+      const pad = 15;
+
+      let left = x + pad;
+      let top = y + pad;
+
+      if (left + tipWidth > window.innerWidth - 10) {
+        left = x - tipWidth - pad;
+      }
+      if (top + tipHeight > window.innerHeight - 10) {
+        top = y - tipHeight - pad;
+      }
+      if (left < 10) left = 10;
+      if (top < 10) top = 10;
+
+      el.style.left = left + "px";
+      el.style.top = top + "px";
+    }
+
+    function hideJdTooltip() {
+      const el = getJdTooltipEl();
+      if (el) el.classList.remove("visible");
+    }
+
+    // =========================================================================
+    // LEAVE MANAGEMENT MODAL
+    // =========================================================================
+    let currentEditingLeaveSlot = null;
+
+    function openLeaveRecordModal(yearAD, month, type, idx1, idx2, sIdx, agentName, label, shiftInfo) {
+      if (!isAdminMode) {
+        showToast("🔒 เฉพาะหัวหน้างาน (Admin) จึงจะสามารถบันทึกหรือแก้ไขการลาได้");
+        return;
+      }
+      if (!agentName || agentName === "-") {
+        showToast("⚠️ ไม่มีพนักงานในช่องนี้");
+        return;
+      }
+
+      const slotKey = type === "WEEKDAY" ? `W_${idx1}_${idx2}_${sIdx}` : `H_${idx1}_${sIdx}`;
+      currentEditingLeaveSlot = { yearAD, month, type, idx1, idx2, sIdx, agentName, slotKey };
+
+      const thName = AGENT_NAME_MAP[agentName] ? ` (${AGENT_NAME_MAP[agentName]})` : "";
+      document.getElementById("leaveModalAgentName").innerText = `${agentName}${thName}`;
+      document.getElementById("leaveModalSlotDesc").innerText = `${type === 'WEEKDAY' ? 'เวรวันทำการ: ' + label + ' • ช่อง ' + shiftInfo : 'เวรวันหยุด: ' + label + ' • ' + shiftInfo}`;
+
+      const currentLeave = getSlotLeave(yearAD, month, slotKey);
+      const statusEl = document.getElementById("leaveModalCurrentStatus");
+      const noteInput = document.getElementById("leaveModalNoteInput");
+      const delBtn = document.getElementById("leaveModalDeleteBtn");
+
+      if (currentLeave) {
+        statusEl.innerHTML = `สถานะปัจจุบัน: <strong style="color:#c2410c;">${getLeaveIcon(currentLeave.leaveType)} ${currentLeave.leaveType}</strong> ${currentLeave.note ? `(หมายเหตุ: ${currentLeave.note})` : ''}`;
+        noteInput.value = currentLeave.note || "";
+        const radios = document.getElementsByName("leaveTypeRadio");
+        for (let r of radios) {
+          if (r.value === currentLeave.leaveType) r.checked = true;
+        }
+        delBtn.style.display = "inline-block";
+      } else {
+        statusEl.innerHTML = `สถานะปัจจุบัน: <span style="color:#16a34a; font-weight:700;">🟢 ปฏิบัติงานตามปกติ (ยังไม่มีบันทึกการลา)</span>`;
+        noteInput.value = "";
+        delBtn.style.display = "none";
+      }
+
+      document.getElementById("leaveRecordModal").classList.add("show");
+    }
+
+    function closeLeaveRecordModal() {
+      document.getElementById("leaveRecordModal").classList.remove("show");
+      currentEditingLeaveSlot = null;
+    }
+
+    function saveCurrentSlotLeave() {
+      if (!currentEditingLeaveSlot) return;
+      const { yearAD, month, slotKey, agentName } = currentEditingLeaveSlot;
+
+      let selectedType = "ลาพักร้อน";
+      const radios = document.getElementsByName("leaveTypeRadio");
+      for (let r of radios) {
+        if (r.checked) selectedType = r.value;
+      }
+      const note = document.getElementById("leaveModalNoteInput").value.trim();
+
+      setSlotLeave(yearAD, month, slotKey, {
+        agent: agentName,
+        leaveType: selectedType,
+        note: note,
+        recordedAt: new Date().toISOString()
+      });
+
+      closeLeaveRecordModal();
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      renderIndividualCards();
+      showToast(`✅ บันทึกสถานะ ${selectedType} ของคุณ${agentName} เรียบร้อยแล้ว`);
+      saveScheduleToCloud(`บันทึกการลา: ${agentName} (${selectedType})`);
+    }
+
+    function deleteCurrentSlotLeave() {
+      if (!currentEditingLeaveSlot) return;
+      const { yearAD, month, slotKey, agentName } = currentEditingLeaveSlot;
+
+      setSlotLeave(yearAD, month, slotKey, null);
+      closeLeaveRecordModal();
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      renderIndividualCards();
+      showToast(`🗑️ ลบสถานะการลาของคุณ${agentName} เรียบร้อยแล้ว`);
+      saveScheduleToCloud(`ยกเลิกการลา: ${agentName}`);
+    }
+
+    // =========================================================================
+    // WEEK-SPECIFIC TIME OVERRIDE MODAL
+    // =========================================================================
+    let currentEditingWeekIdx = null;
+
+    function openWeekTimeModal(wIdx) {
+      if (!isAdminMode) {
+        showToast("🔒 เฉพาะหัวหน้างาน (Admin) จึงจะสามารถปรับเวลาเฉพาะสัปดาห์ได้");
+        return;
+      }
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const week = sched.weeks && sched.weeks[wIdx];
+      if (!week) return;
+
+      currentEditingWeekIdx = wIdx;
+      document.getElementById("weekTimeModalTitle").innerText = `ปรับเวลาทำงานเฉพาะสัปดาห์: ${week.label}`;
+
+      const customTimes = week.customTimes || {};
+      const container = document.getElementById("weekTimeModalGrid");
+
+      let html = "";
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        const curTime = customTimes[cIdx]?.time || col.time;
+        const curBreak = customTimes[cIdx]?.breakTime || col.breakTime;
+        const isOverridden = !!customTimes[cIdx];
+
+        html += `
+          <div style="background:${isOverridden ? '#fff7ed' : '#f8fafc'}; border:1px solid ${isOverridden ? '#fed7aa' : 'var(--border)'}; border-radius:8px; padding:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-weight:700; font-size:12px; color:var(--primary);">ช่องที่ ${cIdx + 1} (${col.code}) • ${col.role}</span>
+              ${isOverridden ? `<span style="font-size:10px; color:#c2410c; font-weight:700; background:#ffedd5; padding:1px 5px; border-radius:4px;">⚡ กำหนดเอง</span>` : ''}
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div>
+                <label style="font-size:10.5px; color:var(--muted); display:block; margin-bottom:2px;">เวลาทำงาน:</label>
+                <input type="text" id="wt_time_${cIdx}" value="${curTime}" style="width:100%; font-size:12px; padding:4px 6px; border:1px solid var(--border); border-radius:4px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px; color:var(--muted); display:block; margin-bottom:2px;">เวลาพัก:</label>
+                <input type="text" id="wt_break_${cIdx}" value="${curBreak}" style="width:100%; font-size:12px; padding:4px 6px; border:1px solid var(--border); border-radius:4px;">
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById("weekTimeModal").classList.add("show");
+    }
+
+    function closeWeekTimeModal() {
+      document.getElementById("weekTimeModal").classList.remove("show");
+      currentEditingWeekIdx = null;
+    }
+
+    function saveWeekTimeOverrides() {
+      if (currentEditingWeekIdx === null) return;
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const week = sched.weeks && sched.weeks[currentEditingWeekIdx];
+      if (!week) return;
+
+      const overrides = {};
+      let changeCount = 0;
+
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        const inputTime = document.getElementById(`wt_time_${cIdx}`).value.trim();
+        const inputBreak = document.getElementById(`wt_break_${cIdx}`).value.trim();
+
+        if (inputTime !== col.time || inputBreak !== col.breakTime) {
+          overrides[cIdx] = { time: inputTime, breakTime: inputBreak };
+          changeCount++;
+        }
+      });
+
+      if (changeCount > 0) {
+        week.customTimes = overrides;
+      } else {
+        delete week.customTimes;
+      }
+
+      closeWeekTimeModal();
+      renderMasterWeekdayTable();
+      renderIndividualCards();
+      showToast(`✅ บันทึกเวลาเฉพาะสัปดาห์ ${week.label} เรียบร้อยแล้ว (${changeCount} ช่องที่มีการปรับเวลา)`);
+      saveScheduleToCloud(`ปรับเวลาเฉพาะสัปดาห์: ${week.label}`);
+    }
+
+    function resetWeekTimeToDefault() {
+      if (currentEditingWeekIdx === null) return;
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const week = sched.weeks && sched.weeks[currentEditingWeekIdx];
+      if (!week) return;
+
+      if (confirm(`ต้องการคืนค่าเวลาทำงานของสัปดาห์ "${week.label}" กลับเป็นเวลามาตรฐานทั้งหมดหรือไม่?`)) {
+        delete week.customTimes;
+        closeWeekTimeModal();
+        renderMasterWeekdayTable();
+        renderIndividualCards();
+        showToast(`🔄 คืนค่าเวลามาตรฐานของสัปดาห์ ${week.label} แล้ว`);
+        saveScheduleToCloud(`คืนค่าเวลามาตรฐานสัปดาห์: ${week.label}`);
+      }
+    }
+
+    // =========================================================================
+    // DAILY LINE BRIEF GENERATOR
+    // =========================================================================
+    function openLineBriefModal() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const daysInMonth = new Date(yearAD, month, 0).getDate();
+      const select = document.getElementById("lineBriefDateSelect");
+      
+      select.innerHTML = "";
+      const cal = buildCalendarWeeksAndHolidays(yearAD, month);
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(yearAD, month - 1, d);
+        const dow = dt.getDay();
+        const dayName = THAI_DAYS[dow];
+        const isHol = cal.holidays.some(h => h.date === d);
+        const holType = isHol ? " [วันหยุด]" : "";
+        
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = `วันที่ ${d} ${THAI_MONTHS_SHORT[month]} (${dayName})${holType}`;
+        select.appendChild(opt);
+      }
+
+      const today = new Date();
+      if (today.getFullYear() === yearAD && (today.getMonth() + 1) === month) {
+        select.value = today.getDate();
+      } else {
+        select.value = 1;
+      }
+
+      updateLineBriefPreview();
+      document.getElementById("lineBriefModal").classList.add("show");
+    }
+
+    function closeLineBriefModal() {
+      document.getElementById("lineBriefModal").classList.remove("show");
+    }
+
+    function generateLineBriefText(day) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const yearTH = yearAD + 543;
+      const dt = new Date(yearAD, month - 1, day);
+      const dow = dt.getDay();
+      const dayName = THAI_DAYS[dow];
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const leaves = getMonthLeaves(yearAD, month);
+
+      const holiday = sched.holidays.find(h => h.date === day);
+
+      let text = "";
+      if (holiday) {
+        text += `📢 รายงานเวรปฏิบัติงาน First Tier (วันหยุด)\n`;
+        text += `📅 วัน${dayName}ที่ ${day} ${THAI_MONTHS[month]} ${yearTH}\n`;
+        if (holiday.note) {
+          text += `🏦 วันหยุดพิเศษ: ${holiday.note}\n`;
+        } else {
+          text += `🏢 ประจำวันหยุดสุดสัปดาห์ (${holiday.dayName})\n`;
+        }
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+        const holidayLeaves = [];
+        holiday.shifts.forEach((ag, sIdx) => {
+          const meta = HOLIDAY_SHIFT_META[sIdx];
+          const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
+          const hIdx = sched.holidays.indexOf(holiday);
+          const lKey = `H_${hIdx}_${sIdx}`;
+          const leave = leaves[lKey];
+
+          text += `⏰ เวร ${meta.time} น. (พัก ${meta.breakTime})\n`;
+          if (leave) {
+            text += `• ${ag}${thName} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n\n`;
+            holidayLeaves.push(`${ag}${thName} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
+          } else {
+            text += `• ${ag}${thName} | ประจำเวร\n\n`;
+          }
+        });
+
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `🏖️ สรุปพนักงานแจ้งลาวันนี้:\n`;
+        if (holidayLeaves.length > 0) {
+          holidayLeaves.forEach(l => { text += `• ${l}\n`; });
+        } else {
+          text += `(ไม่มีพนักงานแจ้งลา ปฏิบัติงานครบทุกท่าน)\n`;
+        }
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `✨ ขอให้ทุกคนปฏิบัติงานด้วยความราบรื่นและปลอดภัยครับ ✨`;
+      } else {
+        const cal = buildCalendarWeeksAndHolidays(yearAD, month);
+        let matchedWIdx = 0;
+        cal.weeks.forEach((w, wIdx) => {
+          if (w.days && w.days.includes(day)) {
+            matchedWIdx = wIdx;
+          }
+        });
+
+        const week = sched.weeks[matchedWIdx] || sched.weeks[0];
+        const customTimes = (week && week.customTimes) || {};
+
+        text += `📢 รายงานเวรปฏิบัติงาน First Tier\n`;
+        text += `📅 วัน${dayName}ที่ ${day} ${THAI_MONTHS[month]} ${yearTH}\n`;
+        text += `🏢 ประจำสัปดาห์: ${week ? week.label : ''}\n`;
+        if (week && week.customTimes && Object.keys(week.customTimes).length > 0) {
+          text += `⚡ (สัปดาห์นี้มีกะเวลาพิเศษเฉพาะสัปดาห์)\n`;
+        }
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+
+        const timeGroups = {};
+        WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+          const shiftTime = customTimes[cIdx]?.time || col.time;
+          const breakTime = customTimes[cIdx]?.breakTime || col.breakTime;
+          const key = `${shiftTime}__${breakTime}`;
+          if (!timeGroups[key]) {
+            timeGroups[key] = { time: shiftTime, breakTime: breakTime, columns: [] };
+          }
+          timeGroups[key].columns.push({ col, cIdx });
+        });
+
+        const weekdayLeaves = [];
+
+        Object.values(timeGroups).forEach(group => {
+          text += `⏰ เวลา ${group.time} น. (พัก ${group.breakTime})\n`;
+          group.columns.forEach(({ col, cIdx }) => {
+            const agents = (week && week.assignments && week.assignments[cIdx]) || [];
+            agents.forEach((ag, sIdx) => {
+              const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
+              const lKey = `W_${matchedWIdx}_${cIdx}_${sIdx}`;
+              const leave = leaves[lKey];
+
+              if (leave) {
+                text += `• ช่อง ${col.code}: ${ag}${thName} | ${col.role} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n`;
+                weekdayLeaves.push(`ช่อง ${col.code}: ${ag}${thName} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
+              } else {
+                text += `• ช่อง ${col.code}: ${ag}${thName} | ${col.role}\n`;
+              }
+            });
+          });
+          text += `\n`;
+        });
+
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `🏖️ สรุปพนักงานแจ้งลาวันนี้:\n`;
+        if (weekdayLeaves.length > 0) {
+          weekdayLeaves.forEach(l => { text += `• ${l}\n`; });
+        } else {
+          text += `(ไม่มีพนักงานแจ้งลา ปฏิบัติงานครบทุกท่าน)\n`;
+        }
+        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `✨ ขอให้ทุกคนปฏิบัติงานด้วยความราบรื่นและปลอดภัยครับ ✨`;
+      }
+
+      return text;
+    }
+
+    function updateLineBriefPreview() {
+      const select = document.getElementById("lineBriefDateSelect");
+      const day = parseInt(select.value, 10);
+      const text = generateLineBriefText(day);
+      document.getElementById("lineBriefTextArea").value = text;
+    }
+
+    async function copyLineBriefText() {
+      const textarea = document.getElementById("lineBriefTextArea");
+      const text = textarea.value;
+      if (!text) return;
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          textarea.select();
+          document.execCommand("copy");
+        }
+        showToast("📋 คัดลอกข้อความสรุปส่ง LINE เรียบร้อยแล้ว!");
+      } catch (err) {
+        textarea.select();
+        document.execCommand("copy");
+        showToast("📋 คัดลอกข้อความสรุปส่ง LINE เรียบร้อยแล้ว!");
+      }
+    }
+
+    // =========================================================================
     // TAB 1: RENDER MASTER WEEKDAY TABLE
+    // =========================================================================
     function renderMasterWeekdayTable() {
       const table = document.getElementById("masterWeekdayTable");
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
@@ -2350,7 +3102,7 @@
       let html = `
         <thead>
           <tr>
-            <th rowspan="4" style="width: 100px;">สัปดาห์</th>
+            <th rowspan="4" style="width: 110px;">สัปดาห์</th>
             ${WEEKDAY_COLUMNS.map((c, idx) => `<th>ช่องที่ ${idx + 1}</th>`).join("")}
           </tr>
           <tr>
@@ -2368,13 +3120,34 @@
 
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
       const isLockedForUser = !allowUserSwap && !isAdminMode;
+      const leaves = getMonthLeaves(yearAD, month);
 
       sched.weeks.forEach((w, wIdx) => {
+        const customTimes = w.customTimes || {};
+        const hasCustomTimes = Object.keys(customTimes).length > 0;
+
+        let weekLabelHTML = formatWeekLabel(w.label);
+        if (hasCustomTimes) {
+          weekLabelHTML += `<br><span class="week-custom-badge" title="มีการปรับเปลี่ยนเวลาทำงานเฉพาะสัปดาห์นี้">⚡ ปรับเวลาพิเศษ</span>`;
+        }
+        if (isAdminMode) {
+          weekLabelHTML += `<br><button class="btn btn-outline btn-sm" onclick="openWeekTimeModal(${wIdx})" style="font-size:10.5px; padding:2px 6px; margin-top:4px;" title="ปรับเวลาทำงานเฉพาะสัปดาห์นี้">⏱️ ปรับเวลา</button>`;
+        }
+
         html += `<tr>`;
-        html += `<td class="week-col-badge" rowspan="${showJD ? 2 : 1}">${formatWeekLabel(w.label)}</td>`;
+        html += `<td class="week-col-badge" rowspan="${showJD ? 2 : 1}">${weekLabelHTML}</td>`;
 
         WEEKDAY_COLUMNS.forEach((col, cIdx) => {
           const names = w.assignments[cIdx] || [];
+          const colCustom = customTimes[cIdx];
+          const shiftTime = colCustom ? colCustom.time : col.time;
+          const isCustomTime = !!colCustom;
+
+          let cellCustomBadge = "";
+          if (isCustomTime) {
+            cellCustomBadge = `<div class="week-custom-badge" style="margin-bottom:4px; display:block;">⏱️ ${shiftTime}</div>`;
+          }
+
           const tagsHTML = names.map((n, sIdx) => {
             if (!n) return "-";
             const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
@@ -2385,6 +3158,27 @@
             const isSwapped = !isViewingOriginal && origName && origName !== n;
             const swapClass = isSwapped ? "was-swapped" : "";
             const lockedClass = isLockedForUser || isViewingOriginal ? "name-tag-locked" : "";
+
+            // Check Leave status
+            const slotKey = `W_${wIdx}_${cIdx}_${sIdx}`;
+            const leave = leaves[slotKey];
+            const hasLeaveClass = leave ? "has-leave" : "";
+
+            let leaveChipHTML = "";
+            if (leave) {
+              const icon = getLeaveIcon(leave.leaveType);
+              const lClass = getLeaveClass(leave.leaveType);
+              const leaveTitle = `${leave.leaveType}${leave.note ? ': ' + leave.note : ''}`;
+              const clickAction = isAdminMode 
+                ? `openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', '${col.code}')`
+                : `showToast('🏖️ ${n}: ${leave.leaveType} ${leave.note || ''}')`;
+              leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
+            }
+
+            let adminLeaveAddBtn = "";
+            if (isAdminMode && !leave && n && n !== "-") {
+              adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', '${col.code}')" title="บันทึกการลา">+🏖️</span>`;
+            }
             
             const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
             let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
@@ -2393,10 +3187,10 @@
             else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
 
             const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-            return `<span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>`;
-          }).join("<br>");
+            return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</div>`;
+          }).join("");
 
-          html += `<td>${tagsHTML || "-"}</td>`;
+          html += `<td onmouseenter="showJdTooltip(event, ${wIdx}, ${cIdx})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()">${cellCustomBadge}${tagsHTML || "-"}</td>`;
         });
         html += `</tr>`;
 
@@ -2413,12 +3207,15 @@
       table.innerHTML = html;
     }
 
+    // =========================================================================
     // TAB 1: RENDER MASTER HOLIDAY TABLE
+    // =========================================================================
     function renderMasterHolidayTable() {
       const table = document.getElementById("masterHolidayTable");
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const monthShort = THAI_MONTHS_SHORT[month];
+      const leaves = getMonthLeaves(yearAD, month);
 
       let html = `
         <thead>
@@ -2460,14 +3257,35 @@
           const swapClass = isSwapped ? "was-swapped" : "";
           const lockedClass = isLockedForUser || isViewingOriginal ? "name-tag-locked" : "";
 
+          // Check Leave status
+          const slotKey = `H_${hIdx}_${s}`;
+          const leave = leaves[slotKey];
+          const hasLeaveClass = leave ? "has-leave" : "";
+
+          let leaveChipHTML = "";
+          if (leave) {
+            const icon = getLeaveIcon(leave.leaveType);
+            const lClass = getLeaveClass(leave.leaveType);
+            const leaveTitle = `${leave.leaveType}${leave.note ? ': ' + leave.note : ''}`;
+            const clickAction = isAdminMode 
+              ? `openLeaveRecordModal(${yearAD}, ${month}, 'HOLIDAY', ${hIdx}, 0, ${s}, '${n}', '${h.date} ${monthShort}', '${HOLIDAY_SHIFT_META[s].time}')`
+              : `showToast('🏖️ ${n}: ${leave.leaveType} ${leave.note || ''}')`;
+            leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
+          }
+
+          let adminLeaveAddBtn = "";
+          if (isAdminMode && !leave && n && n !== "-") {
+            adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'HOLIDAY', ${hIdx}, 0, ${s}, '${n}', '${h.date} ${monthShort}', '${HOLIDAY_SHIFT_META[s].time}')" title="บันทึกการลา">+🏖️</span>`;
+          }
+
           const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
-            let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
+          let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
           if (isViewingOriginal) tagTitle = "ตารางต้นฉบับ (โหมดดู)";
           else if (isLockedForUser) tagTitle = "🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)";
           else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
 
           const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agName: n, label: `${h.date} ${monthShort}`, shiftTime: HOLIDAY_SHIFT_META[s].time }).replace(/"/g, '&quot;');
-          html += `<td><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span></td>`;
+          html += `<td onmouseenter="showHolidayJdTooltip(event, ${hIdx}, ${s})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</td>`;
         }
 
         html += `<td class="no-print admin-only" rowspan="${showJD ? 2 : 1}"><button class="btn btn-outline btn-sm" onclick="removeHoliday(${hIdx})" style="color: var(--danger); padding: 2px 6px;">✕</button></td>`;
@@ -2601,6 +3419,8 @@
       const monthShort = THAI_MONTHS_SHORT[month];
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
       const targetAgents = filterAgent === "ALL" ? AGENTS : AGENTS.filter(a => a === filterAgent);
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const leaves = getMonthLeaves(yearAD, month);
 
       grid.innerHTML = targetAgents.map(ag => {
         let holCount = 0;
@@ -2609,11 +3429,18 @@
         let workingWeeksCount = 0;
 
         // 1. Weekday shifts for this agent
-        const weekdayItems = sched.weeks.map(w => {
+        const weekdayItems = sched.weeks.map((w, wIdx) => {
           let matchedCol = null;
+          let matchedCIdx = -1;
+          let matchedSIdx = -1;
+
           WEEKDAY_COLUMNS.forEach((col, cIdx) => {
-            if ((w.assignments[cIdx] || []).includes(ag)) {
+            const list = w.assignments[cIdx] || [];
+            const idx = list.indexOf(ag);
+            if (idx !== -1) {
               matchedCol = col;
+              matchedCIdx = cIdx;
+              matchedSIdx = idx;
               if (col.code === "8C" || col.code === "8.3C") callCount++;
               if (col.wfh) wfhCount++;
             }
@@ -2631,7 +3458,19 @@
           }
 
           workingWeeksCount++;
-          const cleanTime = matchedCol.time.replace(" (WFH)", "");
+          const customTimes = w.customTimes || {};
+          const colCustom = customTimes[matchedCIdx];
+          const shiftTime = colCustom ? colCustom.time : matchedCol.time.replace(" (WFH)", "");
+          const breakTime = colCustom ? colCustom.breakTime : matchedCol.breakTime;
+          const isCustomTime = !!colCustom;
+
+          // Check leave
+          const lKey = `W_${wIdx}_${matchedCIdx}_${matchedSIdx}`;
+          const leave = leaves[lKey];
+          let leaveChipHtml = "";
+          if (leave) {
+            leaveChipHtml = `<div class="leave-chip leave-${getLeaveClass(leave.leaveType)}" style="margin-top:5px; font-size:10px; padding:2px 6px;">${getLeaveIcon(leave.leaveType)} ${leave.leaveType}${leave.note ? ': ' + leave.note : ''}</div>`;
+          }
 
           const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)
             ? `<div style="font-size:10.5px; color:#64748b; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:4px; line-height:1.4;">
@@ -2643,14 +3482,16 @@
             <div class="shift-box">
               <div class="shift-box-top">
                 <span class="shift-box-week">📅 สัปดาห์ ${w.label}</span>
+                ${isCustomTime ? `<span class="week-custom-badge">⚡ เวลาเฉพาะสัปดาห์</span>` : ''}
               </div>
               <div class="shift-box-details" style="margin-top: 4px;">
-                <span>⏰ <strong>${cleanTime} น.</strong></span>
-                <span style="color: #b45309; font-weight:700;">☕ ${matchedCol.breakTime}</span>
+                <span>⏰ <strong>${shiftTime} น.</strong></span>
+                <span style="color: #b45309; font-weight:700;">☕ ${breakTime}</span>
               </div>
               <div class="shift-box-role" style="font-weight:600; color:var(--text); margin-top:3px;">
-                💼 ${matchedCol.role}
+                💼 ช่องที่ ${matchedCIdx + 1} (${matchedCol.code}) • ${matchedCol.role}
               </div>
+              ${leaveChipHtml}
               ${jdPreview}
             </div>
           `;
@@ -2658,16 +3499,24 @@
 
         // 2. Holiday shifts for this agent
         const holChipsArr = [];
-        sched.holidays.forEach(h => {
+        sched.holidays.forEach((h, hIdx) => {
           h.shifts.forEach((shName, sIdx) => {
             if (shName === ag) {
               holCount++;
               const meta = HOLIDAY_SHIFT_META[sIdx] || { time: "เวรวันหยุด", breakTime: "" };
               const isBank = h.isBankHoliday;
-              const chipClass = isBank ? "hol-chip-item is-bank" : "hol-chip-item";
               const icon = isBank ? "🏦" : "🏖️";
               const noteText = isBank && h.holidayName ? ` (${h.holidayName})` : "";
               const breakText = meta.breakTime ? ` • ${meta.breakTime}` : "";
+
+              // Check leave
+              const lKey = `H_${hIdx}_${sIdx}`;
+              const leave = leaves[lKey];
+              let leaveChipHtml = "";
+              if (leave) {
+                leaveChipHtml = `<div class="leave-chip leave-${getLeaveClass(leave.leaveType)}" style="margin-top:4px; font-size:10px; padding:2px 6px;">${getLeaveIcon(leave.leaveType)} ${leave.leaveType}${leave.note ? ': ' + leave.note : ''}</div>`;
+              }
+
               holChipsArr.push(`
                 <div style="background:#ffffff; border:1px solid ${isBank ? '#fde047' : '#fecdd3'}; border-radius:6px; padding:6px 10px; margin-bottom:4px; font-size:11.5px;">
                   <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -2677,6 +3526,7 @@
                   <div style="color:var(--text); font-size:11px; margin-top:2px;">
                     ⏰ <strong>${meta.time}</strong>
                   </div>
+                  ${leaveChipHtml}
                 </div>
               `);
             }
@@ -3699,7 +4549,7 @@
 
     function toggleJD() {
       showJD = !showJD;
-      document.getElementById("jdToggleText").innerText = showJD ? "ซ่อน JD งาน" : "แสดง JD งาน";
+      document.getElementById("jdToggleText").innerText = showJD ? "ซ่อน JD ในแถว" : "แสดง JD ในแถว";
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
     }
@@ -3820,70 +4670,161 @@
         return;
       }
 
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const yearTH = yearAD + 543;
+      const monthName = THAI_MONTHS[month];
+      const leaves = getMonthLeaves(yearAD, month);
+
       const wb = XLSX.utils.book_new();
 
       // 1. Sheet: เวรวันทำการ
       const wdAoa = [];
-      wdAoa.push(["ตารางเวร First Tier ประจำเดือน"]);
-      const hTime = ["สัปดาห์ / วันที่"];
-      const hBreak = [""];
-      const hRole = [""];
-      WEEKDAY_COLUMNS.forEach(c => {
+      wdAoa.push([`ตารางเวร First Tier ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]);
+      
+      const hSlot = ["สัปดาห์ / วันที่"];
+      const hTime = ["เวลาทำงาน"];
+      const hBreak = ["เวลาพัก"];
+      const hRole = ["หน้าที่ / ช่อง"];
+
+      WEEKDAY_COLUMNS.forEach((c, idx) => {
+        hSlot.push(`ช่องที่ ${idx + 1}`);
         hTime.push(c.time);
         hBreak.push(c.breakTime);
         hRole.push(`${c.role} (${c.code})`);
       });
+
+      wdAoa.push(hSlot);
       wdAoa.push(hTime);
       wdAoa.push(hBreak);
       wdAoa.push(hRole);
 
-      currentSchedule.weeks.forEach(w => {
+      currentSchedule.weeks.forEach((w, wIdx) => {
         let maxSlots = 1;
         WEEKDAY_COLUMNS.forEach((col, cIdx) => {
           const len = (w.assignments[cIdx] || []).length;
           if (len > maxSlots) maxSlots = len;
         });
 
+        const customTimes = w.customTimes || {};
+        const isCustomWeek = Object.keys(customTimes).length > 0;
+        const weekTitle = isCustomWeek ? `${w.label} (⚡ ปรับเวลาพิเศษ)` : w.label;
+
         for (let r = 0; r < maxSlots; r++) {
-          const rowVals = [r === 0 ? w.label : ""];
+          const rowVals = [r === 0 ? weekTitle : ""];
           WEEKDAY_COLUMNS.forEach((col, cIdx) => {
-            rowVals.push((w.assignments[cIdx] || [])[r] || "");
+            const rawName = (w.assignments[cIdx] || [])[r] || "";
+            if (!rawName) {
+              rowVals.push("");
+              return;
+            }
+            const thName = AGENT_NAME_MAP[rawName] ? ` (${AGENT_NAME_MAP[rawName]})` : "";
+            const lKey = `W_${wIdx}_${cIdx}_${r}`;
+            const leave = leaves[lKey];
+            const leaveText = leave ? ` [${leave.leaveType}]` : "";
+            const timeOverride = customTimes[cIdx] ? ` [เวลา: ${customTimes[cIdx].time}]` : "";
+            rowVals.push(`${rawName}${thName}${leaveText}${timeOverride}`);
           });
           wdAoa.push(rowVals);
         }
       });
+
       const wsWd = XLSX.utils.aoa_to_sheet(wdAoa);
+      wsWd['!cols'] = [{ wch: 28 }];
+      WEEKDAY_COLUMNS.forEach(() => wsWd['!cols'].push({ wch: 26 }));
       XLSX.utils.book_append_sheet(wb, wsWd, "เวรวันทำการ");
 
       // 2. Sheet: เวรวันหยุด
       const weAoa = [];
       weAoa.push([`ตารางเวร First Tier วันหยุด ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]);
-      weAoa.push(["วัน", "วันที่", "หมายเหตุ (วันหยุดพิเศษ)", "เวร 08.00-17.00 น.", "เวร 09.00-18.00 น.", "เวร 10.00-19.00 น.", "เวร 13.30-22.30 น."]);
-      weAoa.push(["", "", "", "พัก 13.30-14.30", "พัก 14.30-15.30", "พัก 14.00-15.00", "พัก 16.00-17.00"]);
-      currentSchedule.holidays.forEach(h => {
-        weAoa.push([h.dayName, h.date, h.note || "", h.shifts[0]||"", h.shifts[1]||"", h.shifts[2]||"", h.shifts[3]||""]);
+      weAoa.push([
+        "วัน", 
+        "วันที่", 
+        "หมายเหตุวันหยุด", 
+        "เวร 08:00 - 17:00 น. (พัก 13:30-14:30)", 
+        "เวร 09:00 - 18:00 น. (พัก 14:30-15:30)", 
+        "เวร 10:00 - 19:00 น. (พัก 14:00-15:00)", 
+        "เวร 13:30 - 22:30 น. (พัก 16:00-17:00)"
+      ]);
+
+      currentSchedule.holidays.forEach((h, hIdx) => {
+        const row = [h.dayName, `${h.date} ${THAI_MONTHS_SHORT[month]}`, h.note || ""];
+        for (let s = 0; s < 4; s++) {
+          const rawName = h.shifts[s] || "";
+          if (!rawName) {
+            row.push("-");
+            continue;
+          }
+          const thName = AGENT_NAME_MAP[rawName] ? ` (${AGENT_NAME_MAP[rawName]})` : "";
+          const lKey = `H_${hIdx}_${s}`;
+          const leave = leaves[lKey];
+          const leaveText = leave ? ` [${leave.leaveType}]` : "";
+          row.push(`${rawName}${thName}${leaveText}`);
+        }
+        weAoa.push(row);
       });
+
       const wsWe = XLSX.utils.aoa_to_sheet(weAoa);
+      wsWe['!cols'] = [
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 28 },
+        { wch: 28 },
+        { wch: 28 },
+        { wch: 28 },
+        { wch: 28 }
+      ];
       XLSX.utils.book_append_sheet(wb, wsWe, "เวรวันหยุด");
 
       // 3. Sheet: สรุปรายบุคคล
       const sumAoa = [];
-      sumAoa.push(["ลำดับ", "ชื่อพนักงาน", "กะ Call (8C/8.3C)", "เวรวันหยุดสะสม"]);
+      sumAoa.push([`สรุปสถิติการปฏิบัติงาน First Tier ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]);
+      sumAoa.push(["ลำดับ", "ชื่อผู้ใช้ (Username)", "ชื่อภาษาไทย", "กะ Call Center (8C/8.3C)", "เวรวันหยุด (วัน)", "จำนวนวันลา (วัน)"]);
+
       AGENTS.forEach((a, idx) => {
-        let callCount = 0, holCount = 0;
-        currentSchedule.weeks.forEach(w => {
+        let callCount = 0, holCount = 0, leaveCount = 0;
+        const thName = AGENT_NAME_MAP[a] || a;
+
+        currentSchedule.weeks.forEach((w, wIdx) => {
           WEEKDAY_COLUMNS.forEach((col, cIdx) => {
-            if ((w.assignments[cIdx] || []).includes(a) && (col.code === "8C" || col.code === "8.3C")) callCount++;
+            const list = w.assignments[cIdx] || [];
+            list.forEach((ag, sIdx) => {
+              if (ag === a) {
+                if (col.code === "8C" || col.code === "8.3C") callCount++;
+                const lKey = `W_${wIdx}_${cIdx}_${sIdx}`;
+                if (leaves[lKey]) leaveCount++;
+              }
+            });
           });
         });
-        currentSchedule.holidays.forEach(h => { if (h.shifts.includes(a)) holCount++; });
-        sumAoa.push([idx + 1, a, callCount, holCount]);
+
+        currentSchedule.holidays.forEach((h, hIdx) => {
+          h.shifts.forEach((ag, sIdx) => {
+            if (ag === a) {
+              holCount++;
+              const lKey = `H_${hIdx}_${sIdx}`;
+              if (leaves[lKey]) leaveCount++;
+            }
+          });
+        });
+
+        sumAoa.push([idx + 1, a, thName, callCount, holCount, leaveCount]);
       });
+
       const wsSum = XLSX.utils.aoa_to_sheet(sumAoa);
+      wsSum['!cols'] = [
+        { wch: 8 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 26 },
+        { wch: 20 },
+        { wch: 20 }
+      ];
       XLSX.utils.book_append_sheet(wb, wsSum, "สรุปรายบุคคล");
 
-      XLSX.writeFile(wb, "ตารางเวร_First_Tier.xlsx");
-      showToast("ส่งออกไฟล์ Excel เรียบร้อยแล้ว");
+      const fileName = `ตารางเวร_First_Tier_${yearAD}_${String(month).padStart(2, '0')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      showToast(`📊 ส่งออกไฟล์ Excel "${fileName}" สวยงามเรียบร้อยแล้ว`);
     }
   </script>
   <!-- PIN Login Modal -->
@@ -4018,6 +4959,140 @@
       </div>
       <div class="modal-box-footer">
         <button class="btn btn-primary" onclick="closeCloudConfigModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive JD Popover Tooltip -->
+  <div id="jdHoverTooltip" class="jd-hover-tooltip"></div>
+
+  <!-- LINE Daily Brief Modal -->
+  <div class="modal-backdrop" id="lineBriefModal">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #06c755, #059669);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>📲</span>
+          <span>สรุปข้อความส่ง LINE ประจำวัน (Daily Brief)</span>
+        </h3>
+        <button onclick="closeLineBriefModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-weight:700; font-size:13px; color:var(--secondary);">เลือกวันที่:</label>
+            <select id="lineBriefDateSelect" onchange="updateLineBriefPreview()" style="padding:6px 12px; border:1px solid var(--border-dark); border-radius:6px; font-weight:600; font-size:13px; color:var(--primary);">
+            </select>
+          </div>
+          <button class="btn btn-sm btn-line-brief" onclick="copyLineBriefText()">
+            📋 คัดลอกข้อความส่ง LINE
+          </button>
+        </div>
+        <p style="font-size:11.5px; color:var(--muted); margin:0 0 8px 0;">
+          💡 ตรวจสอบข้อความด้านล่าง แล้วกดปุ่ม <strong>"คัดลอกข้อความ"</strong> เพื่อนำไปวางส่งในกลุ่ม LINE ได้ทันที
+        </p>
+        <div style="position:relative;">
+          <textarea id="lineBriefTextArea" readonly style="width:100%; height:320px; padding:12px; border:1px solid var(--border-dark); border-radius:8px; font-family:'Fira Code', 'Consolas', 'Courier New', monospace; font-size:12.5px; line-height:1.5; background:#f8fafc; color:#0f172a; resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" onclick="closeLineBriefModal()">ปิดหน้าต่าง</button>
+        <button class="btn btn-line-brief" onclick="copyLineBriefText()">
+          📋 คัดลอกข้อความส่ง LINE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Record Modal -->
+  <div class="modal-backdrop" id="leaveRecordModal">
+    <div class="modal-box" style="max-width: 480px; border: 2px solid #f97316;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #c2410c, #ea580c);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🏖️</span>
+          <span>บันทึกการลาของพนักงาน</span>
+        </h3>
+        <button onclick="closeLeaveRecordModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase;">พนักงานและเวรที่เลือก:</div>
+          <div style="font-size:16px; font-weight:800; color:#9a3412; margin-top:3px;" id="leaveModalAgentName">-</div>
+          <div style="font-size:12px; color:#b45309; margin-top:2px;" id="leaveModalSlotDesc">-</div>
+          <div style="font-size:11.5px; color:#475569; margin-top:6px;" id="leaveModalCurrentStatus">-</div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-weight:700; font-size:12.5px; color:var(--secondary); display:block; margin-bottom:6px;">
+            ประเภทการลา:
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลาพักร้อน" checked>
+              <span>🏖️ ลาพักร้อน</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลาป่วย">
+              <span>🤒 ลาป่วย</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลากิจ">
+              <span>💼 ลากิจ</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="อบรม">
+              <span>📚 อบรม/สัมมนา</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-weight:700; font-size:12.5px; color:var(--secondary); display:block; margin-bottom:4px;">
+            หมายเหตุเพิ่มเติม (ถ้ามี):
+          </label>
+          <input type="text" id="leaveModalNoteInput" placeholder="เช่น ลาครึ่งวันบ่าย, มีคนสลับแทนแล้ว" style="width:100%; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;">
+        </div>
+
+        <p style="font-size:11px; color:var(--muted); margin:0;">
+          💡 เมื่อบันทึกแล้ว ระบบจะแสดงป้าย [ลา] ในหน้าตารางเวร, การ์ดบุคคล และสรุปส่ง LINE อัตโนมัติ
+        </p>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" id="leaveModalDeleteBtn" onclick="deleteCurrentSlotLeave()" style="border-color:#dc2626; color:#b91c1c;">
+          🗑️ ล้างสถานะการลา
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="closeLeaveRecordModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="saveCurrentSlotLeave()" style="background:#ea580c; border-color:#c2410c;">💾 บันทึกการลา</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week-specific Time Editor Modal -->
+  <div class="modal-backdrop" id="weekTimeModal">
+    <div class="modal-box" style="max-width: 680px; border: 2px solid #0284c7;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>⏱️</span>
+          <span id="weekTimeModalTitle">ปรับเวลาทำงานเฉพาะสัปดาห์</span>
+        </h3>
+        <button onclick="closeWeekTimeModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+          💡 สามารถระบุเวลาเข้างานและเวลาพักเฉพาะสัปดาห์นี้ได้ โดยจะไม่ส่งผลกระทบต่อสัปดาห์อื่นๆ ในเดือนนี้
+        </p>
+        <div id="weekTimeModalGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:4px;">
+        </div>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" onclick="resetWeekTimeToDefault()" style="border-color:#f59e0b; color:#b45309;">
+          🔄 คืนค่าเวลามาตรฐาน (Default)
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="closeWeekTimeModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="saveWeekTimeOverrides()">💾 บันทึกเวลาเฉพาะสัปดาห์นี้</button>
+        </div>
       </div>
     </div>
   </div>
