@@ -589,45 +589,107 @@
 
     function renderWeekdayJdEditor() {
       const container = document.getElementById("weekdayJdGrid");
+      if (!container) return;
       let html = "";
       WEEKDAY_COLUMNS.forEach((col, idx) => {
+        const roles = getShiftRoles(col);
+        const times = getShiftTimes(col);
+        const breaks = getShiftBreakTimes(col);
+        const jds = Array.isArray(col.jd) ? col.jd : [];
+
         html += `
-          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:8px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:10px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
               <div>
-                <strong style="color:var(--primary); font-size:14px;">กะที่ ${idx+1} [รหัส: ${col.code}]</strong>
+                <strong style="color:var(--primary); font-size:15px;">กะที่ ${idx + 1} [รหัส: ${col.code}]</strong>
+                <span style="font-size:12px; color:var(--secondary); margin-left:8px;">• ${col.role || roles.join(" / ")}</span>
               </div>
-              <span style="font-size:12px; color:var(--muted);">จำนวนคน: ${col.slots} คน</span>
+              <span style="font-size:12px; color:var(--muted); background:#f1f5f9; padding:2px 8px; border-radius:6px; font-weight:600;">👥 จำนวนคน: ${col.slots} คน</span>
             </div>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px;">
-              <div>
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หน้าที่งาน (Role):</label>
-                <input type="text" id="wkRole_${idx}" value="${col.role}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap:12px; margin-bottom:14px;">
+
+              <!-- 1. หน้าที่งาน (Role) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>🏷️</span> หน้าที่งาน (Role):
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('wk', 'role', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มหน้าที่</button>
+                </div>
+                <div id="wkRoleList_${idx}">
+                  ${roles.map((r, rIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="wk-role-item-${idx}" value="${escapeHtml(r)}" placeholder="ระบุหน้าที่งาน เช่น Call, ECE, Mail" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหน้าที่นี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
               </div>
-              <div>
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาเข้า-ออกงาน:</label>
-                <input type="text" id="wkTime_${idx}" value="${col.time}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+
+              <!-- 2. เวลาเข้า-ออกงาน (Working Hours) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>⏱️</span> เวลาเข้า-ออกงาน:
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('wk', 'time', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มเวลา</button>
+                </div>
+                <div id="wkTimeList_${idx}">
+                  ${times.map((t, tIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="wk-time-item-${idx}" value="${escapeHtml(t)}" placeholder="เช่น 08.00-17.00" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบเวลานี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
               </div>
-              <div>
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาพักเบรก:</label>
-                <input type="text" id="wkBreak_${idx}" value="${col.breakTime}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+
+              <!-- 3. เวลาพักเบรก (Break Times) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>☕</span> เวลาพักเบรก:
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('wk', 'break', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มเวลาพัก</button>
+                </div>
+                <div id="wkBreakList_${idx}">
+                  ${breaks.map((b, bIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="wk-break-item-${idx}" value="${escapeHtml(b)}" placeholder="เช่น พัก 13.00 น." style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบเวลาพักนี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
+                <div style="font-size:11px; color:var(--muted); margin-top:6px;">
+                  💡 สามารถเพิ่มได้มากกว่า 1 เวลา หากมีหลายคนระบบจะจัดสรรกลุ่มเวลาพักให้ตามลำดับโดยอัตโนมัติ
+                </div>
               </div>
+
             </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หัวข้อ Job Description (JD):</label>
+
+            <!-- 4. หัวข้อ Job Description (JD) -->
+            <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                  <span>📋</span> หัวข้อ Job Description (JD):
+                </label>
                 <button class="btn btn-outline btn-sm" type="button" onclick="addJdLine('wk', ${idx})" style="padding:2px 8px; font-size:11px; color:var(--primary); border-color:var(--primary);">+ เพิ่มหัวข้อ JD</button>
               </div>
               <div id="wkJdList_${idx}">
-                ${col.jd.map((line, lIdx) => `
+                ${jds.map((line, lIdx) => `
                   <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
                     <span style="color:var(--muted); font-size:12px;">•</span>
-                    <input type="text" class="wk-jd-item-${idx}" value="${line}" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
+                    <input type="text" class="wk-jd-item-${idx}" value="${escapeHtml(line)}" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
                     <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหัวข้อนี้">✕</button>
                   </div>
                 `).join("")}
               </div>
             </div>
+
           </div>
         `;
       });
@@ -636,53 +698,136 @@
 
     function renderHolidayJdEditor() {
       const container = document.getElementById("holidayJdGrid");
+      if (!container) return;
       let html = "";
       HOLIDAY_SHIFT_META.forEach((meta, idx) => {
+        const roles = getShiftRoles(meta);
+        const times = getShiftTimes(meta);
+        const breaks = getShiftBreakTimes(meta);
+        const jds = Array.isArray(meta.jd) ? meta.jd : [];
+
         html += `
-          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:8px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
-              <strong style="color:var(--primary); font-size:14px;">กะวันหยุดที่ ${idx+1} [${meta.time}]</strong>
+          <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:10px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+              <strong style="color:var(--primary); font-size:15px;">กะวันหยุดที่ ${idx + 1} [${times.join(" / ")}]</strong>
               <span class="badge badge-hol">วันหยุดพิเศษ</span>
             </div>
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:12px;">
-              <div>
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาเข้า-ออกงาน:</label>
-                <input type="text" id="holTime_${idx}" value="${meta.time}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap:12px; margin-bottom:14px;">
+
+              <!-- 1. หน้าที่งาน (Role) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>🏷️</span> ชื่อกะ / หน้าที่งาน (Role):
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('hol', 'role', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มหน้าที่</button>
+                </div>
+                <div id="holRoleList_${idx}">
+                  ${roles.map((r, rIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="hol-role-item-${idx}" value="${escapeHtml(r)}" placeholder="ระบุหน้าที่งาน" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหน้าที่นี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
               </div>
-              <div>
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">เวลาพักเบรก:</label>
-                <input type="text" id="holBreak_${idx}" value="${meta.breakTime}" style="width:100%; padding:5px 8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12.5px;">
+
+              <!-- 2. เวลาเข้า-ออกงาน (Working Hours) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>⏱️</span> เวลาเข้า-ออกงาน:
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('hol', 'time', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มเวลา</button>
+                </div>
+                <div id="holTimeList_${idx}">
+                  ${times.map((t, tIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="hol-time-item-${idx}" value="${escapeHtml(t)}" placeholder="เช่น 08.00-17.00 น." style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบเวลานี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
               </div>
+
+              <!-- 3. เวลาพักเบรก (Break Times) -->
+              <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                    <span>☕</span> เวลาพักเบรก:
+                  </label>
+                  <button class="btn btn-outline btn-sm" type="button" onclick="addShiftItem('hol', 'break', ${idx})" style="padding:2px 8px; font-size:11px; border-color:var(--primary); color:var(--primary);">+ เพิ่มเวลาพัก</button>
+                </div>
+                <div id="holBreakList_${idx}">
+                  ${breaks.map((b, bIdx) => `
+                    <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                      <span style="color:var(--muted); font-size:12px;">•</span>
+                      <input type="text" class="hol-break-item-${idx}" value="${escapeHtml(b)}" placeholder="เช่น พัก 13.30-14.30 น." style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+                      <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบเวลาพักนี้">✕</button>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+
             </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <label style="font-size:11.5px; font-weight:700; color:var(--secondary);">หัวข้อ Job Description (JD):</label>
+
+            <!-- 4. หัวข้อ Job Description (JD) -->
+            <div style="background:white; border:1px solid var(--border); border-radius:8px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label style="font-size:12px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:5px;">
+                  <span>📋</span> หัวข้อ Job Description (JD):
+                </label>
                 <button class="btn btn-outline btn-sm" type="button" onclick="addJdLine('hol', ${idx})" style="padding:2px 8px; font-size:11px; color:var(--primary); border-color:var(--primary);">+ เพิ่มหัวข้อ JD</button>
               </div>
               <div id="holJdList_${idx}">
-                ${meta.jd.map((line, lIdx) => `
+                ${jds.map((line, lIdx) => `
                   <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
                     <span style="color:var(--muted); font-size:12px;">•</span>
-                    <input type="text" class="hol-jd-item-${idx}" value="${line}" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
+                    <input type="text" class="hol-jd-item-${idx}" value="${escapeHtml(line)}" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
                     <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหัวข้อนี้">✕</button>
                   </div>
                 `).join("")}
               </div>
             </div>
+
           </div>
         `;
       });
       container.innerHTML = html;
     }
 
-    function addJdLine(type, colIdx) {
-      const container = document.getElementById(`${type}JdList_${colIdx}`);
+    function addShiftItem(type, field, colIdx) {
+      const capField = field.charAt(0).toUpperCase() + field.slice(1);
+      const container = document.getElementById(`${type}${capField}List_${colIdx}`);
+      if (!container) return;
+      const placeholders = {
+        role: "ระบุหน้าที่งาน เช่น Call, ECE, Mail",
+        time: "ระบุเวลาเข้า-ออกงาน เช่น 08.00-17.00",
+        break: "ระบุเวลาพัก เช่น พัก 12.00 น."
+      };
       const div = document.createElement("div");
       div.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px;";
       div.innerHTML = `
         <span style="color:var(--muted); font-size:12px;">•</span>
-        <input type="text" class="${type}-jd-item-${colIdx}" value="" placeholder="ระบุข้อความ JD ใหม่" style="flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; font-family:inherit;">
-        <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;">✕</button>
+        <input type="text" class="${type}-${field}-item-${colIdx}" value="" placeholder="${placeholders[field] || ''}" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+        <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบรายการนี้">✕</button>
+      `;
+      container.appendChild(div);
+      div.querySelector("input").focus();
+    }
+
+    function addJdLine(type, colIdx) {
+      const container = document.getElementById(`${type}JdList_${colIdx}`);
+      if (!container) return;
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; gap:6px; align-items:center; margin-bottom:6px;";
+      div.innerHTML = `
+        <span style="color:var(--muted); font-size:12px;">•</span>
+        <input type="text" class="${type}-jd-item-${colIdx}" value="" placeholder="ระบุข้อความ JD ใหม่" style="flex:1; padding:5px 8px; border:1px solid var(--border); border-radius:5px; font-size:12px; font-family:inherit;">
+        <button class="btn btn-outline btn-sm" type="button" onclick="this.parentElement.remove()" style="color:var(--danger); padding:2px 6px; font-size:11px;" title="ลบหัวข้อนี้">✕</button>
       `;
       container.appendChild(div);
       div.querySelector("input").focus();
@@ -690,44 +835,64 @@
 
     function saveWeekdayJdConfig() {
       WEEKDAY_COLUMNS.forEach((col, idx) => {
-        const roleInp = document.getElementById(`wkRole_${idx}`);
-        const timeInp = document.getElementById(`wkTime_${idx}`);
-        const breakInp = document.getElementById(`wkBreak_${idx}`);
-        if (roleInp) col.role = roleInp.value.trim();
-        if (timeInp) col.time = timeInp.value.trim();
-        if (breakInp) col.breakTime = breakInp.value.trim();
+        // 1. Roles
+        const roleInputs = document.querySelectorAll(`.wk-role-item-${idx}`);
+        const roles = Array.from(roleInputs).map(inp => inp.value.trim()).filter(Boolean);
+        col.roles = roles.length > 0 ? roles : [col.role || "เจ้าหน้าที่"];
+        col.role = col.roles.join(" / ");
 
+        // 2. Times
+        const timeInputs = document.querySelectorAll(`.wk-time-item-${idx}`);
+        const times = Array.from(timeInputs).map(inp => inp.value.trim()).filter(Boolean);
+        col.times = times.length > 0 ? times : [col.time || "08.00-17.00"];
+        col.time = col.times.join(" / ");
+
+        // 3. Break times
+        const breakInputs = document.querySelectorAll(`.wk-break-item-${idx}`);
+        const breaks = Array.from(breakInputs).map(inp => inp.value.trim()).filter(Boolean);
+        col.breakTimes = breaks.length > 0 ? breaks : [col.breakTime || "พัก 12.00"];
+        col.breakTime = col.breakTimes.join(" / ");
+
+        // 4. JD
         const jdInputs = document.querySelectorAll(`.wk-jd-item-${idx}`);
-        const newJd = [];
-        jdInputs.forEach(inp => {
-          const v = inp.value.trim();
-          if (v) newJd.push(v);
-        });
+        const newJd = Array.from(jdInputs).map(inp => inp.value.trim()).filter(Boolean);
         col.jd = newJd;
       });
+
       renderAllViews();
-      showToast("💾 บันทึกเวลาเข้างานและ JD วันทำการเรียบร้อยแล้ว");
-      triggerAutoSaveToCloud("บันทึกการตั้งค่า JD วันทำการ");
+      showToast("💾 บันทึกเวลาเข้างาน, เวลาพัก และ JD วันทำการเรียบร้อยแล้ว");
+      triggerAutoSaveToCloud("บันทึกการตั้งค่ากะและ JD วันทำการ");
     }
 
     function saveHolidayJdConfig() {
       HOLIDAY_SHIFT_META.forEach((meta, idx) => {
-        const timeInp = document.getElementById(`holTime_${idx}`);
-        const breakInp = document.getElementById(`holBreak_${idx}`);
-        if (timeInp) meta.time = timeInp.value.trim();
-        if (breakInp) meta.breakTime = breakInp.value.trim();
+        // 1. Roles
+        const roleInputs = document.querySelectorAll(`.hol-role-item-${idx}`);
+        const roles = Array.from(roleInputs).map(inp => inp.value.trim()).filter(Boolean);
+        meta.roles = roles.length > 0 ? roles : [meta.role || `กะวันหยุดที่ ${idx+1}`];
+        meta.role = meta.roles.join(" / ");
 
+        // 2. Times
+        const timeInputs = document.querySelectorAll(`.hol-time-item-${idx}`);
+        const times = Array.from(timeInputs).map(inp => inp.value.trim()).filter(Boolean);
+        meta.times = times.length > 0 ? times : [meta.time || "08.00-17.00"];
+        meta.time = meta.times.join(" / ");
+
+        // 3. Break times
+        const breakInputs = document.querySelectorAll(`.hol-break-item-${idx}`);
+        const breaks = Array.from(breakInputs).map(inp => inp.value.trim()).filter(Boolean);
+        meta.breakTimes = breaks.length > 0 ? breaks : [meta.breakTime || "พัก 13.00"];
+        meta.breakTime = meta.breakTimes.join(" / ");
+
+        // 4. JD
         const jdInputs = document.querySelectorAll(`.hol-jd-item-${idx}`);
-        const newJd = [];
-        jdInputs.forEach(inp => {
-          const v = inp.value.trim();
-          if (v) newJd.push(v);
-        });
+        const newJd = Array.from(jdInputs).map(inp => inp.value.trim()).filter(Boolean);
         meta.jd = newJd;
       });
+
       renderAllViews();
-      showToast("💾 บันทึกเวลาเข้างานและ JD วันหยุดเรียบร้อยแล้ว");
-      triggerAutoSaveToCloud("บันทึกการตั้งค่า JD วันหยุด");
+      showToast("💾 บันทึกเวลาเข้างาน, เวลาพัก และ JD วันหยุดเรียบร้อยแล้ว");
+      triggerAutoSaveToCloud("บันทึกการตั้งค่ากะและ JD วันหยุด");
     }
 
     function saveAgentNames() {

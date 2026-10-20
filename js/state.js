@@ -31,11 +31,35 @@
 
         // Helper to get exact slot break time for Column 10 or custom
     function getWeekdaySlotBreakTime(cIdx, sIdx, customBreak) {
-      if (customBreak) return customBreak;
-      if (cIdx === 9) {
-        return sIdx < 2 ? "พัก 13.00 น." : "พัก 13.30 น.";
+      const col = WEEKDAY_COLUMNS[cIdx];
+      const totalSlots = (col && col.slots) || 1;
+
+      if (customBreak) {
+        let customList = [];
+        if (customBreak.includes(' / ')) customList = customBreak.split(' / ').map(s => s.trim()).filter(Boolean);
+        else if (customBreak.includes('/')) customList = customBreak.split('/').map(s => s.trim()).filter(Boolean);
+        else if (customBreak.includes(',')) customList = customBreak.split(',').map(s => s.trim()).filter(Boolean);
+        else customList = [customBreak.trim()];
+
+        if (customList.length > 1 && totalSlots > 1) {
+          const slotsPerBreak = Math.ceil(totalSlots / customList.length);
+          const bIdx = Math.min(Math.floor(sIdx / slotsPerBreak), customList.length - 1);
+          return customList[bIdx];
+        }
+        return customBreak;
       }
-      return (WEEKDAY_COLUMNS[cIdx] && WEEKDAY_COLUMNS[cIdx].breakTime) || "";
+
+      if (!col) return '';
+      const breaks = getShiftBreakTimes(col);
+      if (breaks.length === 0) return col.breakTime || '';
+      if (breaks.length === 1) return breaks[0];
+
+      if (totalSlots > 1) {
+        const slotsPerBreak = Math.ceil(totalSlots / breaks.length);
+        const breakIdx = Math.min(Math.floor(sIdx / slotsPerBreak), breaks.length - 1);
+        return breaks[breakIdx];
+      }
+      return breaks.join(', ');
     }
 
     // Reconcile slot capacities (Col 3 -> 2 slots, Col 10 -> 4 slots) across all month schedules

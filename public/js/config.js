@@ -166,3 +166,49 @@
     }
 
 
+// Shift Role, Time, and Break Helpers (Supports multiple items per shift)
+function getShiftRoles(col) {
+  if (!col) return [];
+  if (Array.isArray(col.roles) && col.roles.length > 0) {
+    return col.roles.map(r => String(r).trim()).filter(Boolean);
+  }
+  if (typeof col.role === 'string' && col.role.trim()) {
+    if (col.role.includes(' / ')) return col.role.split(' / ').map(s => s.trim()).filter(Boolean);
+    return [col.role.trim()];
+  }
+  return [];
+}
+
+function getShiftTimes(col) {
+  if (!col) return [];
+  if (Array.isArray(col.times) && col.times.length > 0) {
+    return col.times.map(t => String(t).trim()).filter(Boolean);
+  }
+  if (typeof col.time === 'string' && col.time.trim()) {
+    if (col.time.includes(' / ')) return col.time.split(' / ').map(s => s.trim()).filter(Boolean);
+    return [col.time.trim()];
+  }
+  return [];
+}
+
+function getShiftBreakTimes(col) {
+  if (!col) return [];
+  if (Array.isArray(col.breakTimes) && col.breakTimes.length > 0) {
+    return col.breakTimes.map(b => String(b).trim()).filter(Boolean);
+  }
+  if (col.code === '8.3C') {
+    return ['พัก 13.00 น.', 'พัก 13.30 น.'];
+  }
+  if (typeof col.breakTime === 'string' && col.breakTime.trim()) {
+    if (col.breakTime.includes(' / ')) {
+      return col.breakTime.split(' / ').map(s => {
+        let clean = s.trim().replace(/\s*\(\d+\s*คน\)/g, '').trim();
+        if (!clean.startsWith('พัก')) clean = 'พัก ' + clean;
+        if (!clean.endsWith('น.')) clean = clean + ' น.';
+        return clean;
+      }).filter(Boolean);
+    }
+    return [col.breakTime.trim()];
+  }
+  return [];
+}
