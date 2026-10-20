@@ -2689,6 +2689,16 @@
       return `<span class="badge badge-spec">${code}</span>`;
     }
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     function formatWeekLabel(label) {
       if (!label) return "";
       return label.replace(/\s*(\(หยุด[^\)]+\))/g, '<br><span style="display:inline-block; margin-top:3px; font-size:11px; font-weight:600; color:#dc2626; line-height:1.2;">$1</span>');
