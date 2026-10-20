@@ -401,15 +401,56 @@
       white-space: nowrap;
     }
 
+    #masterWeekdayTable {
+      min-width: 1750px;
+    }
+    #masterWeekdayTable th,
+    #masterWeekdayTable td {
+      min-width: 95px;
+    }
+    #masterWeekdayTable th:first-child,
+    #masterWeekdayTable td:first-child {
+      min-width: 110px;
+    }
+
     .jd-row td {
-      font-size: 10.5px;
-      color: #475569;
+      font-size: 11px;
+      color: #334155;
       text-align: left;
       background: #f8fafc;
-      line-height: 1.45;
+      line-height: 1.5;
       padding: 6px 8px !important;
       vertical-align: top;
-      border-top: 1px dashed #e2e8f0;
+      border-top: 1px dashed #cbd5e1;
+      min-width: 105px;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      line-break: loose;
+      white-space: normal;
+    }
+
+    .jd-line-item {
+      margin-bottom: 3px;
+      line-height: 1.45;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      white-space: normal;
+    }
+    .jd-line-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .break-subgroup-pill {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #9a3412;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 4px;
+      padding: 1px 5px;
+      line-height: 1.35;
+      white-space: nowrap;
     }
 
     .wfh-bg {
@@ -1728,7 +1769,7 @@
                   <th style="width: 240px; text-align: left; padding-left: 12px;">ผู้สลับ A (ต้นทาง)</th>
                   <th style="width: 240px; text-align: left; padding-left: 12px;">สลับกับ B (ปลายทาง)</th>
                   <th style="text-align: left; padding-left: 12px;">ผลลัพธ์การสลับเวร (Work Exchange Summary)</th>
-                  <th style="width: 200px; text-align: left; padding-left: 12px;">บันทึกระบบ / หมายเหตุ</th>
+                  <th style="width: 220px; text-align: left; padding-left: 12px;">👤 ผู้ทำรายการ / บันทึกระบบ</th>
                 </tr>
               </thead>
               <tbody id="swapHistoryTableBody">
@@ -2142,14 +2183,14 @@
     let WEEKDAY_COLUMNS = [
       { id: 1, time: "07.00-16.00", breakTime: "พัก 11.00", role: "Call/ECE", code: "7C", slots: 1, wfh: false, jd: ["7.00 - 08.00 Call+ECE", "8.00 - 16.00 น. Call"] },
       { id: 2, time: "07.00-16.00", breakTime: "พัก 12.00", role: "Mail K-Helps/Self/Realtime", code: "7A", slots: 1, wfh: false, jd: ["7.00 - 08.00 Mail All", "09.00 - 16.00 Self ตู้ 0-3"] },
-      { id: 3, time: "08.00-17.00", breakTime: "พัก 11.30", role: "Call", code: "8C", slots: 3, wfh: false, jd: ["รับสาย Call 08.00 - 17.00 น."] },
+      { id: 3, time: "08.00-17.00", breakTime: "พัก 11.30", role: "Call", code: "8C", slots: 2, wfh: false, jd: ["รับสาย Call 08.00 - 17.00 น."] },
       { id: 4, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Self Service", code: "8A", slots: 1, wfh: false, jd: ["09.00 - 17.00 Self ตู้ 4-6"] },
       { id: 5, time: "08.00-17.00", breakTime: "พัก 12.00", role: "ECE", code: "8E", slots: 1, wfh: false, jd: ["ดู ECE รอบ 08.00 - 17.00 น."] },
       { id: 6, time: "08.00-17.00", breakTime: "พัก 13.00", role: "Mail K-Helps/Realtime", code: "8M", slots: 1, wfh: false, jd: ["08.00 – 17.00 น Mail All"] },
       { id: 7, time: "08.30-17.30", breakTime: "พัก 12.30", role: "Aging/16App/Follow SOS/Follow SR", code: "Agingคู่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคู่", "13.30-14.30 All"] },
       { id: 8, time: "08.30-17.30", breakTime: "พัก 13.00", role: "ECE", code: "8.3E", slots: 1, wfh: false, jd: ["ดู ECE 08.30 - 17.30 น."] },
       { id: 9, time: "08.30-17.30", breakTime: "พัก 13.30", role: "Aging/16App/Follow SOS/Follow SR", code: "Agingคี่", slots: 1, wfh: false, jd: ["08.30-12.30 นาทีคี่", "12.30-13.30 All"] },
-      { id: 10, time: "08.30-17.30", breakTime: "พัก 13.00 / 13.30", role: "Call", code: "8.3C", slots: 3, wfh: false, jd: ["รับสาย Call 08.30 - 17.30 น."] },
+      { id: 10, time: "08.30-17.30", breakTime: "พัก 13.00 (2 คน) / 13.30 (2 คน)", role: "Call", code: "8.3C", slots: 4, wfh: false, jd: ["รับสาย Call 08.30 - 17.30 น."] },
       { id: 11, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Self Service", code: "9A", slots: 1, wfh: false, jd: ["09.00-17.00 Self ตู้ 7-9"] },
       { id: 12, time: "09.00-18.00", breakTime: "พัก 14.00", role: "Call/ECE", code: "9C", slots: 1, wfh: false, jd: ["09.00-14.00 ECE", "15.00-18.00 Call"] },
       { id: 13, time: "10.00-19.00", breakTime: "พัก 13.30", role: "ECE", code: "10", slots: 1, wfh: false, jd: ["ดู ECE 10.00 - 19.00 น."] },
@@ -2159,14 +2200,14 @@
     ];
 
     let HOLIDAY_SHIFT_META = [
-      { time: "08.00-17.00 น.", breakTime: "พัก 13.30-14.30 น.", jd: ["เวลา 08.00 - 09.00 น. (All)", "เวลา 09.00 - 17.00 น. (Call+ECE)", "Monitor V2 เวลา 9.00 , 11.00 น. , 13.00 น."] },
-      { time: "09.00-18.00 น.", breakTime: "พัก 14.30-15.30 น.", jd: ["เวลา 09.00 - 10.00 น. (All)", "เวลา 10.00 - 18.00 น. (Call+ECE)", "Monitor V2 เวลา 10.00 , 12.00 , 14.00 น."] },
-      { time: "10.00-19.00 น.", breakTime: "พัก 14.00-15.00 น.", jd: ["เวลา 10.00 - 11.00 น. (All)", "เวลา 11.00 - 18.00 น. (Mail + ECE+Self+Follow PK/Console Expert)", "Monitor V2 เวลา 15.00 , 17.00 , 18.30 น.", "เวลา 18.00 น.-19.00 น. (All)"] },
-      { time: "13.30-22.30 น.", breakTime: "พัก 16.00-17.00 น.", jd: ["13.30 - 14.00 น. (Call+ECE)", "เวลา 14.00 - 15.00 (Mail + ECE+Self+Follow PK/Console Expert)", "เวลา 15.00 - 19.00 (Call+ECE)", "เวลา 19.00 (All)", "Monitor V2 เวลา 19.30 , 20.30 , 22.00 น."] }
+      { role: "เวรวันหยุด กะที่ 1", time: "08.00-17.00 น.", breakTime: "พัก 13.30-14.30 น.", jd: ["เวลา 08.00 - 09.00 น. (All)", "เวลา 09.00 - 17.00 น. (Call+ECE)", "Monitor V2 เวลา 9.00 , 11.00 น. , 13.00 น."] },
+      { role: "เวรวันหยุด กะที่ 2", time: "09.00-18.00 น.", breakTime: "พัก 14.30-15.30 น.", jd: ["เวลา 09.00 - 10.00 น. (All)", "เวลา 10.00 - 18.00 น. (Call+ECE)", "Monitor V2 เวลา 10.00 , 12.00 , 14.00 น."] },
+      { role: "เวรวันหยุด กะที่ 3", time: "10.00-19.00 น.", breakTime: "พัก 14.00-15.00 น.", jd: ["เวลา 10.00 - 11.00 น. (All)", "เวลา 11.00 - 18.00 น. (Mail + ECE+Self+Follow PK/Console Expert)", "Monitor V2 เวลา 15.00 , 17.00 , 18.30 น.", "เวลา 18.00 น.-19.00 น. (All)"] },
+      { role: "เวรวันหยุด กะที่ 4", time: "13.30-22.30 น.", breakTime: "พัก 16.00-17.00 น.", jd: ["13.30 - 14.00 น. (Call+ECE)", "เวลา 14.00 - 15.00 (Mail + ECE+Self+Follow PK/Console Expert)", "เวลา 15.00 - 19.00 (Call+ECE)", "เวลา 19.00 (All)", "Monitor V2 เวลา 19.30 , 20.30 , 22.00 น."] }
     ];
 
     // Real historical schedules for September and October
-    const HISTORICAL_SCHEDULES = {"2026-9": {"weeks": [{"label": "1 - 4 ก.ย. 69", "assignments": [["chadaporn.sa"], ["mallika.to"], ["pornpoom.t", "nutchanat.p"], ["yasumin.t"], ["pattaraporn.n"], ["kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["siriyakorn.y"], ["parinya.si", "theerawut.b", "panisara.n", "kittipa.j"], ["sawitree.ton"], ["mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["anusit.k"]]}, {"label": "7 - 11 ก.ย. 69", "assignments": [["mewika.p"], ["komkrit.pr"], ["nutchanat.p", "jutharat.ka"], ["parinya.si"], ["chadaporn.sa"], ["siriyakorn.y"], ["anusit.k"], ["pattaraporn.n"], ["theerawut.b"], ["nithus.d", "yasumin.t", "kittiyakorn.h", "pornpoom.t"], ["suriya.r"], ["sawitree.ton"], ["pantip.to"], ["panisara.n"], ["kittipa.j"], ["mallika.to"]]}, {"label": "14 - 18 ก.ย. 69", "assignments": [["pattaraporn.n"], ["nithus.d"], ["suriya.r", "sawitree.ton"], ["pantip.to"], ["panisara.n"], ["jutharat.ka"], ["nutchanat.p"], ["kittiyakorn.h"], ["mewika.p"], ["mallika.to", "chadaporn.sa", "anusit.k", "pornpoom.t"], ["kittipa.j"], ["theerawut.b"], ["siriyakorn.y"], ["yasumin.t"], ["komkrit.pr"], ["parinya.si"]]}, {"label": "21 - 25 ก.ย. 69", "assignments": [["pantip.to"], ["chadaporn.sa"], ["kittiyakorn.h", "siriyakorn.y"], ["mallika.to"], ["yasumin.t"], ["theerawut.b"], ["komkrit.pr"], ["parinya.si"], ["pattaraporn.n"], ["suriya.r", "panisara.n", "jutharat.ka", "sawitree.ton"], ["pornpoom.t"], ["nithus.d"], ["kittipa.j"], ["anusit.k"], ["mewika.p"], ["nutchanat.p"]]}, {"label": "28 - 30 ก.ย. 69", "assignments": [["yasumin.t"], ["anusit.k"], ["nutchanat.p", "pattaraporn.n"], ["kittiyakorn.h"], ["kittipa.j"], ["pantip.to"], ["panisara.n"], ["nithus.d"], ["jutharat.ka"], ["komkrit.pr", "theerawut.b", "siriyakorn.y", "mewika.p"], ["parinya.si"], ["chadaporn.sa"], ["sawitree.ton"], ["mallika.to"], ["pornpoom.t"], ["suriya.r"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "", "shifts": ["mewika.p", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 12, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 19, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-10": {"weeks": [{"label": "5 - 9 ต.ค. 69", "assignments": [["nutchanat.p"], ["jutharat.ka"], ["nithus.d", "pantip.to"], ["komkrit.pr"], ["mewika.p"], ["kittipa.j"], ["chadaporn.sa"], ["suriya.r"], ["anusit.k"], ["pattaraporn.n", "pornpoom.t", "kittiyakorn.h", "yasumin.t"], ["mallika.to"], ["panisara.n"], ["theerawut.b"], ["parinya.si"], ["sawitree.ton"], ["siriyakorn.y"]]}, {"label": "12 - 16 ต.ค. 69", "assignments": [["suriya.r"], ["pantip.to"], ["kittipa.j", "panisara.n"], ["chadaporn.sa"], ["pattaraporn.n"], ["mallika.to"], ["kittiyakorn.h"], ["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "sawitree.ton", "parinya.si", "mewika.p"], ["anusit.k"], ["komkrit.pr"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["nithus.d"]]}, {"label": "19 - 22 ต.ค. 69", "assignments": [["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "komkrit.pr"], ["mewika.p"], ["nithus.d"], ["kittiyakorn.h"], ["yasumin.t"], ["nutchanat.p"], ["pantip.to"], ["mallika.to", "suriya.r", "chadaporn.sa", "anusit.k"], ["jutharat.ka"], ["kittipa.j"], ["parinya.si"], ["pattaraporn.n"], ["panisara.n"], ["sawitree.ton"]]}, {"label": "26 - 30 ต.ค. 69", "assignments": [["mallika.to"], ["suriya.r"], ["jutharat.ka", "parinya.si"], ["nutchanat.p"], ["sawitree.ton"], ["komkrit.pr"], ["mewika.p"], ["anusit.k"], ["kittipa.j"], ["panisara.n", "nithus.d", "pornpoom.t", "kittiyakorn.h"], ["yasumin.t"], ["siriyakorn.y"], ["pattaraporn.n"], ["theerawut.b"], ["chadaporn.sa"], ["pantip.to"]]}], "holidays": [{"dayName": "เสาร์", "date": 3, "note": "", "shifts": ["pornpoom.t", "pattaraporn.n", "theerawut.b", "mewika.p"]}, {"dayName": "อาทิตย์", "date": 4, "note": "", "shifts": ["kittiyakorn.h", "siriyakorn.y", "panisara.n", "sawitree.ton"]}, {"dayName": "เสาร์", "date": 10, "note": "", "shifts": ["nutchanat.p", "nithus.d", "suriya.r", "chadaporn.sa"]}, {"dayName": "อาทิตย์", "date": 11, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "kittipa.j", "parinya.si"]}, {"dayName": "อังคาร", "date": 13, "note": "วันนวมินทรมหาราช", "isBankHoliday": true, "holidayName": "วันนวมินทรมหาราช", "shifts": ["pantip.to", "kittiyakorn.h", "mallika.to", "theerawut.b"]}, {"dayName": "เสาร์", "date": 17, "note": "", "shifts": ["jutharat.ka", "nutchanat.p", "pattaraporn.n", "panisara.n"]}, {"dayName": "อาทิตย์", "date": 18, "note": "", "shifts": ["komkrit.pr", "yasumin.t", "siriyakorn.y", "suriya.r"]}, {"dayName": "ศุกร์", "date": 23, "note": "วันปิยมหาราช", "isBankHoliday": true, "holidayName": "วันปิยมหาราช", "shifts": ["anusit.k", "pantip.to", "nithus.d", "kittipa.j"]}, {"dayName": "เสาร์", "date": 24, "note": "", "shifts": ["mewika.p", "jutharat.ka", "pornpoom.t", "mallika.to"]}, {"dayName": "อาทิตย์", "date": 25, "note": "", "shifts": ["sawitree.ton", "komkrit.pr", "kittiyakorn.h", "pattaraporn.n"]}, {"dayName": "เสาร์", "date": 31, "note": "", "shifts": ["chadaporn.sa", "anusit.k", "nutchanat.p", "siriyakorn.y"]}, {"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}]}, "2026-11": {"weeks": [{"label": "2 - 6 พ.ย. 69", "assignments": [["kittiyakorn.h"], ["panisara.n"], ["kittipa.j", "pattaraporn.n", "komkrit.pr"], ["anusit.k"], ["mewika.p"], ["pornpoom.t"], ["nithus.d"], ["sawitree.ton"], ["parinya.si"], ["mallika.to", "suriya.r", "siriyakorn.y"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["pantip.to"], ["theerawut.b"], ["chadaporn.sa"]]}, {"label": "9 - 13 พ.ย. 69", "assignments": [["sawitree.ton"], ["nutchanat.p"], ["parinya.si", "suriya.r", "pantip.to"], ["nithus.d"], ["theerawut.b"], ["mewika.p"], ["siriyakorn.y"], ["yasumin.t"], ["panisara.n"], ["chadaporn.sa", "jutharat.ka", "pornpoom.t"], ["pattaraporn.n"], ["anusit.k"], ["mallika.to"], ["komkrit.pr"], ["kittiyakorn.h"], ["kittipa.j"]]}, {"label": "16 - 20 พ.ย. 69", "assignments": [["anusit.k"], ["theerawut.b"], ["kittipa.j", "panisara.n", "yasumin.t"], ["siriyakorn.y"], ["kittiyakorn.h"], ["pattaraporn.n"], ["sawitree.ton"], ["pornpoom.t"], ["chadaporn.sa"], ["komkrit.pr", "mallika.to", "pantip.to"], ["mewika.p"], ["parinya.si"], ["suriya.r"], ["nithus.d"], ["nutchanat.p"], ["jutharat.ka"]]}, {"label": "23 - 27 พ.ย. 69", "assignments": [["jutharat.ka"], ["pattaraporn.n"], ["mallika.to", "nithus.d", "pantip.to"], ["panisara.n"], ["anusit.k"], ["parinya.si"], ["kittipa.j"], ["mewika.p"], ["nutchanat.p"], ["kittiyakorn.h", "yasumin.t", "komkrit.pr"], ["chadaporn.sa"], ["suriya.r"], ["pornpoom.t"], ["sawitree.ton"], ["siriyakorn.y"], ["theerawut.b"]]}, {"label": "30 พ.ย. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}], "holidays": [{"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}, {"dayName": "เสาร์", "date": 7, "note": "", "shifts": ["theerawut.b", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 8, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 14, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 15, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 21, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 22, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 28, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 29, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-12": {"weeks": [{"label": "1 - 4 ธ.ค. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h", "mewika.p"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}, {"label": "8 - 11 ธ.ค. 69 (หยุด 7, 10 ธ.ค.)", "assignments": [["pornpoom.t"], ["kittipa.j"], ["yasumin.t", "siriyakorn.y", "pantip.to"], ["sawitree.ton"], ["parinya.si"], ["nithus.d"], ["jutharat.ka"], ["theerawut.b"], ["suriya.r"], ["chadaporn.sa", "panisara.n", "mewika.p"], ["komkrit.pr"], ["mallika.to"], ["anusit.k"], ["nutchanat.p"], ["pattaraporn.n"], ["kittiyakorn.h"]]}, {"label": "14 - 18 ธ.ค. 69", "assignments": [["kittipa.j"], ["yasumin.t"], ["jutharat.ka", "theerawut.b", "mewika.p"], ["pornpoom.t"], ["suriya.r"], ["anusit.k"], ["pantip.to"], ["mallika.to"], ["komkrit.pr"], ["nutchanat.p", "nithus.d", "sawitree.ton"], ["siriyakorn.y"], ["pattaraporn.n"], ["chadaporn.sa"], ["kittiyakorn.h"], ["parinya.si"], ["panisara.n"]]}, {"label": "21 - 25 ธ.ค. 69", "assignments": [["parinya.si"], ["siriyakorn.y"], ["mallika.to", "nutchanat.p", "suriya.r"], ["theerawut.b"], ["jutharat.ka"], ["sawitree.ton"], ["pattaraporn.n"], ["komkrit.pr"], ["kittipa.j"], ["panisara.n", "yasumin.t", "anusit.k"], ["kittiyakorn.h"], ["pornpoom.t"], ["nithus.d"], ["chadaporn.sa"], ["pantip.to"], ["mewika.p"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "วันพ่อแห่งชาติ / วันชาติ", "isBankHoliday": true, "holidayName": "วันพ่อแห่งชาติ / วันชาติ", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["pantip.to", "siriyakorn.y", "sawitree.ton", "komkrit.pr"]}, {"dayName": "จันทร์", "date": 7, "note": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "isBankHoliday": true, "holidayName": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "shifts": ["jutharat.ka", "mallika.to", "kittipa.j", "anusit.k"]}, {"dayName": "พฤหัสบดี", "date": 10, "note": "วันรัฐธรรมนูญ", "isBankHoliday": true, "holidayName": "วันรัฐธรรมนูญ", "shifts": ["pornpoom.t", "mewika.p", "yasumin.t", "parinya.si"]}, {"dayName": "เสาร์", "date": 12, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["nithus.d", "suriya.r", "chadaporn.sa", "pattaraporn.n"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["theerawut.b", "kittiyakorn.h", "panisara.n", "nutchanat.p"]}, {"dayName": "เสาร์", "date": 19, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["sawitree.ton", "pantip.to", "siriyakorn.y", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["kittipa.j", "jutharat.ka", "mallika.to", "anusit.k"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "mewika.p", "parinya.si"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["chadaporn.sa", "nithus.d", "suriya.r", "pattaraporn.n"]}, {"dayName": "พฤหัสบดี", "date": 31, "note": "วันสิ้นปี", "isBankHoliday": true, "holidayName": "วันสิ้นปี", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}]}};
+    const HISTORICAL_SCHEDULES = {"2026-9": {"weeks": [{"label": "1 - 4 ก.ย. 69", "assignments": [["chadaporn.sa"], ["mallika.to"], ["pornpoom.t", "nutchanat.p"], ["yasumin.t"], ["pattaraporn.n"], ["kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["siriyakorn.y"], ["parinya.si", "theerawut.b", "panisara.n", "kittipa.j"], ["sawitree.ton"], ["mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["anusit.k"]]}, {"label": "7 - 11 ก.ย. 69", "assignments": [["mewika.p"], ["komkrit.pr"], ["nutchanat.p", "jutharat.ka"], ["parinya.si"], ["chadaporn.sa"], ["siriyakorn.y"], ["anusit.k"], ["pattaraporn.n"], ["theerawut.b"], ["nithus.d", "yasumin.t", "kittiyakorn.h", "pornpoom.t"], ["suriya.r"], ["sawitree.ton"], ["pantip.to"], ["panisara.n"], ["kittipa.j"], ["mallika.to"]]}, {"label": "14 - 18 ก.ย. 69", "assignments": [["pattaraporn.n"], ["nithus.d"], ["suriya.r", "sawitree.ton"], ["pantip.to"], ["panisara.n"], ["jutharat.ka"], ["nutchanat.p"], ["kittiyakorn.h"], ["mewika.p"], ["mallika.to", "chadaporn.sa", "anusit.k", "pornpoom.t"], ["kittipa.j"], ["theerawut.b"], ["siriyakorn.y"], ["yasumin.t"], ["komkrit.pr"], ["parinya.si"]]}, {"label": "21 - 25 ก.ย. 69", "assignments": [["pantip.to"], ["chadaporn.sa"], ["kittiyakorn.h", "siriyakorn.y"], ["mallika.to"], ["yasumin.t"], ["theerawut.b"], ["komkrit.pr"], ["parinya.si"], ["pattaraporn.n"], ["suriya.r", "panisara.n", "jutharat.ka", "sawitree.ton"], ["pornpoom.t"], ["nithus.d"], ["kittipa.j"], ["anusit.k"], ["mewika.p"], ["nutchanat.p"]]}, {"label": "28 - 30 ก.ย. 69", "assignments": [["yasumin.t"], ["anusit.k"], ["nutchanat.p", "pattaraporn.n"], ["kittiyakorn.h"], ["kittipa.j"], ["pantip.to"], ["panisara.n"], ["nithus.d"], ["jutharat.ka"], ["komkrit.pr", "theerawut.b", "siriyakorn.y", "mewika.p"], ["parinya.si"], ["chadaporn.sa"], ["sawitree.ton"], ["mallika.to"], ["pornpoom.t"], ["suriya.r"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "", "shifts": ["mewika.p", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 12, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 19, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-10": {"weeks": [{"label": "5 - 9 ต.ค. 69", "assignments": [["nutchanat.p"], ["jutharat.ka"], ["nithus.d", "pantip.to"], ["komkrit.pr"], ["mewika.p"], ["kittipa.j"], ["chadaporn.sa"], ["suriya.r"], ["anusit.k"], ["pattaraporn.n", "pornpoom.t", "kittiyakorn.h", "yasumin.t"], ["mallika.to"], ["panisara.n"], ["theerawut.b"], ["parinya.si"], ["sawitree.ton"], ["siriyakorn.y"]]}, {"label": "12 - 16 ต.ค. 69", "assignments": [["suriya.r"], ["pantip.to"], ["kittipa.j", "panisara.n"], ["chadaporn.sa"], ["pattaraporn.n"], ["mallika.to"], ["kittiyakorn.h"], ["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "sawitree.ton", "parinya.si", "mewika.p"], ["anusit.k"], ["komkrit.pr"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["nithus.d"]]}, {"label": "19 - 22 ต.ค. 69", "assignments": [["siriyakorn.y"], ["pornpoom.t"], ["theerawut.b", "komkrit.pr"], ["mewika.p"], ["nithus.d"], ["kittiyakorn.h"], ["yasumin.t"], ["nutchanat.p"], ["pantip.to"], ["mallika.to", "suriya.r", "chadaporn.sa", "anusit.k"], ["jutharat.ka"], ["kittipa.j"], ["parinya.si"], ["pattaraporn.n"], ["panisara.n"], ["sawitree.ton"]]}, {"label": "26 - 30 ต.ค. 69", "assignments": [["mallika.to"], ["suriya.r"], ["jutharat.ka", "parinya.si"], ["nutchanat.p"], ["sawitree.ton"], ["komkrit.pr"], ["mewika.p"], ["anusit.k"], ["kittipa.j"], ["panisara.n", "nithus.d", "pornpoom.t", "kittiyakorn.h"], ["yasumin.t"], ["siriyakorn.y"], ["pattaraporn.n"], ["theerawut.b"], ["chadaporn.sa"], ["pantip.to"]]}], "holidays": [{"dayName": "เสาร์", "date": 3, "note": "", "shifts": ["pornpoom.t", "pattaraporn.n", "theerawut.b", "mewika.p"]}, {"dayName": "อาทิตย์", "date": 4, "note": "", "shifts": ["kittiyakorn.h", "siriyakorn.y", "panisara.n", "sawitree.ton"]}, {"dayName": "เสาร์", "date": 10, "note": "", "shifts": ["nutchanat.p", "nithus.d", "suriya.r", "chadaporn.sa"]}, {"dayName": "อาทิตย์", "date": 11, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "kittipa.j", "parinya.si"]}, {"dayName": "อังคาร", "date": 13, "note": "วันนวมินทรมหาราช", "isBankHoliday": true, "holidayName": "วันนวมินทรมหาราช", "shifts": ["pantip.to", "kittiyakorn.h", "mallika.to", "theerawut.b"]}, {"dayName": "เสาร์", "date": 17, "note": "", "shifts": ["jutharat.ka", "nutchanat.p", "pattaraporn.n", "panisara.n"]}, {"dayName": "อาทิตย์", "date": 18, "note": "", "shifts": ["komkrit.pr", "yasumin.t", "siriyakorn.y", "suriya.r"]}, {"dayName": "ศุกร์", "date": 23, "note": "วันปิยมหาราช", "isBankHoliday": true, "holidayName": "วันปิยมหาราช", "shifts": ["anusit.k", "pantip.to", "nithus.d", "kittipa.j"]}, {"dayName": "เสาร์", "date": 24, "note": "", "shifts": ["mewika.p", "jutharat.ka", "pornpoom.t", "mallika.to"]}, {"dayName": "อาทิตย์", "date": 25, "note": "", "shifts": ["sawitree.ton", "komkrit.pr", "kittiyakorn.h", "pattaraporn.n"]}, {"dayName": "เสาร์", "date": 31, "note": "", "shifts": ["chadaporn.sa", "anusit.k", "nutchanat.p", "siriyakorn.y"]}, {"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}]}, "2026-11": {"weeks": [{"label": "2 - 6 พ.ย. 69", "assignments": [["kittiyakorn.h"], ["panisara.n"], ["kittipa.j", "pattaraporn.n"], ["anusit.k"], ["mewika.p"], ["pornpoom.t"], ["nithus.d"], ["sawitree.ton"], ["parinya.si"], ["mallika.to", "suriya.r", "siriyakorn.y", "komkrit.pr"], ["nutchanat.p"], ["jutharat.ka"], ["yasumin.t"], ["pantip.to"], ["theerawut.b"], ["chadaporn.sa"]]}, {"label": "9 - 13 พ.ย. 69", "assignments": [["sawitree.ton"], ["nutchanat.p"], ["parinya.si", "suriya.r"], ["nithus.d"], ["theerawut.b"], ["mewika.p"], ["siriyakorn.y"], ["yasumin.t"], ["panisara.n"], ["chadaporn.sa", "jutharat.ka", "pornpoom.t", "pantip.to"], ["pattaraporn.n"], ["anusit.k"], ["mallika.to"], ["komkrit.pr"], ["kittiyakorn.h"], ["kittipa.j"]]}, {"label": "16 - 20 พ.ย. 69", "assignments": [["anusit.k"], ["theerawut.b"], ["kittipa.j", "panisara.n"], ["siriyakorn.y"], ["kittiyakorn.h"], ["pattaraporn.n"], ["sawitree.ton"], ["pornpoom.t"], ["chadaporn.sa"], ["komkrit.pr", "mallika.to", "pantip.to", "yasumin.t"], ["mewika.p"], ["parinya.si"], ["suriya.r"], ["nithus.d"], ["nutchanat.p"], ["jutharat.ka"]]}, {"label": "23 - 27 พ.ย. 69", "assignments": [["jutharat.ka"], ["pattaraporn.n"], ["mallika.to", "nithus.d"], ["panisara.n"], ["anusit.k"], ["parinya.si"], ["kittipa.j"], ["mewika.p"], ["nutchanat.p"], ["kittiyakorn.h", "yasumin.t", "komkrit.pr", "pantip.to"], ["chadaporn.sa"], ["suriya.r"], ["pornpoom.t"], ["sawitree.ton"], ["siriyakorn.y"], ["theerawut.b"]]}, {"label": "30 พ.ย. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y", "mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}], "holidays": [{"dayName": "อาทิตย์", "date": 1, "note": "", "shifts": ["parinya.si", "mewika.p", "yasumin.t", "nithus.d"]}, {"dayName": "เสาร์", "date": 7, "note": "", "shifts": ["theerawut.b", "sawitree.ton", "pantip.to", "pornpoom.t"]}, {"dayName": "อาทิตย์", "date": 8, "note": "", "shifts": ["panisara.n", "chadaporn.sa", "jutharat.ka", "kittiyakorn.h"]}, {"dayName": "เสาร์", "date": 14, "note": "", "shifts": ["suriya.r", "parinya.si", "komkrit.pr", "nutchanat.p"]}, {"dayName": "อาทิตย์", "date": 15, "note": "", "shifts": ["kittipa.j", "theerawut.b", "anusit.k", "yasumin.t"]}, {"dayName": "เสาร์", "date": 21, "note": "", "shifts": ["mallika.to", "panisara.n", "mewika.p", "pantip.to"]}, {"dayName": "อาทิตย์", "date": 22, "note": "", "shifts": ["pattaraporn.n", "suriya.r", "sawitree.ton", "jutharat.ka"]}, {"dayName": "เสาร์", "date": 28, "note": "", "shifts": ["siriyakorn.y", "kittipa.j", "chadaporn.sa", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 29, "note": "", "shifts": ["nithus.d", "mallika.to", "parinya.si", "anusit.k"]}]}, "2026-12": {"weeks": [{"label": "1 - 4 ธ.ค. 69", "assignments": [["panisara.n"], ["sawitree.ton"], ["theerawut.b", "kittiyakorn.h"], ["suriya.r"], ["komkrit.pr"], ["nutchanat.p"], ["mallika.to"], ["chadaporn.sa"], ["yasumin.t"], ["pattaraporn.n", "parinya.si", "siriyakorn.y", "mewika.p"], ["nithus.d"], ["pantip.to"], ["jutharat.ka"], ["kittipa.j"], ["anusit.k"], ["pornpoom.t"]]}, {"label": "8 - 11 ธ.ค. 69 (หยุด 7, 10 ธ.ค.)", "assignments": [["pornpoom.t"], ["kittipa.j"], ["yasumin.t", "siriyakorn.y"], ["sawitree.ton"], ["parinya.si"], ["nithus.d"], ["jutharat.ka"], ["theerawut.b"], ["suriya.r"], ["chadaporn.sa", "panisara.n", "mewika.p", "pantip.to"], ["komkrit.pr"], ["mallika.to"], ["anusit.k"], ["nutchanat.p"], ["pattaraporn.n"], ["kittiyakorn.h"]]}, {"label": "14 - 18 ธ.ค. 69", "assignments": [["kittipa.j"], ["yasumin.t"], ["jutharat.ka", "theerawut.b"], ["pornpoom.t"], ["suriya.r"], ["anusit.k"], ["pantip.to"], ["mallika.to"], ["komkrit.pr"], ["nutchanat.p", "nithus.d", "sawitree.ton", "mewika.p"], ["siriyakorn.y"], ["pattaraporn.n"], ["chadaporn.sa"], ["kittiyakorn.h"], ["parinya.si"], ["panisara.n"]]}, {"label": "21 - 25 ธ.ค. 69", "assignments": [["parinya.si"], ["siriyakorn.y"], ["mallika.to", "nutchanat.p"], ["theerawut.b"], ["jutharat.ka"], ["sawitree.ton"], ["pattaraporn.n"], ["komkrit.pr"], ["kittipa.j"], ["panisara.n", "yasumin.t", "anusit.k", "suriya.r"], ["kittiyakorn.h"], ["pornpoom.t"], ["nithus.d"], ["chadaporn.sa"], ["pantip.to"], ["mewika.p"]]}], "holidays": [{"dayName": "เสาร์", "date": 5, "note": "วันพ่อแห่งชาติ / วันชาติ", "isBankHoliday": true, "holidayName": "วันพ่อแห่งชาติ / วันชาติ", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}, {"dayName": "อาทิตย์", "date": 6, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["pantip.to", "siriyakorn.y", "sawitree.ton", "komkrit.pr"]}, {"dayName": "จันทร์", "date": 7, "note": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "isBankHoliday": true, "holidayName": "ชดเชยวันพ่อแห่งชาติ (5 ธ.ค.)", "shifts": ["jutharat.ka", "mallika.to", "kittipa.j", "anusit.k"]}, {"dayName": "พฤหัสบดี", "date": 10, "note": "วันรัฐธรรมนูญ", "isBankHoliday": true, "holidayName": "วันรัฐธรรมนูญ", "shifts": ["pornpoom.t", "mewika.p", "yasumin.t", "parinya.si"]}, {"dayName": "เสาร์", "date": 12, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["nithus.d", "suriya.r", "chadaporn.sa", "pattaraporn.n"]}, {"dayName": "อาทิตย์", "date": 13, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["theerawut.b", "kittiyakorn.h", "panisara.n", "nutchanat.p"]}, {"dayName": "เสาร์", "date": 19, "note": "", "isBankHoliday": false, "holidayName": "", "shifts": ["sawitree.ton", "pantip.to", "siriyakorn.y", "komkrit.pr"]}, {"dayName": "อาทิตย์", "date": 20, "note": "", "shifts": ["kittipa.j", "jutharat.ka", "mallika.to", "anusit.k"]}, {"dayName": "เสาร์", "date": 26, "note": "", "shifts": ["yasumin.t", "pornpoom.t", "mewika.p", "parinya.si"]}, {"dayName": "อาทิตย์", "date": 27, "note": "", "shifts": ["chadaporn.sa", "nithus.d", "suriya.r", "pattaraporn.n"]}, {"dayName": "พฤหัสบดี", "date": 31, "note": "วันสิ้นปี", "isBankHoliday": true, "holidayName": "วันสิ้นปี", "shifts": ["kittiyakorn.h", "panisara.n", "nutchanat.p", "theerawut.b"]}]}};
 
     const BASE_ROTATION_ORDER_INDICES = [12, 9, 2, 6, 18, 1, 4, 0, 5, 11, 10, 15, 16, 17, 19, 14, 13, 7, 3, 8];
 
@@ -2190,6 +2231,69 @@
     const THAI_MONTHS = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
     const THAI_MONTHS_SHORT = ["", "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     const THAI_DAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+        // Helper to get exact slot break time for Column 10 or custom
+    function getWeekdaySlotBreakTime(cIdx, sIdx, customBreak) {
+      if (customBreak) return customBreak;
+      if (cIdx === 9) {
+        return sIdx < 2 ? "พัก 13.00 น." : "พัก 13.30 น.";
+      }
+      return (WEEKDAY_COLUMNS[cIdx] && WEEKDAY_COLUMNS[cIdx].breakTime) || "";
+    }
+
+    // Reconcile slot capacities (Col 3 -> 2 slots, Col 10 -> 4 slots) across all month schedules
+    function reconcileSlotCapacities() {
+      if (WEEKDAY_COLUMNS[2]) WEEKDAY_COLUMNS[2].slots = 2;
+      if (WEEKDAY_COLUMNS[9]) {
+        WEEKDAY_COLUMNS[9].slots = 4;
+        WEEKDAY_COLUMNS[9].breakTime = "พัก 13.00 (2 คน) / 13.30 (2 คน)";
+      }
+      if (Array.isArray(HOLIDAY_SHIFT_META)) {
+        HOLIDAY_SHIFT_META.forEach((m, idx) => {
+          if (!m.role || m.role === "undefined") m.role = `เวรวันหยุด กะที่ ${idx + 1}`;
+        });
+      }
+
+      Object.keys(monthSchedules).forEach(k => {
+        const data = monthSchedules[k];
+        if (!data) return;
+        [data.schedule, data.originalSchedule].forEach(sch => {
+          if (!sch || !Array.isArray(sch.weeks)) return;
+          sch.weeks.forEach(w => {
+            if (!Array.isArray(w.assignments)) return;
+            while (w.assignments[2] && w.assignments[2].length > 2 && w.assignments[9] && w.assignments[9].length < 4) {
+              const moved = w.assignments[2].pop();
+              w.assignments[9].push(moved);
+            }
+          });
+        });
+      });
+    }
+
+    // Clean up undefined strings and ensure performedBy is set on past swap records
+    function sanitizeSwapHistory() {
+      Object.keys(monthSchedules).forEach(k => {
+        const data = monthSchedules[k];
+        if (!data || !Array.isArray(data.swapHistory)) return;
+        data.swapHistory.forEach(item => {
+          if (!item) return;
+          if (item.agentA) {
+            if (!item.agentA.role || item.agentA.role === "undefined") item.agentA.role = "เวรวันหยุด";
+            if (typeof item.agentA.desc === "string") item.agentA.desc = item.agentA.desc.replace(/undefined/g, "เวรวันหยุด");
+          }
+          if (item.agentB) {
+            if (!item.agentB.role || item.agentB.role === "undefined") item.agentB.role = "เวรวันหยุด";
+            if (typeof item.agentB.desc === "string") item.agentB.desc = item.agentB.desc.replace(/undefined/g, "เวรวันหยุด");
+          }
+          if (typeof item.summaryAtoB === "string") item.summaryAtoB = item.summaryAtoB.replace(/undefined/g, "เวรวันหยุด");
+          if (typeof item.summaryBtoA === "string") item.summaryBtoA = item.summaryBtoA.replace(/undefined/g, "เวรวันหยุด");
+          if (typeof item.detail === "string") item.detail = item.detail.replace(/undefined/g, "เวรวันหยุด");
+          if (!item.performedBy) {
+            item.performedBy = (item.agentA && item.agentA.username) ? `${item.agentA.username} (ผู้สลับ)` : "ผู้ใช้งานในระบบ";
+          }
+        });
+      });
+    }
 
     // =========================================================================
     // MONGODB ATLAS CLOUD SYNC ENGINE
@@ -2286,6 +2390,9 @@
             currentSchedule = curData.schedule;
             originalSchedule = curData.originalSchedule;
             swapHistory = curData.swapHistory || [];
+
+            reconcileSlotCapacities();
+            sanitizeSwapHistory();
 
             renderAgentsEditor();
             renderWeekdayJdEditor();
@@ -2453,6 +2560,8 @@
       currentSchedule = curData.schedule;
       originalSchedule = curData.originalSchedule;
       swapHistory = curData.swapHistory || [];
+      reconcileSlotCapacities();
+      sanitizeSwapHistory();
       currentlyLoadedMonthKey = `${yearAD}-${month}`;
 
       updateAdminModeUI();
@@ -2908,17 +3017,30 @@
         ? col.jd.map(item => `<li>${item}</li>`).join("")
         : `<li>ปฏิบัติหน้าที่ตามที่ได้รับมอบหมาย</li>`;
 
+      let breakDisplayHtml = `<span>☕ เวลาพัก: ${breakTime}</span>`;
+      let agentDisplayHtml = `<strong>👤 ผู้ปฏิบัติงาน:</strong> ${agentNames}`;
+      if (cIdx === 9 && assigned.length >= 3) {
+        breakDisplayHtml = `<span>☕ เวลาพัก: <strong style="color:#fde047;">พัก 13.00 น.</strong> (คนที่ 1-2) / <strong style="color:#fed7aa;">พัก 13.30 น.</strong> (คนที่ 3-4)</span>`;
+        const p1Names = assigned.slice(0, 2).map(a => `${a}${AGENT_NAME_MAP[a] ? ` (${AGENT_NAME_MAP[a]})` : ''}`).join(", ");
+        const p2Names = assigned.slice(2).map(a => `${a}${AGENT_NAME_MAP[a] ? ` (${AGENT_NAME_MAP[a]})` : ''}`).join(", ");
+        agentDisplayHtml = `
+          <strong>👤 ผู้ปฏิบัติงาน (แยกกลุ่มเวลาพัก):</strong>
+          <div style="margin-top:2px; font-size:11.5px;">• ☕ <strong>พัก 13.00 น.:</strong> ${p1Names || '-'}</div>
+          <div style="margin-top:2px; font-size:11.5px;">• ☕ <strong>พัก 13.30 น.:</strong> ${p2Names || '-'}</div>
+        `;
+      }
+
       el.innerHTML = `
         <div class="jd-tip-header">
           <span class="jd-tip-title">ช่องที่ ${cIdx + 1} (${col.code}) • ${col.role}</span>
           <span class="jd-tip-time">${shiftTime}</span>
         </div>
         <div class="jd-tip-role">
-          <span>☕ เวลาพัก: ${breakTime}</span>
+          ${breakDisplayHtml}
           ${isCustomTime ? `<span style="color:#fdba74; font-size:10px; margin-left:6px; font-weight:700;">(⚡ เวลาเฉพาะสัปดาห์นี้)</span>` : ''}
         </div>
         <div class="jd-tip-agent">
-          <strong>👤 ผู้ปฏิบัติงาน:</strong> ${agentNames}
+          ${agentDisplayHtml}
         </div>
         ${leaveInfos.length > 0 ? `<div class="jd-tip-leave">${leaveInfos.join("<br>")}</div>` : ''}
         <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:4px; text-transform:uppercase;">ภาระหน้าที่ (Job Description):</div>
@@ -3327,12 +3449,13 @@
               const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
               const lKey = `W_${matchedWIdx}_${cIdx}_${sIdx}`;
               const leave = leaves[lKey];
+              const slotBreak = (cIdx === 9) ? (sIdx < 2 ? " [พัก 13.00 น.]" : " [พัก 13.30 น.]") : "";
 
               if (leave) {
-                text += `• ช่อง ${col.code}: ${ag}${thName} | ${col.role} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n`;
-                weekdayLeaves.push(`ช่อง ${col.code}: ${ag}${thName} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
+                text += `• ช่อง ${col.code}: ${ag}${thName}${slotBreak} | ${col.role} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n`;
+                weekdayLeaves.push(`ช่อง ${col.code}: ${ag}${thName}${slotBreak} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
               } else {
-                text += `• ช่อง ${col.code}: ${ag}${thName} | ${col.role}\n`;
+                text += `• ช่อง ${col.code}: ${ag}${thName}${slotBreak} | ${col.role}\n`;
               }
             });
           });
@@ -3397,7 +3520,12 @@
             ${WEEKDAY_COLUMNS.map(c => `<th>${c.time}</th>`).join("")}
           </tr>
           <tr>
-            ${WEEKDAY_COLUMNS.map(c => `<th>${c.breakTime}</th>`).join("")}
+            ${WEEKDAY_COLUMNS.map((c, idx) => {
+              if (idx === 9) {
+                return `<th style="line-height:1.25; font-size:10.5px; padding: 4px 2px;"><span style="color:#b45309;">พัก 13.00 (2 คน)</span><br><span style="color:#d97706;">พัก 13.30 (2 คน)</span></th>`;
+              }
+              return `<th>${c.breakTime}</th>`;
+            }).join("")}
           </tr>
           <tr>
             ${WEEKDAY_COLUMNS.map(c => `<th>${c.role}</th>`).join("")}
@@ -3436,7 +3564,7 @@
             cellCustomBadge = `<div class="week-custom-badge" style="margin-bottom:4px; display:block;">⏱️ ${shiftTime}</div>`;
           }
 
-          const tagsHTML = names.map((n, sIdx) => {
+          const renderSingleSlotTag = (n, sIdx) => {
             if (!n) return "-";
             const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
             const isSelected = pendingSwapSlot && pendingSwapSlot.yearAD === yearAD && pendingSwapSlot.month === month && pendingSwapSlot.type === "WEEKDAY" && pendingSwapSlot.wIdx === wIdx && pendingSwapSlot.cIdx === cIdx && pendingSwapSlot.sIdx === sIdx ? "selected-for-swap" : "";
@@ -3469,14 +3597,29 @@
             }
             
             const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
-            let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
-            if (isViewingOriginal) tagTitle = "ตารางต้นฉบับ (โหมดดู)";
-            else if (isLockedForUser) tagTitle = "🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)";
-            else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
+            const slotBreakLabel = (cIdx === 9) ? ` (พัก ${sIdx < 2 ? '13.00' : '13.30'} น.)` : "";
+            let tagTitle = `คลิกเพื่อสลับเวร${thName}${slotBreakLabel}`;
+            if (isViewingOriginal) tagTitle = `ตารางต้นฉบับ (โหมดดู)${slotBreakLabel}`;
+            else if (isLockedForUser) tagTitle = `🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)${slotBreakLabel}`;
+            else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName}${slotBreakLabel} (คลิกเพื่อสลับต่อได้)`;
 
             const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
             return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</div>`;
-          }).join("");
+          };
+
+          let tagsHTML = "";
+          if (cIdx === 9 && names.length >= 3) {
+            const part1 = names.slice(0, 2).map((n, i) => renderSingleSlotTag(n, i)).join("");
+            const part2 = names.slice(2).map((n, i) => renderSingleSlotTag(n, i + 2)).join("");
+            tagsHTML = `
+              <div style="margin-bottom:2px;"><span class="break-subgroup-pill">☕ พัก 13.00</span></div>
+              ${part1}
+              <div style="margin-top:4px; margin-bottom:2px;"><span class="break-subgroup-pill">☕ พัก 13.30</span></div>
+              ${part2}
+            `;
+          } else {
+            tagsHTML = names.map((n, sIdx) => renderSingleSlotTag(n, sIdx)).join("");
+          }
 
           html += `<td onmouseenter="showJdTooltip(event, ${wIdx}, ${cIdx})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()">${cellCustomBadge}${tagsHTML || "-"}</td>`;
         });
@@ -3485,7 +3628,15 @@
         if (showJD) {
           html += `<tr class="jd-row">`;
           WEEKDAY_COLUMNS.forEach(col => {
-            html += `<td>${col.jd.map(l => `• ${l}`).join("<br>")}</td>`;
+            const formattedLines = col.jd.map(l => {
+              const cleanL = escapeHtml(l)
+                .replace(/(\d{1,2}\.\d{2})\s+น\./g, '$1&nbsp;น.')
+                .replace(/\s+น\./g, '&nbsp;น.')
+                .replace(/นาที\s+คู่/g, 'นาทีคู่')
+                .replace(/นาที\s+คี่/g, 'นาทีคี่');
+              return `<div class="jd-line-item">• ${cleanL}</div>`;
+            }).join("");
+            html += `<td>${formattedLines}</td>`;
           });
           html += `</tr>`;
         }
@@ -3696,9 +3847,9 @@
         descA = `${periodA} • ${roleA} [${timeA}]`;
       } else {
         const hA = mDataA.schedule.holidays[slotA.hIdx];
-        const metaA = HOLIDAY_SHIFT_META[slotA.sIdx];
-        roleA = metaA.role;
-        timeA = metaA.time;
+        const metaA = HOLIDAY_SHIFT_META[slotA.sIdx] || {};
+        roleA = (metaA && metaA.role) ? metaA.role : `เวรวันหยุด กะที่ ${slotA.sIdx + 1}`;
+        timeA = (metaA && metaA.time) ? metaA.time : "09.00-18.00 น.";
         periodA = `${hA.dayName} ${hA.date} ${THAI_MONTHS_SHORT[slotA.month] || ''}`;
         descA = `วันหยุด ${periodA} • ${roleA} [${timeA}]`;
       }
@@ -3716,11 +3867,20 @@
         descB = `${periodB} • ${roleB} [${timeB}]`;
       } else {
         const hB = mDataB.schedule.holidays[slotB.hIdx];
-        const metaB = HOLIDAY_SHIFT_META[slotB.sIdx];
-        roleB = metaB.role;
-        timeB = metaB.time;
+        const metaB = HOLIDAY_SHIFT_META[slotB.sIdx] || {};
+        roleB = (metaB && metaB.role) ? metaB.role : `เวรวันหยุด กะที่ ${slotB.sIdx + 1}`;
+        timeB = (metaB && metaB.time) ? metaB.time : "09.00-18.00 น.";
         periodB = `${hB.dayName} ${hB.date} ${THAI_MONTHS_SHORT[slotB.month] || ''}`;
         descB = `วันหยุด ${periodB} • ${roleB} [${timeB}]`;
+      }
+
+      let performedBy = "ผู้ใช้งานในระบบ";
+      if (isAdminMode) {
+        performedBy = "หัวหน้างาน (Admin)";
+      } else if (highlightedAgent && highlightedAgent !== "ALL") {
+        performedBy = `${highlightedAgent} (ผู้ใช้งาน)`;
+      } else if (nameA) {
+        performedBy = `${nameA} (ผู้สลับคนแรก)`;
       }
 
       const thNameA = AGENT_NAME_MAP[nameA] || nameA;
@@ -3733,6 +3893,7 @@
         timeStr: timeStr,
         timestamp: now.toISOString(),
         swapTag: swapTag,
+        performedBy: performedBy,
         yearAD_A: slotA.yearAD,
         month_A: slotA.month,
         yearAD_B: slotB.yearAD,
@@ -3953,8 +4114,15 @@
             </div>
           `;
 
+          const performedByText = item.performedBy || (isAdminMode ? 'หัวหน้างาน (Admin)' : (agA ? agA.username : 'ผู้ใช้งานในระบบ'));
+          const isByAdmin = performedByText.includes('Admin');
           colDetail = `
             <div style="font-size: 11px; color: var(--muted); line-height: 1.4;">
+              <div style="margin-bottom: 5px;">
+                <span class="badge" style="font-size: 11px; padding: 3px 8px; background: ${isByAdmin ? '#fee2e2; color:#991b1b; border: 1px solid #fecaca;' : '#e0e7ff; color:#3730a3; border: 1px solid #c7d2fe;'} font-weight: 700; border-radius: 4px; display:inline-block;">
+                  👤 ผู้ทำรายการ: <strong>${performedByText}</strong>
+                </span>
+              </div>
               <div>🆔 <code>${item.id || '-'}</code></div>
               <div style="color: #64748b; margin-top: 2px;">${item.detail || '-'}</div>
             </div>
@@ -4075,7 +4243,7 @@
           const customTimes = w.customTimes || {};
           const colCustom = customTimes[matchedCIdx];
           const shiftTime = colCustom ? colCustom.time : matchedCol.time.replace(" (WFH)", "");
-          const breakTime = colCustom ? colCustom.breakTime : matchedCol.breakTime;
+          const breakTime = getWeekdaySlotBreakTime(matchedCIdx, matchedSIdx, colCustom ? colCustom.breakTime : null);
           const isCustomTime = !!colCustom;
 
           // Check leave
@@ -5567,8 +5735,26 @@
             cell.border = headerBorder;
           });
 
+          // Row 7: รายละเอียดงาน (Job Description - JD)
+          wsWd.getRow(7).height = 70;
+          const cellJdHeader = wsWd.getCell(7, 1);
+          cellJdHeader.value = 'รายละเอียดงาน (JD)';
+          cellJdHeader.font = { name: 'Sarabun', size: 9.5, bold: true, color: { argb: 'FF1E293B' } };
+          cellJdHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+          cellJdHeader.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cellJdHeader.border = headerBorder;
+
+          WEEKDAY_COLUMNS.forEach((col, idx) => {
+            const cell = wsWd.getCell(7, idx + 2);
+            cell.value = col.jd.map(line => `• ${line}`).join('\n');
+            cell.font = { name: 'Sarabun', size: 8.5, color: { argb: 'FF334155' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            cell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+            cell.border = headerBorder;
+          });
+
           // Data Rows (Weeks)
-          let currentRowNum = 7;
+          let currentRowNum = 8;
           currentSchedule.weeks.forEach((w, wIdx) => {
             const isEvenWeek = wIdx % 2 === 0;
             const defaultRowBg = isEvenWeek ? 'FFFFFFFF' : 'FFF8FAFC';
@@ -5704,8 +5890,27 @@
             cell.border = headerBorder;
           });
 
+          // Header 3: Job Description (JD)
+          wsWe.getRow(5).height = 65;
+          const cellHolJdHeader = wsWe.getCell(5, 3);
+          cellHolJdHeader.value = 'รายละเอียดงาน (JD)';
+          cellHolJdHeader.font = { name: 'Sarabun', size: 9.5, bold: true, color: { argb: 'FF065F46' } };
+          cellHolJdHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F4EA' } };
+          cellHolJdHeader.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cellHolJdHeader.border = headerBorder;
+
+          for (let s = 0; s < 4; s++) {
+            const cell = wsWe.getCell(5, s + 4);
+            const meta = HOLIDAY_SHIFT_META[s];
+            cell.value = (meta && meta.jd) ? meta.jd.map(l => `• ${l}`).join('\n') : '-';
+            cell.font = { name: 'Sarabun', size: 8.5, color: { argb: 'FF1E293B' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            cell.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
+            cell.border = headerBorder;
+          }
+
           // Holiday Data Rows
-          let holRowNum = 5;
+          let holRowNum = 6;
           currentSchedule.holidays.forEach((h, hIdx) => {
             const isSun = h.dayName === 'อาทิตย์';
             const isSat = h.dayName === 'เสาร์';
@@ -5970,6 +6175,89 @@
             });
           }
 
+          // =========================================================
+          // 4. SHEET: รายละเอียดหน้าที่ (Job Description Reference)
+          // =========================================================
+          const wsJdRef = wb.addWorksheet('รายละเอียดหน้าที่ (JD)', {
+            views: [{ showGridLines: true }]
+          });
+
+          wsJdRef.columns = [
+            { key: 'category', width: 16 },
+            { key: 'slot', width: 14 },
+            { key: 'code', width: 14 },
+            { key: 'role', width: 28 },
+            { key: 'time', width: 20 },
+            { key: 'break', width: 26 },
+            { key: 'jd', width: 65 }
+          ];
+
+          wsJdRef.mergeCells('A1:G1');
+          for (let c = 1; c <= 7; c++) {
+            wsJdRef.getCell(1, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+          }
+          const jdTitleCell = wsJdRef.getCell('A1');
+          jdTitleCell.value = 'คู่มือรายละเอียดหน้าที่และเวลาปฏิบัติงาน (First Tier Support Job Description)';
+          jdTitleCell.font = { name: 'Sarabun', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+          jdTitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+          wsJdRef.getRow(1).height = 36;
+
+          wsJdRef.getRow(2).height = 26;
+          const jdHeaders = ['หมวดหมู่', 'ลำดับช่อง', 'รหัสกะ', 'บทบาท / หน้าที่', 'เวลาทำงาน', 'เวลาพัก', 'รายละเอียดงาน (Job Description)'];
+          jdHeaders.forEach((txt, idx) => {
+            const cell = wsJdRef.getCell(2, idx + 1);
+            cell.value = txt;
+            cell.font = { name: 'Sarabun', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = headerBorder;
+          });
+
+          let jdRowIdx = 3;
+          WEEKDAY_COLUMNS.forEach((col, idx) => {
+            wsJdRef.getRow(jdRowIdx).height = Math.max(30, col.jd.length * 18);
+            const rowData = [
+              'เวรวันทำการ',
+              `ช่องที่ ${idx + 1}`,
+              col.code,
+              col.role,
+              `${col.time} น.`,
+              col.breakTime,
+              col.jd.map(line => `• ${line}`).join('\n')
+            ];
+            rowData.forEach((val, cIdx) => {
+              const cell = wsJdRef.getCell(jdRowIdx, cIdx + 1);
+              cell.value = val;
+              cell.font = { name: 'Sarabun', size: 9.5 };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC' } };
+              cell.alignment = { horizontal: cIdx === 6 ? 'left' : 'center', vertical: 'middle', wrapText: true };
+              cell.border = thinBorder;
+            });
+            jdRowIdx++;
+          });
+
+          HOLIDAY_SHIFT_META.forEach((meta, idx) => {
+            wsJdRef.getRow(jdRowIdx).height = Math.max(30, (meta.jd || []).length * 18);
+            const rowData = [
+              'เวรวันหยุด',
+              `กะที่ ${idx + 1}`,
+              `วันหยุด-${idx + 1}`,
+              meta.role || `เวรวันหยุด กะที่ ${idx + 1}`,
+              meta.time,
+              meta.breakTime,
+              (meta.jd || []).map(line => `• ${line}`).join('\n')
+            ];
+            rowData.forEach((val, cIdx) => {
+              const cell = wsJdRef.getCell(jdRowIdx, cIdx + 1);
+              cell.value = val;
+              cell.font = { name: 'Sarabun', size: 9.5 };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0FDF4' } };
+              cell.alignment = { horizontal: cIdx === 6 ? 'left' : 'center', vertical: 'middle', wrapText: true };
+              cell.border = thinBorder;
+            });
+            jdRowIdx++;
+          });
+
           // Write buffer and download
           const buffer = await wb.xlsx.writeBuffer();
           const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -5997,13 +6285,15 @@
         const hTime = ["เวลาทำงาน"];
         const hBreak = ["เวลาพัก"];
         const hRole = ["หน้าที่ / ช่อง"];
+        const hJd = ["รายละเอียดงาน (JD)"];
         WEEKDAY_COLUMNS.forEach((c, idx) => {
           hSlot.push(`ช่องที่ ${idx + 1}`);
           hTime.push(c.time);
           hBreak.push(c.breakTime);
           hRole.push(`${c.role} (${c.code})`);
+          hJd.push(c.jd.join("\n"));
         });
-        wdAoa.push(hSlot); wdAoa.push(hTime); wdAoa.push(hBreak); wdAoa.push(hRole);
+        wdAoa.push(hSlot); wdAoa.push(hTime); wdAoa.push(hBreak); wdAoa.push(hRole); wdAoa.push(hJd);
 
         currentSchedule.weeks.forEach((w, wIdx) => {
           let maxSlots = 1;
@@ -6038,6 +6328,11 @@
 
         const weAoa = [[`ตารางเวร First Tier วันหยุด ประจำเดือน ${monthName} พ.ศ. ${yearTH}`]];
         weAoa.push(["วัน", "วันที่", "หมายเหตุวันหยุด", "เวร 08:00 - 17:00 น.", "เวร 09:00 - 18:00 น.", "เวร 10:00 - 19:00 น.", "เวร 13:30 - 22:30 น."]);
+        const weJdRow = ["", "", "รายละเอียดหน้าที่ (JD)"];
+        for (let s = 0; s < 4; s++) {
+          weJdRow.push((HOLIDAY_SHIFT_META[s] && HOLIDAY_SHIFT_META[s].jd) ? HOLIDAY_SHIFT_META[s].jd.join("\n") : "");
+        }
+        weAoa.push(weJdRow);
         currentSchedule.holidays.forEach((h, hIdx) => {
           const row = [h.dayName, `${h.date} ${THAI_MONTHS_SHORT[month]}`, h.note || ""];
           for (let s = 0; s < 4; s++) {
