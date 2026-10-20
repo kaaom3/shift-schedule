@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดตารางเวร First Tier (MongoDB Cloud Edition)</title>
+  <!-- Google Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- ExcelJS CDN for Rich Formatted Spreadsheets (Fills, Borders, Fonts) -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <!-- SheetJS CDN (โหลดตรงจากอินเทอร์เน็ต ไม่ต้องใช้ไฟล์แยก) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Sleek Top Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-logo">FT</div>
+        <div class="brand-text">
+          <h1>First Tier Shift Roster</h1>
+          <p>ระบบจัดตารางเวร First Tier IT Support</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="select-pill">
+          <label>ปี:</label>
+          <select id="yearSelect" onchange="generateScheduleForSelectedMonth()">
+            <option value="2026" selected>2569</option>
+            <option value="2027">2570</option>
+          </select>
+        </div>
+
+        <div class="select-pill">
+          <label>เดือน:</label>
+          <select id="monthSelect" onchange="generateScheduleForSelectedMonth()">
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11" selected>พฤศจิกายน</option>
+            <option value="12">ธันวาคม</option>
+          </select>
+        </div>
+
+                <div class="mongo-sync-badge" id="mongoSyncBadge" onclick="openCloudConfigModal()" title="คลิกเพื่อดูสถานะหรือเชื่อมต่อ Cloud Database (MongoDB Atlas)">
+          <span class="sync-dot disconnected" id="mongoSyncDot"></span>
+          <span id="mongoSyncText">Cloud Sync</span>
+        </div>
+
+        <button class="btn btn-header-outline" id="adminToggleBtn" onclick="handleAdminToggle()" style="background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); font-weight: 700;">
+          🔒 โหมดหัวหน้า (Admin)
+        </button>
+
+        <button class="btn btn-line-brief" onclick="openLineBriefModal()">
+          📲 สรุปส่ง LINE
+        </button>
+
+        <button class="btn btn-header-outline" onclick="exportToExcel()">
+          📊 ส่งออก Excel
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Secondary Navigation Tabs -->
+  <nav class="nav-tabs no-print">
+    <div class="nav-tabs-inner">
+      <div class="tabs-group">
+        <button class="tab-btn active" id="tabBtnMaster" onclick="switchTab('masterTab', this)">
+          📊 1. ตารางรวมทั้งเดือน (Master Table)
+        </button>
+        <button class="tab-btn" id="tabBtnCards" onclick="switchTab('cardsTab', this)">
+          👤 2. การ์ดสรุปรายบุคคล (Individual Cards)
+        </button>
+        <button class="tab-btn" id="tabBtnSwap" onclick="switchTab('swapTab', this); renderSwapHistoryTable();">
+          🔄 3. สรุปประวัติการสลับเวร (<span id="swapTabBadge">0</span>)
+        </button>
+        <button class="tab-btn" id="tabBtnHourly" onclick="switchTab('hourlyTab', this); renderHourlyHeadcountTable();">
+          ⏱️ 4. เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount)
+        </button>
+        <button class="tab-btn admin-only" id="tabBtnMatrix" onclick="switchTab('matrixTab', this)">
+          ⚖️ 5. ตรวจสอบโควตา & กะ Call (Matrix Check)
+        </button>
+        <button class="tab-btn admin-only" id="tabBtnAgents" onclick="switchTab('agentsTab', this)">
+          👥 6. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
+        </button>
+      </div>
+
+      <div class="tab-tools">
+        <button class="btn btn-outline btn-sm" onclick="toggleJD()">
+          👁️ <span id="jdToggleText">แสดง JD ในแถว</span>
+        </button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <label style="font-size: 0.775rem; color: var(--muted); font-weight: 600;">เน้นชื่อ:</label>
+          <select id="userFilterSelect" onchange="applyUserHighlight(this.value)" style="padding: 3px 6px; border: 1px solid var(--border-dark); border-radius: 6px; font-size: 12px;">
+            <option value="ALL">-- ทุกคน --</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Areas -->
+  <main>
+
+    <!-- Admin Indicator Banner -->
+    <div class="admin-indicator-bar no-print" id="adminIndicator">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <span style="font-size:22px;">👑</span>
+        <div>
+          <strong style="font-size:14px; color:#78350f;">โหมดหัวหน้างาน (Admin Control)</strong>
+          <span style="font-weight:normal; color:#b45309; margin-left:6px; font-size:12px;">ควบคุมสิทธิ์สลับเวร และจัดการฐานข้อมูลตาราง</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-sm" id="swapLockToggleBtn" onclick="toggleUserSwapPermission()" style="background:#dc2626; color:white; font-weight:700;">
+          🔒 ปิดรับการสลับเวร (ล็อกดูอย่างเดียว)
+        </button>
+        <button class="btn btn-outline btn-sm" id="viewBaselineBtn" onclick="toggleViewOriginal()" style="border-color:#0284c7; color:#0369a1; background:white; font-weight:600;">
+          📜 สลับดูตารางต้นฉบับ
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openChangePinModal()" style="border-color:#f59e0b; color:#b45309; background:white;">
+          🔑 เปลี่ยน PIN
+        </button>
+        <button class="btn btn-sm" onclick="exitAdminMode()" style="background:#78350f; color:white;">
+          ออกจากโหมด
+        </button>
+
+        <!-- Danger Zone Box with Safety Guard -->
+        <div style="display:flex; align-items:center; gap:6px; background:rgba(234, 88, 12, 0.12); padding:3px 8px; border-radius:8px; border:1px dashed #f97316; margin-left:6px;">
+          <span style="font-size:11px; font-weight:800; color:#c2410c;">🛡️ คำสั่งขั้นสูง:</span>
+          <button class="btn btn-outline btn-sm" onclick="requestRestoreOriginal()" style="border-color:#dc2626; color:#b91c1c; background:white; font-weight:700; padding:3px 8px; font-size:11.5px;" title="ยกเลิกการสลับเวรทั้งหมดและย้อนกลับสู่ต้นฉบับ (มีกล่องยืนยันความปลอดภัย)">
+            🔄 คืนค่าตารางต้นฉบับ
+          </button>
+          <button class="btn btn-sm" onclick="requestCalculateNextMonth()" style="background:linear-gradient(135deg, #0284c7, #1d4ed8); color:white; font-weight:700; border:none; padding:3px 8px; font-size:11.5px;" title="คำนวณเวรเดือนถัดไปโดยใช้ตารางต้นฉบับของเดือนนี้เป็นตัวตั้ง (มีกล่องยืนยันความปลอดภัย)">
+            ✨ คำนวณเดือนถัดไป
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="requestShuffle()" style="border-color:#94a3b8; color:#475569; background:white; padding:3px 8px; font-size:11.5px;" title="สุ่มสร้างตารางต้นฉบับใหม่ (มีกล่องยืนยันความปลอดภัย)">
+            🎲 สลับคิวใหม่
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1: ตารางรวมทั้งเดือน (Master Table) — แสดงเป็นหน้าแรกทันที -->
+    <section id="masterTab" class="panel active">
+
+      <!-- Schedule Mode Switcher (Active vs Master Baseline) - Visible to all members -->
+      <div class="schedule-mode-container no-print" id="scheduleModeContainer">
+        <div class="schedule-mode-tabs">
+          <button type="button" id="modeBtnActive" class="schedule-mode-btn active" onclick="setScheduleViewMode(false)">
+            <span class="mode-icon">📋</span>
+            <div class="mode-text">
+              <span class="mode-title">ตารางปฏิบัติงานจริง (สลับเวรแล้ว)</span>
+              <span class="mode-desc">ตารางปัจจุบันที่มีการสลับเวรแล้ว • ใช้ดูเวลาเข้างานจริงรายวัน</span>
+            </div>
+            <span class="mode-badge badge-active">ปฏิบัติงาน</span>
+          </button>
+          
+          <button type="button" id="modeBtnMaster" class="schedule-mode-btn" onclick="setScheduleViewMode(true)">
+            <span class="mode-icon">📜</span>
+            <div class="mode-text">
+              <span class="mode-title">ตารางต้นฉบับ Master (ก่อนสลับเวร)</span>
+              <span class="mode-desc">ตารางตั้งต้นตามสูตรหมุนวน (ก่อนสลับ) • ใช้เป็นฐานคำนวณเดือนถัดไป</span>
+            </div>
+            <span class="mode-badge badge-master">ต้นฉบับ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Swap Status Banner for Members -->
+      <div class="swap-status-pill open no-print" id="swapStatusPill">
+        <span>🟢</span>
+        <span id="swapStatusPillText"><strong>สถานะการสลับเวร:</strong> เปิดให้น้องๆ สลับเวรกันเองได้ (คลิกชื่อคนที่ 1 และคนที่ 2 เพื่อสลับเวร)</span>
+      </div>
+
+      <!-- Master Baseline Notice Bar -->
+      <div class="master-baseline-banner no-print" id="baselineNoticeBar">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <span style="font-size:26px; line-height:1;">👑</span>
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <strong style="font-size:14px; color:#92400e;">กำลังดู "ตารางต้นฉบับ Master (Baseline)"</strong>
+              <span class="badge badge-master-mode">โหมดดูอย่างเดียว</span>
+            </div>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#b45309; line-height:1.4;">
+              นี่คือตารางตั้งต้นของเดือนนี้ตามรอบหมุนเวรที่เป็นธรรม <strong>ก่อนที่น้องๆ จะทำการสลับเวรใดๆ</strong> โดยระบบจะยึดตารางนี้เป็นฐานข้อมูลในการคำนวณเดือนถัดไปเสมอ<br>
+              *(🔒 ในโหมดนี้ระบบจะล็อกไม่ให้คลิกสลับเวร เพื่อรักษาความถูกต้องของข้อมูลต้นฉบับ)*
+            </p>
+          </div>
+        </div>
+        <button class="btn btn-sm" onclick="setScheduleViewMode(false)" style="background:white; border:1px solid #d97706; color:#92400e; font-weight:700; white-space:nowrap; padding:6px 14px;">
+          ⬅️ สลับกลับสู่ตารางปฏิบัติงานจริง
+        </button>
+      </div>
+
+      <!-- Weekday Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🏢 ตารางเวรวันทำการ (จันทร์ - ศุกร์)</span>
+            <span class="badge badge-early" id="weekdayMonthBadge">ประจำเดือน</span>
+            <span class="badge badge-active-mode" id="scheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง</span>
+          </div>
+          <span style="font-size: 0.8rem; color: var(--muted);" id="swapHintText">
+            💡 <strong>วิธีสลับเวร:</strong> คลิกที่ชื่อคนที่ 1 แล้วคลิกชื่อคนที่ 2 เพื่อสลับเวร (หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือน)
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table" id="masterWeekdayTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekend Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>🏖️ ตารางเวรวันหยุด & วันพิเศษ (เสาร์ - อาทิตย์ / วันหยุดนักขัตฤกษ์)</span>
+            <span class="badge badge-hol">4 กะต่อวัน</span>
+            <span class="badge badge-active-mode admin-only" id="holScheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง (Active)</span>
+          </div>
+          <div class="admin-only" style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" id="quickHolDate" min="1" max="31" placeholder="วันที่" style="width: 60px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+            <input type="text" id="quickHolName" placeholder="ชื่อวันหยุด" style="width: 140px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+            <button class="btn btn-outline btn-sm" onclick="addCustomHolidayQuick()">+ เพิ่มวันหยุด</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table" id="masterHolidayTable"></table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: การ์ดสรุปรายบุคคล (Individual Cards) -->
+    <section id="cardsTab" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>👤 ตารางเวรแยกตามรายบุคคล (Individual Shift Cards)</span>
+            <span class="badge badge-active-mode admin-only" id="cardScheduleTypeBadge">🟢 ข้อมูลอิงจากตารางปฏิบัติงานจริง</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 0.8rem; font-weight: 600;">กรองเฉพาะบุคคล:</label>
+            <select id="cardFilterSelect" onchange="renderIndividualCards(this.value)" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary);">
+              <option value="ALL">-- แสดงครบทุกคน (20 คน) --</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="individualCardsGrid" class="agent-cards-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: สรุปประวัติการสลับเวร (Swap History Table) -->
+    <section id="swapTab" class="panel">
+      <!-- Top Statistics Cards -->
+      <div class="swap-stat-grid">
+        <div class="swap-stat-card">
+          <div class="swap-stat-icon" style="background: #eff6ff; color: #2563eb;">🔄</div>
+          <div class="swap-stat-info">
+            <div class="swap-stat-label">สลับเวรเดือนนี้</div>
+            <div class="swap-stat-value"><span id="statSwapCurrentMonth">0</span> <span style="font-size: 13px; font-weight: normal; color: var(--muted);">รายการ</span></div>
+          </div>
+        </div>
+        <div class="swap-stat-card">
+          <div class="swap-stat-icon" style="background: #f5f3ff; color: #7c3aed;">🌐</div>
+          <div class="swap-stat-info">
+            <div class="swap-stat-label">สลับสะสมทุกเดือน</div>
+            <div class="swap-stat-value"><span id="statSwapAllMonths">0</span> <span style="font-size: 13px; font-weight: normal; color: var(--muted);">รายการ</span></div>
+          </div>
+        </div>
+        <div class="swap-stat-card">
+          <div class="swap-stat-icon" id="statSwapStatusIcon" style="background: #ecfdf5; color: #059669;">✅</div>
+          <div class="swap-stat-info">
+            <div class="swap-stat-label">สถานะระบบสลับเวร</div>
+            <div class="swap-stat-value" id="statSwapStatusText" style="font-size: 0.95rem; font-weight: 700; color: #059669;">เปิดให้สมาชิกสลับเวรได้</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+          <div class="card-title">
+            <span>🔄 ตารางสรุปประวัติการสลับเวร (Shift Swap History & Audit Log)</span>
+            <span class="badge badge-active-mode" id="swapHeaderCountBadge">0 รายการ</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <!-- Scope Filter -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">ขอบเขต:</label>
+              <select id="swapScopeSelect" onchange="renderSwapHistoryTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #fff;">
+                <option value="CURRENT">เฉพาะเดือนนี้ (Current Month)</option>
+                <option value="ALL">ย้อนหลังทุกเดือน (All Months)</option>
+              </select>
+            </div>
+
+            <!-- Agent Filter -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">กรองชื่อบุคคล:</label>
+              <select id="swapAgentFilterSelect" onchange="renderSwapHistoryTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #fff;">
+                <option value="ALL">-- ทุกคน --</option>
+              </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">ประเภท:</label>
+              <select id="swapTypeFilterSelect" onchange="renderSwapHistoryTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; background: #fff;">
+                <option value="ALL">-- ทุกประเภทการสลับ --</option>
+                <option value="สลับข้ามสัปดาห์">สลับข้ามสัปดาห์ (Weekday)</option>
+                <option value="สลับข้ามวันหยุด">สลับข้ามวันหยุด (Holiday)</option>
+                <option value="สลับข้ามประเภทเวร">สลับข้ามประเภท (วันทำการ ⇄ วันหยุด)</option>
+                <option value="สลับข้ามเดือน">สลับข้ามเดือน (Cross Month)</option>
+              </select>
+            </div>
+
+            <!-- Search box -->
+            <div style="position: relative;">
+              <input type="text" id="swapSearchInput" oninput="renderSwapHistoryTable()" placeholder="🔍 ค้นหาชื่อ, วันที่, รายละเอียด..." style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; width: 190px;">
+            </div>
+
+            <!-- Admin Clear History Button -->
+            <button class="btn btn-outline btn-sm admin-only" onclick="clearSwapHistoryPrompt()" style="color: var(--danger); border-color: #fca5a5; padding: 4px 8px; font-size: 11.5px;">
+              🗑️ ล้างประวัติ (Admin)
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-responsive" style="border: none; border-radius: 0;">
+            <table class="roster-table" id="swapHistoryTable" style="margin: 0;">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th style="width: 140px;">วัน-เวลาที่สลับ</th>
+                  <th style="width: 125px;">ประเภทการสลับ</th>
+                  <th style="width: 240px; text-align: left; padding-left: 12px;">ผู้สลับ A (ต้นทาง)</th>
+                  <th style="width: 240px; text-align: left; padding-left: 12px;">สลับกับ B (ปลายทาง)</th>
+                  <th style="text-align: left; padding-left: 12px;">ผลลัพธ์การสลับเวร (Work Exchange Summary)</th>
+                  <th style="width: 220px; text-align: left; padding-left: 12px;">👤 ผู้ทำรายการ / บันทึกระบบ</th>
+                </tr>
+              </thead>
+              <tbody id="swapHistoryTableBody">
+                <!-- Populated via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount Table) -->
+    <section id="hourlyTab" class="panel">
+      <div class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 12px;">
+          <div class="card-title">
+            <span>⏱️ ตารางเช็คจำนวนคนแต่ละช่วงเวลา (Hourly Staffing & Coverage Check)</span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">เลือกโหมด:</label>
+              <div class="btn-group" style="display: flex; background: var(--bg-hover); padding: 2px; border-radius: 6px;">
+                <button type="button" class="btn btn-sm btn-primary" id="hourlyModeWeekdayBtn" onclick="setHourlyMode('WEEKDAY')" style="padding: 3px 10px; font-size: 12px; font-weight: 600;">📅 วันทำการ (Weekday)</button>
+                <button type="button" class="btn btn-sm" id="hourlyModeHolidayBtn" onclick="setHourlyMode('HOLIDAY')" style="padding: 3px 10px; font-size: 12px; font-weight: 600; background: transparent; color: var(--muted);">🏖️ วันหยุด (Holiday)</button>
+              </div>
+            </div>
+            <div id="hourlyWeekSelectContainer" style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">สัปดาห์:</label>
+              <select id="hourlyWeekSelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              </select>
+            </div>
+            <div id="hourlyHolidaySelectContainer" style="display: none; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">วันหยุด:</label>
+              <select id="hourlyHolidaySelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- KPI Summary Metrics -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div style="background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(59,130,246,0.03)); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase;">🔥 ช่วงเวลาเร่งด่วน (Peak Hours)</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">08:30 - 17:00 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" id="kpiPeakCoverage">กำลังพล On-Duty 11 - 19 คน</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.03)); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase;">☕ การสลับพักเที่ยง & บ่าย</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">11:00 - 15:00 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">กระจายพัก 4 รอบ ไม่กระทบสาย</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.03)); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase;">🌙 ครอบคลุมรอบวัน (All-Day)</div>
+              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">07:00 - 22:30 น.</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">เช้าตรู่ 2 คน • กะดึก 1 คน</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(124,58,237,0.03)); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase;">📊 สัดส่วนหน้าที่งาน (Roles)</div>
+              <div style="font-size: 15px; font-weight: 800; color: var(--text); margin-top: 4px;">Call 13 • Mail 5 • Self 2</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Log 2 • Follow SR 1 คน</div>
+            </div>
+          </div>
+
+          <!-- Capacity Timeline Visualizer -->
+          <div style="margin-bottom: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text);">📈 กราฟระดับความหนาแน่นผู้ปฏิบัติงาน On-Duty ตลอดวัน (Capacity Timeline)</span>
+              <div style="display: flex; gap: 12px; font-size: 11px;">
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:2px;"></span> $\ge$14 คน (Peak สูง)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:2px;"></span> 7-13 คน (ปกติ)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:2px;"></span> 2-6 คน (เช้า/เย็น)</span>
+                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#8b5cf6; border-radius:2px;"></span> 1 คน (เปิด/ปิดกะ)</span>
+              </div>
+            </div>
+            <div id="hourlyCapacityTimeline" style="display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px;"></div>
+          </div>
+
+          <!-- Main Table Container -->
+          <div class="table-responsive">
+            <table class="roster-table" id="hourlyHeadcountTable" style="font-size: 11.5px; text-align: center;">
+              <thead id="hourlyHead"></thead>
+              <tbody id="hourlyBody"></tbody>
+              <tfoot id="hourlyFoot"></tfoot>
+            </table>
+          </div>
+
+          <!-- Roles Distribution Detail Note -->
+          <div style="margin-top: 20px; padding: 14px; background: rgba(59,130,246,0.04); border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0; font-size: 12px; line-height: 1.6;">
+            <strong>📌 ข้อมูลอ้างอิงหน้าที่งานหลัก First Tier:</strong>
+            <ul style="margin: 6px 0 0 18px; padding: 0;">
+              <li><strong>Call (07.00 - 22.30 น.):</strong> รับสายตลอดช่วงเวลาเปิดทำการ มี Agent ประจำการรวม 13 คนต่อวัน (หมุนเวียนพักตามรอบ)</li>
+              <li><strong>Mail K-Helps & Realtime:</strong> ประจำการ 5 คนต่อวัน เพื่อตอบกลับข้อความและจัดการเคสผ่านช่องทางอิเล็กทรอนิกส์</li>
+              <li><strong>Monitor Self Service:</strong> ประจำการ 2 คน ดูแลระบบบริการตนเองของลูกค้า</li>
+              <li><strong>Confirm Outstanding Log & Follow SR:</strong> ประจำการ 2 คน และ 1 คน ติดตามงาน Change และความคืบหน้าระบบ KInfra</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ตรวจสอบโควตา (Matrix Check) -->
+    <section id="matrixTab" class="panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>⚖️ ตารางตรวจสอบการกระจายเวรและโควตา (Matrix & Balance Check)</span>
+          </div>
+          <span class="badge badge-spec">เช็คความสมดุลของทีม</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="roster-table">
+              <thead id="matrixHead"></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: จัดการรายชื่อทีม, เวลาเข้างาน & JD -->
+    <section id="agentsTab" class="panel">
+      <!-- Sub-tabs within Tab 4 -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="subTabBtnAgents" onclick="switchSettingsSubTab('agentsSubTab', this)">
+          👥 1. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
+        </button>
+        <button class="btn btn-outline btn-sm" id="subTabBtnWeekdayJD" onclick="switchSettingsSubTab('weekdayJdSubTab', this)">
+          ⏰ 2. แก้ไขเวลาเข้างาน & JD วันทำการ (16 กะ)
+        </button>
+        <button class="btn btn-outline btn-sm" id="subTabBtnHolidayJD" onclick="switchSettingsSubTab('holidayJdSubTab', this)">
+          🏖️ 3. แก้ไขเวลาเข้างาน & JD วันหยุด (4 กะ)
+        </button>
+      </div>
+
+      <!-- Sub-tab 1: Agents -->
+      <div id="agentsSubTab" class="settings-sub-panel">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div class="card-title">
+              <span>👥 รายชื่อสมาชิกทีม First Tier (20 คน)</span>
+            </div>
+            <button class="btn btn-save btn-sm" onclick="saveAgentNames()">💾 บันทึกรายชื่อและอัปเดตตาราง</button>
+          </div>
+          <div class="card-body">
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:12.5px; line-height:1.6;">
+              <div style="font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                <span>💡</span> คำแนะนำการแก้ไขรายชื่อเจ้าหน้าที่ (ชื่อไม่หาย ข้อมูลเชื่อมโยงอัตโนมัติ)
+              </div>
+              <ul style="margin:0; padding-left:18px;">
+                <li><strong>Username (ภาษาอังกฤษ):</strong> ใช้ระบุในช่องกะเวรและการประมวลผลหมุนเวียน (เช่น <code>pantip.to</code>)</li>
+                <li><strong>ชื่อภาษาไทย:</strong> ใช้แสดงผลคู่กับชื่อภาษาอังกฤษในตาราง, การ์ดบุคคล, ข้อความส่ง LINE, และรายงาน Excel (เช่น <code>พันธุ์ทิพย์</code>)</li>
+                <li>🛡️ <strong>ระบบเชื่อมโยงอัตโนมัติ:</strong> เมื่อแก้ไขชื่อแล้วกดบันทึก ระบบจะอัปเดตชื่อในตารางเวรทุกเดือน (ย้อนหลังและล่วงหน้า) ให้ทันที <strong>โดยกะเวรเดิมที่จัดไว้ สถิติ และวันลาจะไม่สูญหาย</strong></li>
+              </ul>
+            </div>
+            <div id="agentsGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
+            <button class="btn btn-primary" onclick="saveAgentNames()">💾 บันทึกรายชื่อและอัปเดตตาราง</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-tab 2: Weekday Shifts & JD Editor -->
+      <div id="weekdayJdSubTab" class="settings-sub-panel" style="display:none;">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div class="card-title">
+              <span>⏰ แก้ไขเวลาเข้างาน, เวลาพัก และ Job Description (JD) กะวันทำการ (16 กะ)</span>
+            </div>
+            <button class="btn btn-save btn-sm" onclick="saveWeekdayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันทำการ</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+              💡 สามารถแก้ไขเวลาเข้า-ออกงาน, เวลาพัก, หน้าที่รับผิดชอบ และกด <strong>"+ เพิ่มหัวข้อ JD"</strong> หรือ <strong>"✕ ลบ"</strong> ได้ตามต้องการ
+            </p>
+            <div id="weekdayJdGrid" style="display:flex; flex-direction:column; gap:16px;"></div>
+            <div style="margin-top: 20px;">
+              <button class="btn btn-save" onclick="saveWeekdayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันทำการ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-tab 3: Holiday Shifts & JD Editor -->
+      <div id="holidayJdSubTab" class="settings-sub-panel" style="display:none;">
+        <div class="card">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div class="card-title">
+              <span>🏖️ แก้ไขเวลาเข้างาน, เวลาพัก และ Job Description (JD) กะวันหยุด (4 กะ)</span>
+            </div>
+            <button class="btn btn-save btn-sm" onclick="saveHolidayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันหยุด</button>
+          </div>
+          <div class="card-body">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+              💡 แก้ไขเวลาเข้างาน, เวลาพัก และหัวข้อ JD สำหรับ 4 กะของเวรวันหยุดและวันหยุดพิเศษ
+            </p>
+            <div id="holidayJdGrid" style="display:flex; flex-direction:column; gap:16px;"></div>
+            <div style="margin-top: 20px;">
+              <button class="btn btn-save" onclick="saveHolidayJdConfig()">💾 บันทึกเวลาเข้างานและ JD วันหยุด</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Swap Notification Bar -->
+  <div id="floating-swap-bar">
+    <span>🔄 กำลังเลือก: <strong id="swapSelectedName" style="color: #67e8f9;">-</strong> — คลิกเลือกเพื่อนในสัปดาห์อื่น หรือเปลี่ยนเดือนเพื่อสลับข้ามเดือนได้อิสระ</span>
+    <button class="btn-cancel-swap" onclick="cancelPendingSwap()">✕ ยกเลิก</button>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg">
+    <span>✅</span>
+    <span id="toast-text">สำเร็จ</span>
+  </div>
+
+
+  <!-- PIN Login Modal -->
+  <div class="modal-backdrop" id="pinModal">
+    <div class="modal-box">
+      <div class="modal-box-header">
+        <h3>🔒 เข้าสู่โหมดหัวหน้างาน (Admin Login)</h3>
+        <button onclick="closePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
+          กรุณากรอกรหัส PIN เพื่อปลดล็อคแท็บตั้งค่าและเครื่องมือจัดการตารางสำหรับหัวหน้า (ค่าเริ่มต้น: <strong>1234</strong>)
+        </p>
+        <div style="display:flex; justify-content:center; margin:16px 0;">
+          <input type="password" id="pinInput" maxlength="6" placeholder="รหัส PIN 4 หลัก" style="font-size:20px; letter-spacing:6px; text-align:center; width:180px; padding:8px; border:2px solid var(--primary); border-radius:8px; outline:none;" onkeyup="if(event.key==='Enter') submitAdminPin()">
+        </div>
+        <div id="pinErrorMsg" style="color:var(--danger); font-size:12px; text-align:center; display:none;">
+          ⚠️ รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-outline" onclick="closePinModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitAdminPin()">🔓 ยืนยันรหัส PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change PIN Modal -->
+  <div class="modal-backdrop" id="changePinModal">
+    <div class="modal-box">
+      <div class="modal-box-header">
+        <h3>🔑 ตั้งรหัส PIN ใหม่สำหรับหัวหน้า</h3>
+        <button onclick="closeChangePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
+          กำหนดรหัส PIN ใหม่ (ตัวเลข 4-6 หลัก) สำหรับใช้ปลดล็อคโหมดหัวหน้าในครั้งถัดไป:
+        </p>
+        <div style="display:flex; justify-content:center; margin:16px 0;">
+          <input type="password" id="newPinInput" maxlength="6" placeholder="PIN ใหม่ 4 หลัก" style="font-size:18px; letter-spacing:4px; text-align:center; width:180px; padding:8px; border:1px solid var(--border-dark); border-radius:8px; outline:none;">
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-outline" onclick="closeChangePinModal()">ยกเลิก</button>
+        <button class="btn btn-save" onclick="saveNewPin()">💾 บันทึก PIN ใหม่</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety Confirmation Modal (กันเผลอกดคืนค่าหรือคำนวณใหม่) -->
+  <div class="modal-backdrop" id="safetyConfirmModal">
+    <div class="modal-box" style="max-width: 500px; border: 2px solid #ea580c;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #9a3412, #c2410c);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span id="safetyModalIcon">⚠️</span>
+          <span id="safetyModalTitle">ยืนยันคำสั่งความปลอดภัย</span>
+        </h3>
+        <button onclick="closeSafetyModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div id="safetyModalAlertBox" style="margin-bottom: 16px;">
+          <!-- Dynamic Alert Box -->
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="safetyConfirmCheckbox" onchange="onSafetyCheckboxChange()" style="width: 18px; height: 18px; margin-top: 2px; cursor: pointer;">
+            <span style="font-size: 13px; font-weight: 700; color: #1e293b; line-height: 1.4;" id="safetyCheckboxLabel">
+              ฉันได้อ่านและเข้าใจผลกระทบนี้ และยืนยันต้องการดำเนินการต่อ
+            </span>
+          </label>
+        </div>
+
+        <p style="font-size: 11.5px; color: var(--muted); margin: 0; text-align: center;">
+          💡 หากกดผิด หรือไม่ต้องการเปลี่ยนแปลงใดๆ ให้กดปุ่ม <strong>"✕ ยกเลิก (ปลอดภัย)"</strong>
+        </p>
+      </div>
+      <div class="modal-box-footer" style="justify-content: space-between;">
+        <button class="btn btn-outline" onclick="closeSafetyModal()" style="font-weight: 600;">
+          ✕ ยกเลิก (ปลอดภัย)
+        </button>
+        <button class="btn btn-danger" id="safetyConfirmActionBtn" onclick="executeSafetyAction()" disabled style="opacity: 0.5; cursor: not-allowed; font-weight: 700; padding: 6px 14px;">
+          💥 ยืนยันดำเนินการ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MongoDB Atlas Cloud Sync Settings Modal -->
+  <div class="modal-backdrop" id="cloudConfigModal">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0f766e, #0d9488);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🍃</span>
+          <span>การเชื่อมต่อฐานข้อมูล MongoDB Atlas</span>
+        </h3>
+        <button onclick="closeCloudConfigModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div id="cloudStatusCard" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-weight: 700; color: #166534; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+            <span id="cloudModalStatusDot" class="sync-dot connected"></span>
+            <span id="cloudModalStatusTitle">สถานะ: กำลังตรวจสอบ</span>
+          </div>
+          <div id="cloudModalStatusDetail" style="font-size: 12px; color: #374151; margin-top: 4px;">
+            ระบบพร้อมซิงค์ข้อมูลกับ MongoDB Atlas
+          </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-weight: 700; font-size: 12.5px; color: var(--secondary); display: block; margin-bottom: 4px;">
+            API Endpoint URL:
+          </label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="cloudApiEndpointInput" placeholder="/api/schedule หรือ https://shift-schedule.vercel.app/api/schedule" style="flex: 1; padding: 7px 10px; border: 1px solid var(--border-dark); border-radius: 6px; font-size: 12.5px; font-family: monospace;">
+            <button class="btn btn-outline btn-sm" onclick="saveCloudConfigEndpoint()">💾 บันทึก URL</button>
+          </div>
+          <p style="font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4;">
+            💡 หากรันบน Vercel ให้ใช้ <code>/api/schedule</code> (ค่าเริ่มต้น)<br>
+            💡 หากเปิดผ่าน GitHub Pages ให้นำ URL ของ Vercel มาใส่ เช่น <code>https://shift-schedule-xxx.vercel.app/api/schedule</code>
+          </p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--secondary); margin-bottom: 6px;">การดำเนินการทันที:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <button class="btn btn-outline btn-sm" onclick="testMongoConnectionModal()">🔄 ทดสอบการเชื่อมต่อ (Ping)</button>
+            <button class="btn btn-outline btn-sm" onclick="saveScheduleToCloud('Manual Admin Sync'); showToast('กำลังส่งข้อมูลขึ้น MongoDB...');">⬆️ บันทึกขึ้น MongoDB ทันที</button>
+            <button class="btn btn-outline btn-sm" onclick="initMongoCloudSync(); showToast('กำลังดึงข้อมูลล่าสุดจาก MongoDB...');">⬇️ ดึงข้อมูลล่าสุดจาก MongoDB</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-box-footer">
+        <button class="btn btn-primary" onclick="closeCloudConfigModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive JD Popover Tooltip -->
+  <div id="jdHoverTooltip" class="jd-hover-tooltip"></div>
+
+  <!-- LINE Daily Brief Modal -->
+  <div class="modal-backdrop" id="lineBriefModal">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #06c755, #059669);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>📲</span>
+          <span>สรุปข้อความส่ง LINE ประจำวัน (Daily Brief)</span>
+        </h3>
+        <button onclick="closeLineBriefModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-weight:700; font-size:13px; color:var(--secondary);">เลือกวันที่:</label>
+            <select id="lineBriefDateSelect" onchange="updateLineBriefPreview()" style="padding:6px 12px; border:1px solid var(--border-dark); border-radius:6px; font-weight:600; font-size:13px; color:var(--primary);">
+            </select>
+          </div>
+          <button class="btn btn-sm btn-line-brief" onclick="copyLineBriefText()">
+            📋 คัดลอกข้อความส่ง LINE
+          </button>
+        </div>
+        <p style="font-size:11.5px; color:var(--muted); margin:0 0 8px 0;">
+          💡 ตรวจสอบข้อความด้านล่าง แล้วกดปุ่ม <strong>"คัดลอกข้อความ"</strong> เพื่อนำไปวางส่งในกลุ่ม LINE ได้ทันที
+        </p>
+        <div style="position:relative;">
+          <textarea id="lineBriefTextArea" readonly style="width:100%; height:320px; padding:12px; border:1px solid var(--border-dark); border-radius:8px; font-family:'Fira Code', 'Consolas', 'Courier New', monospace; font-size:12.5px; line-height:1.5; background:#f8fafc; color:#0f172a; resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" onclick="closeLineBriefModal()">ปิดหน้าต่าง</button>
+        <button class="btn btn-line-brief" onclick="copyLineBriefText()">
+          📋 คัดลอกข้อความส่ง LINE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Record Modal -->
+  <div class="modal-backdrop" id="leaveRecordModal">
+    <div class="modal-box" style="max-width: 480px; border: 2px solid #f97316;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #c2410c, #ea580c);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🏖️</span>
+          <span>บันทึกการลาของพนักงาน</span>
+        </h3>
+        <button onclick="closeLeaveRecordModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase;">พนักงานและเวรที่เลือก:</div>
+          <div style="font-size:16px; font-weight:800; color:#9a3412; margin-top:3px;" id="leaveModalAgentName">-</div>
+          <div style="font-size:12px; color:#b45309; margin-top:2px;" id="leaveModalSlotDesc">-</div>
+          <div style="font-size:11.5px; color:#475569; margin-top:6px;" id="leaveModalCurrentStatus">-</div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-weight:700; font-size:12.5px; color:var(--secondary); display:block; margin-bottom:6px;">
+            ประเภทการลา:
+          </label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลาพักร้อน" checked>
+              <span>🏖️ ลาพักร้อน</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลาป่วย">
+              <span>🤒 ลาป่วย</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="ลากิจ">
+              <span>💼 ลากิจ</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; background:#f8fafc; border:1px solid var(--border); padding:8px 10px; border-radius:6px; cursor:pointer;">
+              <input type="radio" name="leaveTypeRadio" value="อบรม">
+              <span>📚 อบรม/สัมมนา</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-weight:700; font-size:12.5px; color:var(--secondary); display:block; margin-bottom:4px;">
+            หมายเหตุเพิ่มเติม (ถ้ามี):
+          </label>
+          <input type="text" id="leaveModalNoteInput" placeholder="เช่น ลาครึ่งวันบ่าย, มีคนสลับแทนแล้ว" style="width:100%; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;">
+        </div>
+
+        <p style="font-size:11px; color:var(--muted); margin:0;">
+          💡 เมื่อบันทึกแล้ว ระบบจะแสดงป้าย [ลา] ในหน้าตารางเวร, การ์ดบุคคล และสรุปส่ง LINE อัตโนมัติ
+        </p>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" id="leaveModalDeleteBtn" onclick="deleteCurrentSlotLeave()" style="border-color:#dc2626; color:#b91c1c;">
+          🗑️ ล้างสถานะการลา
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="closeLeaveRecordModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="saveCurrentSlotLeave()" style="background:#ea580c; border-color:#c2410c;">💾 บันทึกการลา</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week-specific Time Editor Modal -->
+  <div class="modal-backdrop" id="weekTimeModal">
+    <div class="modal-box" style="max-width: 680px; border: 2px solid #0284c7;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>⏱️</span>
+          <span id="weekTimeModalTitle">ปรับเวลาทำงานเฉพาะสัปดาห์</span>
+        </h3>
+        <button onclick="closeWeekTimeModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+          💡 สามารถระบุเวลาเข้างานและเวลาพักเฉพาะสัปดาห์นี้ได้ โดยจะไม่ส่งผลกระทบต่อสัปดาห์อื่นๆ ในเดือนนี้
+        </p>
+        <div id="weekTimeModalGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:4px;">
+        </div>
+      </div>
+      <div class="modal-box-footer" style="justify-content:space-between;">
+        <button class="btn btn-outline" onclick="resetWeekTimeToDefault()" style="border-color:#f59e0b; color:#b45309;">
+          🔄 คืนค่าเวลามาตรฐาน (Default)
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-outline" onclick="closeWeekTimeModal()">ยกเลิก</button>
+          <button class="btn btn-primary" onclick="saveWeekTimeOverrides()">💾 บันทึกเวลาเฉพาะสัปดาห์นี้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modular JavaScript Application -->
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/tables.js"></script>
+  <script src="js/swap.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

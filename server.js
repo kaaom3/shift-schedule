@@ -72,14 +72,20 @@ const server = http.createServer((req, res) => {
   if (safePath === '/' || safePath === '\\' || safePath === '') {
     safePath = '/index.html';
   }
-  const filePath = path.join(__dirname, safePath);
+  let filePath = path.join(__dirname, 'public', safePath);
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(__dirname, safePath);
+  }
   const ext = path.extname(filePath).toLowerCase();
 
   if (MIME_TYPES[ext]) {
     sendFile(res, filePath, MIME_TYPES[ext]);
   } else {
     // Default fallback to index.html
-    sendFile(res, path.join(__dirname, 'index.html'), 'text/html; charset=utf-8');
+    const fallbackPath = fs.existsSync(path.join(__dirname, 'public', 'index.html'))
+      ? path.join(__dirname, 'public', 'index.html')
+      : path.join(__dirname, 'index.html');
+    sendFile(res, fallbackPath, 'text/html; charset=utf-8');
   }
 });
 
