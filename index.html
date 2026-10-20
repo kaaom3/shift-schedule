@@ -2082,8 +2082,12 @@
         return;
       }
       currentAdminPin = newPin;
+      try {
+        localStorage.setItem("ft_admin_pin", newPin);
+      } catch (e) {}
       closeChangePinModal();
-      showToast("🔑 เปลี่ยนรหัส PIN เรียบร้อยแล้ว (กดเซฟทับเพื่อบันทึก)");
+      showToast("🔑 เปลี่ยนรหัส PIN เรียบร้อยแล้ว (บันทึกขึ้นระบบแล้ว)");
+      saveScheduleToCloud("Admin เปลี่ยนรหัส PIN ใหม่");
     }
 
     // Master Team List (20 Agents)
@@ -2221,6 +2225,12 @@
     let originalSchedule = { weeks: [], holidays: [] };
     let monthSchedules = {}; // Stores multi-month state: { "2026-9": { schedule, originalSchedule, swapHistory }, "2026-10": ... }
     let allowUserSwap = true;
+    try {
+      const cachedAllowSwap = localStorage.getItem("ft_allow_user_swap");
+      if (cachedAllowSwap !== null) {
+        allowUserSwap = (cachedAllowSwap === "true");
+      }
+    } catch(e) {}
     let isViewingOriginal = false;
     let showJD = false;
     let customSpinSeed = 0;
@@ -2381,7 +2391,10 @@
               currentAdminPin = cloudData.adminPin;
             }
             if (cloudData.allowUserSwap !== undefined) {
-              allowUserSwap = cloudData.allowUserSwap;
+              allowUserSwap = Boolean(cloudData.allowUserSwap);
+              try {
+                localStorage.setItem("ft_allow_user_swap", allowUserSwap ? "true" : "false");
+              } catch(e) {}
             }
 
             const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
@@ -2873,11 +2886,12 @@
     function renderAllViews() {
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
-      renderIndividualCards(document.getElementById("cardFilterSelect").value || "ALL");
+      renderIndividualCards((document.getElementById("cardFilterSelect") && document.getElementById("cardFilterSelect").value) || "ALL");
       renderSwapHistoryTable();
       renderHourlyHeadcountTable();
       renderMatrixTable();
       updateBadgesAndTitles();
+      updateSwapPermissionUI();
     }
 
     function updateBadgesAndTitles() {
@@ -4813,14 +4827,25 @@
     // Swap Permission & Master Baseline Management
     function toggleUserSwapPermission() {
       allowUserSwap = !allowUserSwap;
+      try {
+        localStorage.setItem("ft_allow_user_swap", allowUserSwap ? "true" : "false");
+      } catch (e) {
+        console.warn("localStorage write failed:", e);
+      }
       updateSwapPermissionUI();
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
+      renderSwapHistoryTable();
+
+      const actionText = allowUserSwap ? "เปิดรับการสลับเวร (น้องๆ สลับเวรได้)" : "ปิดรับการสลับเวร (ล็อกดูอย่างเดียว)";
       if (allowUserSwap) {
-        showToast("🔓 เปิดให้น้องๆ สลับเวรได้แล้ว (กดเซฟทับเพื่อบันทึกสถานะ)");
+        showToast("🟢 เปิดให้น้องๆ สลับเวรได้แล้ว (บันทึกลงระบบแล้ว)");
       } else {
-        showToast("🔒 ปิดรับการสลับเวรแล้ว (น้องๆ จะดูได้อย่างเดียว)");
+        showToast("🔒 ปิดรับการสลับเวรแล้ว (บันทึกลงระบบแล้ว)");
       }
+
+      // Save directly to MongoDB Atlas so the state persists across refreshes and devices
+      saveScheduleToCloud(`Admin เปลี่ยนสถานะ: ${actionText}`);
     }
 
     function updateSwapPermissionUI() {
