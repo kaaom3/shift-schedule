@@ -7,11 +7,24 @@ const healthHandler = require('./api/health');
 // Read port from environment or fallback to 3000
 const PORT = process.env.PORT || 3000;
 
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+};
+
 function sendFile(res, filePath, contentType) {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('File not found');
+      res.end('File not found: ' + path.basename(filePath));
     } else {
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
@@ -34,7 +47,7 @@ const server = http.createServer((req, res) => {
     return this;
   };
 
-  // Helper to read JSON body
+  // Helper to read JSON body for API routes
   if (pathname === '/api/schedule' || pathname === '/api/health') {
     let rawBody = '';
     req.on('data', chunk => { rawBody += chunk; });
@@ -55,13 +68,17 @@ const server = http.createServer((req, res) => {
   }
 
   // Serve static assets
-  if (pathname === '/' || pathname === '/index.html') {
-    sendFile(res, path.join(__dirname, 'index.html'), 'text/html; charset=utf-8');
-  } else if (pathname.endsWith('.xlsx')) {
-    const filename = path.basename(pathname);
-    sendFile(res, path.join(__dirname, decodeURIComponent(filename)), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  let safePath = path.normalize(decodeURIComponent(pathname)).replace(/^(\.\.[\/\\])+/, '');
+  if (safePath === '/' || safePath === '\\' || safePath === '') {
+    safePath = '/index.html';
+  }
+  const filePath = path.join(__dirname, safePath);
+  const ext = path.extname(filePath).toLowerCase();
+
+  if (MIME_TYPES[ext]) {
+    sendFile(res, filePath, MIME_TYPES[ext]);
   } else {
-    // Fallback to index.html
+    // Default fallback to index.html
     sendFile(res, path.join(__dirname, 'index.html'), 'text/html; charset=utf-8');
   }
 });
