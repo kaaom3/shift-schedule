@@ -1871,13 +1871,24 @@
       <!-- Sub-tab 1: Agents -->
       <div id="agentsSubTab" class="settings-sub-panel">
         <div class="card">
-          <div class="card-header">
+          <div class="card-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div class="card-title">
               <span>👥 รายชื่อสมาชิกทีม First Tier (20 คน)</span>
             </div>
+            <button class="btn btn-save btn-sm" onclick="saveAgentNames()">💾 บันทึกรายชื่อและอัปเดตตาราง</button>
           </div>
           <div class="card-body">
-            <div id="agentsGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin-bottom: 16px;"></div>
+            <div style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:12.5px; line-height:1.6;">
+              <div style="font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:6px;">
+                <span>💡</span> คำแนะนำการแก้ไขรายชื่อเจ้าหน้าที่ (ชื่อไม่หาย ข้อมูลเชื่อมโยงอัตโนมัติ)
+              </div>
+              <ul style="margin:0; padding-left:18px;">
+                <li><strong>Username (ภาษาอังกฤษ):</strong> ใช้ระบุในช่องกะเวรและการประมวลผลหมุนเวียน (เช่น <code>pantip.to</code>)</li>
+                <li><strong>ชื่อภาษาไทย:</strong> ใช้แสดงผลคู่กับชื่อภาษาอังกฤษในตาราง, การ์ดบุคคล, ข้อความส่ง LINE, และรายงาน Excel (เช่น <code>พันธุ์ทิพย์</code>)</li>
+                <li>🛡️ <strong>ระบบเชื่อมโยงอัตโนมัติ:</strong> เมื่อแก้ไขชื่อแล้วกดบันทึก ระบบจะอัปเดตชื่อในตารางเวรทุกเดือน (ย้อนหลังและล่วงหน้า) ให้ทันที <strong>โดยกะเวรเดิมที่จัดไว้ สถิติ และวันลาจะไม่สูญหาย</strong></li>
+              </ul>
+            </div>
+            <div id="agentsGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px;"></div>
             <button class="btn btn-primary" onclick="saveAgentNames()">💾 บันทึกรายชื่อและอัปเดตตาราง</button>
           </div>
         </div>
@@ -2058,7 +2069,7 @@
   "yasumin.t"
 ];
 
-    const AGENT_NAME_MAP = {
+    let AGENT_NAME_MAP = {
   "pantip.to": "พันธุ์ทิพย์",
   "jutharat.ka": "จุฑารัตน์",
   "anusit.k": "อนุสิทธิ์",
@@ -2086,6 +2097,46 @@
       const th = AGENT_NAME_MAP[name];
       return th ? `${name} (${th})` : name;
     }
+
+    function reconcileScheduleNames(sched) {
+      if (!sched) return;
+      const thaiToEn = {};
+      Object.keys(AGENT_NAME_MAP).forEach(en => {
+        const th = AGENT_NAME_MAP[en];
+        if (th) thaiToEn[th.trim()] = en;
+      });
+
+      if (Array.isArray(sched.weeks)) {
+        sched.weeks.forEach(w => {
+          if (Array.isArray(w.assignments)) {
+            w.assignments.forEach(col => {
+              if (Array.isArray(col)) {
+                for (let i = 0; i < col.length; i++) {
+                  const name = col[i];
+                  if (thaiToEn[name]) {
+                    col[i] = thaiToEn[name];
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+
+      if (Array.isArray(sched.holidays)) {
+        sched.holidays.forEach(h => {
+          if (Array.isArray(h.shifts)) {
+            for (let i = 0; i < h.shifts.length; i++) {
+              const name = h.shifts[i];
+              if (thaiToEn[name]) {
+                h.shifts[i] = thaiToEn[name];
+              }
+            }
+          }
+        });
+      }
+    }
+
 
     // 16 Weekday Column Definitions
     let WEEKDAY_COLUMNS = [
@@ -2120,10 +2171,10 @@
     const BASE_ROTATION_ORDER_INDICES = [12, 9, 2, 6, 18, 1, 4, 0, 5, 11, 10, 15, 16, 17, 19, 14, 13, 7, 3, 8];
 
     // Master holiday rotation sequence from Excel Sheet 'รายชื่อหมุนเวรวันวันหยุด'
-    const HOLIDAY_ROTATION_AGENTS = ["พันธุ์ทิพย์", "จุฑารัตน์", "คมกริช", "อนุสิทธิ์", "เมวิกา", "สาวิตรี", "ชฎาพร", "ปริญญา", "ธีรวุฒิ", "ปาณิสรา", "สุริยา", "กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร", "นิทัศน์", "พรภูมิ", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"];
+    let HOLIDAY_ROTATION_AGENTS = ["pantip.to", "jutharat.ka", "komkrit.pr", "anusit.k", "mewika.p", "sawitree.ton", "chadaporn.sa", "parinya.si", "theerawut.b", "panisara.n", "suriya.r", "kittipa.j", "mallika.to", "pattaraporn.n", "siriyakorn.y", "nithus.d", "pornpoom.t", "kittiyakorn.h", "nutchanat.p", "yasumin.t"];
 
     // 20-week weekday shift rotation matrix from Excel Sheet 'รายชื่อหมุนเวรวันธรรมดา'
-    const WEEKDAY_ROTATION_MATRIX = [[["กิตติยากร"], ["นุชนาถ"], ["ปริญญา", "สุริยา"], ["อนุสิทธิ์"], ["เมวิกา"], ["พรภูมิ"], ["นิทัศน์"], ["ญาสุมินทร์"], ["ปาณิสรา"], ["กิตติภา", "มัลลิกา", "ภัทรภรณ์", "สิริยากร"], ["สาวิตรี"], ["จุฑารัตน์"], ["คมกริช"], ["พันธุ์ทิพย์"], ["ธีรวุฒิ"], ["ชฎาพร"]], [["สาวิตรี"], ["ธีรวุฒิ"], ["สุริยา", "ปาณิสรา"], ["นิทัศน์"], ["กิตติยากร"], ["เมวิกา"], ["จุฑารัตน์"], ["ชฎาพร"], ["ปริญญา"], ["สิริยากร", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["ภัทรภรณ์"], ["อนุสิทธิ์"], ["มัลลิกา"], ["คมกริช"], ["พันธุ์ทิพย์"], ["กิตติภา"]], [["จุฑารัตน์"], ["ปาณิสรา"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["สิริยากร"], ["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา"], ["พรภูมิ"], ["นุชนาถ"], ["มัลลิกา", "ภัทรภรณ์", "กิตติยากร", "ญาสุมินทร์"], ["เมวิกา"], ["สุริยา"], ["ชฎาพร"], ["นิทัศน์"], ["คมกริช"], ["ปริญญา"]], [["อนุสิทธิ์"], ["สาวิตรี"], ["กิตติภา", "มัลลิกา"], ["พรภูมิ"], ["คมกริช"], ["ภัทรภรณ์"], ["สิริยากร"], ["เมวิกา"], ["ชฎาพร"], ["นิทัศน์", "กิตติยากร", "นุชนาถ", "ญาสุมินทร์"], ["จุฑารัตน์"], ["ปริญญา"], ["พันธุ์ทิพย์"], ["สุริยา"], ["ปาณิสรา"], ["ธีรวุฒิ"]], [["พรภูมิ"], ["ภัทรภรณ์"], ["คมกริช", "สุริยา"], ["สาวิตรี"], ["ธีรวุฒิ"], ["ปริญญา"], ["จุฑารัตน์"], ["มัลลิกา"], ["ญาสุมินทร์"], ["ปาณิสรา", "สิริยากร", "กิตติยากร", "นุชนาถ"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["อนุสิทธิ์"], ["กิตติภา"], ["เมวิกา"], ["ชฎาพร"]], [["กิตติภา"], ["เมวิกา"], ["ธีรวุฒิ", "ปาณิสรา"], ["สุริยา"], ["ปริญญา"], ["นิทัศน์"], ["พันธุ์ทิพย์"], ["จุฑารัตน์"], ["สาวิตรี"], ["สิริยากร", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["คมกริช"], ["มัลลิกา"], ["ชฎาพร"], ["กิตติยากร"], ["ภัทรภรณ์"], ["อนุสิทธิ์"]], [["ปาณิสรา"], ["ปริญญา"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["เมวิกา"], ["สุริยา"], ["สาวิตรี"], ["พรภูมิ"], ["กิตติภา"], ["กิตติยากร"], ["มัลลิกา", "สิริยากร", "นิทัศน์", "ญาสุมินทร์"], ["จุฑารัตน์"], ["ภัทรภรณ์"], ["ชฎาพร"], ["นุชนาถ"], ["คมกริช"], ["อนุสิทธิ์"]], [["ปริญญา"], ["ญาสุมินทร์"], ["อนุสิทธิ์", "ปาณิสรา"], ["ธีรวุฒิ"], ["จุฑารัตน์"], ["สุริยา"], ["มัลลิกา"], ["ชฎาพร"], ["คมกริช"], ["กิตติภา", "ภัทรภรณ์", "นิทัศน์", "นุชนาถ"], ["สิริยากร"], ["พรภูมิ"], ["กิตติยากร"], ["เมวิกา"], ["พันธุ์ทิพย์"], ["สาวิตรี"]], [["ธีรวุฒิ"], ["กิตติยากร"], ["ปริญญา", "พันธุ์ทิพย์"], ["จุฑารัตน์"], ["นิทัศน์"], ["ปาณิสรา"], ["เมวิกา"], ["สาวิตรี"], ["ภัทรภรณ์"], ["กิตติภา", "มัลลิกา", "สิริยากร", "พรภูมิ"], ["คมกริช"], ["นุชนาถ"], ["อนุสิทธิ์"], ["ชฎาพร"], ["สุริยา"], ["ญาสุมินทร์"]], [["ชฎาพร"], ["เมวิกา"], ["ธีรวุฒิ", "สุริยา"], ["ปริญญา"], ["กิตติภา"], ["นุชนาถ"], ["สาวิตรี"], ["พันธุ์ทิพย์"], ["จุฑารัตน์"], ["มัลลิกา", "สิริยากร", "พรภูมิ", "ญาสุมินทร์"], ["คมกริช"], ["กิตติยากร"], ["อนุสิทธิ์"], ["ปาณิสรา"], ["นิทัศน์"], ["ภัทรภรณ์"]], [["นิทัศน์"], ["สิริยากร"], ["สุริยา", "กิตติภา"], ["พันธุ์ทิพย์"], ["ญาสุมินทร์"], ["ชฎาพร"], ["ภัทรภรณ์"], ["คมกริช"], ["เมวิกา"], ["มัลลิกา", "พรภูมิ", "กิตติยากร", "นุชนาถ"], ["ปาณิสรา"], ["สาวิตรี"], ["อนุสิทธิ์"], ["ปริญญา"], ["จุฑารัตน์"], ["ธีรวุฒิ"]], [["คมกริช"], ["พรภูมิ"], ["ธีรวุฒิ", "พันธุ์ทิพย์"], ["มัลลิกา"], ["ชฎาพร"], ["ญาสุมินทร์"], ["สุริยา"], ["ภัทรภรณ์"], ["จุฑารัตน์"], ["ปาณิสรา", "สิริยากร", "นิทัศน์", "กิตติยากร"], ["สาวิตรี"], ["เมวิกา"], ["นุชนาถ"], ["อนุสิทธิ์"], ["กิตติภา"], ["ปริญญา"]], [["เมวิกา"], ["มัลลิกา"], ["ธีรวุฒิ", "ปาณิสรา"], ["กิตติยากร"], ["พันธุ์ทิพย์"], ["สิริยากร"], ["อนุสิทธิ์"], ["จุฑารัตน์"], ["นิทัศน์"], ["ภัทรภรณ์", "พรภูมิ", "นุชนาถ", "ญาสุมินทร์"], ["สุริยา"], ["สาวิตรี"], ["กิตติภา"], ["ชฎาพร"], ["คมกริช"], ["ปริญญา"]], [["ภัทรภรณ์"], ["คมกริช"], ["ปาณิสรา", "มัลลิกา"], ["ชฎาพร"], ["ญาสุมินทร์"], ["จุฑารัตน์"], ["นุชนาถ"], ["ปริญญา"], ["สาวิตรี"], ["สิริยากร", "นิทัศน์", "พรภูมิ", "กิตติยากร"], ["กิตติภา"], ["ธีรวุฒิ"], ["อนุสิทธิ์"], ["พันธุ์ทิพย์"], ["เมวิกา"], ["สุริยา"]], [["พันธุ์ทิพย์"], ["นิทัศน์"], ["ปาณิสรา", "มัลลิกา"], ["ชฎาพร"], ["กิตติภา"], ["เมวิกา"], ["คมกริช"], ["สาวิตรี"], ["อนุสิทธิ์"], ["ภัทรภรณ์", "สิริยากร", "กิตติยากร", "ญาสุมินทร์"], ["พรภูมิ"], ["ปริญญา"], ["ธีรวุฒิ"], ["จุฑารัตน์"], ["สุริยา"], ["นุชนาถ"]], [["ญาสุมินทร์"], ["ชฎาพร"], ["พันธุ์ทิพย์", "มัลลิกา"], ["เมวิกา"], ["จุฑารัตน์"], ["กิตติภา"], ["คมกริช"], ["สุริยา"], ["พรภูมิ"], ["สิริยากร", "นิทัศน์", "กิตติยากร", "นุชนาถ"], ["ปริญญา"], ["อนุสิทธิ์"], ["ปาณิสรา"], ["ภัทรภรณ์"], ["สาวิตรี"], ["ธีรวุฒิ"]], [["นุชนาถ"], ["อนุสิทธิ์"], ["พันธุ์ทิพย์", "สุริยา"], ["เมวิกา"], ["ภัทรภรณ์"], ["มัลลิกา"], ["ปาณิสรา"], ["สิริยากร"], ["จุฑารัตน์"], ["กิตติภา", "นิทัศน์", "พรภูมิ", "กิตติยากร"], ["สาวิตรี"], ["ชฎาพร"], ["ปริญญา"], ["ธีรวุฒิ"], ["ญาสุมินทร์"], ["คมกริช"]], [["สุริยา"], ["จุฑารัตน์"], ["ชฎาพร", "ปริญญา"], ["ญาสุมินทร์"], ["นิทัศน์"], ["กิตติยากร"], ["เมวิกา"], ["นุชนาถ"], ["ธีรวุฒิ"], ["พันธุ์ทิพย์", "กิตติภา", "มัลลิกา", "พรภูมิ"], ["อนุสิทธิ์"], ["คมกริช"], ["ภัทรภรณ์"], ["สิริยากร"], ["ปาณิสรา"], ["สาวิตรี"]], [["มัลลิกา"], ["พันธุ์ทิพย์"], ["ภัทรภรณ์", "สิริยากร"], ["กิตติภา"], ["สาวิตรี"], ["คมกริช"], ["ญาสุมินทร์"], ["อนุสิทธิ์"], ["เมวิกา"], ["นิทัศน์", "พรภูมิ", "กิตติยากร", "นุชนาถ"], ["จุฑารัตน์"], ["ปริญญา"], ["ธีรวุฒิ"], ["สุริยา"], ["ชฎาพร"], ["ปาณิสรา"]], [["สิริยากร"], ["สุริยา"], ["ชฎาพร", "ปริญญา"], ["ภัทรภรณ์"], ["ปาณิสรา"], ["ธีรวุฒิ"], ["เมวิกา"], ["สาวิตรี"], ["อนุสิทธิ์"], ["กิตติภา", "นิทัศน์", "กิตติยากร", "นุชนาถ"], ["ญาสุมินทร์"], ["จุฑารัตน์"], ["คมกริช"], ["พรภูมิ"], ["มัลลิกา"], ["พันธุ์ทิพย์"]]];
+    let WEEKDAY_ROTATION_MATRIX = [[["kittiyakorn.h"],["nutchanat.p"],["parinya.si","suriya.r"],["anusit.k"],["mewika.p"],["pornpoom.t"],["nithus.d"],["yasumin.t"],["panisara.n"],["kittipa.j","mallika.to","pattaraporn.n","siriyakorn.y"],["sawitree.ton"],["jutharat.ka"],["komkrit.pr"],["pantip.to"],["theerawut.b"],["chadaporn.sa"]],[["sawitree.ton"],["theerawut.b"],["suriya.r","panisara.n"],["nithus.d"],["kittiyakorn.h"],["mewika.p"],["jutharat.ka"],["chadaporn.sa"],["parinya.si"],["siriyakorn.y","pornpoom.t","nutchanat.p","yasumin.t"],["pattaraporn.n"],["anusit.k"],["mallika.to"],["komkrit.pr"],["pantip.to"],["kittipa.j"]],[["jutharat.ka"],["panisara.n"],["theerawut.b","pantip.to"],["siriyakorn.y"],["anusit.k"],["sawitree.ton"],["kittipa.j"],["pornpoom.t"],["nutchanat.p"],["mallika.to","pattaraporn.n","kittiyakorn.h","yasumin.t"],["mewika.p"],["suriya.r"],["chadaporn.sa"],["nithus.d"],["komkrit.pr"],["parinya.si"]],[["anusit.k"],["sawitree.ton"],["kittipa.j","mallika.to"],["pornpoom.t"],["komkrit.pr"],["pattaraporn.n"],["siriyakorn.y"],["mewika.p"],["chadaporn.sa"],["nithus.d","kittiyakorn.h","nutchanat.p","yasumin.t"],["jutharat.ka"],["parinya.si"],["pantip.to"],["suriya.r"],["panisara.n"],["theerawut.b"]],[["pornpoom.t"],["pattaraporn.n"],["komkrit.pr","suriya.r"],["sawitree.ton"],["theerawut.b"],["parinya.si"],["jutharat.ka"],["mallika.to"],["yasumin.t"],["panisara.n","siriyakorn.y","kittiyakorn.h","nutchanat.p"],["nithus.d"],["pantip.to"],["anusit.k"],["kittipa.j"],["mewika.p"],["chadaporn.sa"]],[["kittipa.j"],["mewika.p"],["theerawut.b","panisara.n"],["suriya.r"],["parinya.si"],["nithus.d"],["pantip.to"],["jutharat.ka"],["sawitree.ton"],["siriyakorn.y","pornpoom.t","nutchanat.p","yasumin.t"],["komkrit.pr"],["mallika.to"],["chadaporn.sa"],["kittiyakorn.h"],["pattaraporn.n"],["anusit.k"]],[["panisara.n"],["parinya.si"],["theerawut.b","pantip.to"],["mewika.p"],["suriya.r"],["sawitree.ton"],["pornpoom.t"],["kittipa.j"],["kittiyakorn.h"],["mallika.to","siriyakorn.y","nithus.d","yasumin.t"],["jutharat.ka"],["pattaraporn.n"],["chadaporn.sa"],["nutchanat.p"],["komkrit.pr"],["anusit.k"]],[["parinya.si"],["yasumin.t"],["anusit.k","panisara.n"],["theerawut.b"],["jutharat.ka"],["suriya.r"],["mallika.to"],["chadaporn.sa"],["komkrit.pr"],["kittipa.j","pattaraporn.n","nithus.d","nutchanat.p"],["siriyakorn.y"],["pornpoom.t"],["kittiyakorn.h"],["mewika.p"],["pantip.to"],["sawitree.ton"]],[["theerawut.b"],["kittiyakorn.h"],["parinya.si","pantip.to"],["jutharat.ka"],["nithus.d"],["panisara.n"],["mewika.p"],["sawitree.ton"],["pattaraporn.n"],["kittipa.j","mallika.to","siriyakorn.y","pornpoom.t"],["komkrit.pr"],["nutchanat.p"],["anusit.k"],["chadaporn.sa"],["suriya.r"],["yasumin.t"]],[["chadaporn.sa"],["mewika.p"],["theerawut.b","suriya.r"],["parinya.si"],["kittipa.j"],["nutchanat.p"],["sawitree.ton"],["pantip.to"],["jutharat.ka"],["mallika.to","siriyakorn.y","pornpoom.t","yasumin.t"],["komkrit.pr"],["kittiyakorn.h"],["anusit.k"],["panisara.n"],["nithus.d"],["pattaraporn.n"]],[["nithus.d"],["siriyakorn.y"],["suriya.r","kittipa.j"],["pantip.to"],["yasumin.t"],["chadaporn.sa"],["pattaraporn.n"],["komkrit.pr"],["mewika.p"],["mallika.to","pornpoom.t","kittiyakorn.h","nutchanat.p"],["panisara.n"],["sawitree.ton"],["anusit.k"],["parinya.si"],["jutharat.ka"],["theerawut.b"]],[["komkrit.pr"],["pornpoom.t"],["theerawut.b","pantip.to"],["mallika.to"],["chadaporn.sa"],["yasumin.t"],["suriya.r"],["pattaraporn.n"],["jutharat.ka"],["panisara.n","siriyakorn.y","nithus.d","kittiyakorn.h"],["sawitree.ton"],["mewika.p"],["nutchanat.p"],["anusit.k"],["kittipa.j"],["parinya.si"]],[["mewika.p"],["mallika.to"],["theerawut.b","panisara.n"],["kittiyakorn.h"],["pantip.to"],["siriyakorn.y"],["anusit.k"],["jutharat.ka"],["nithus.d"],["pattaraporn.n","pornpoom.t","nutchanat.p","yasumin.t"],["suriya.r"],["sawitree.ton"],["kittipa.j"],["chadaporn.sa"],["komkrit.pr"],["parinya.si"]],[["pattaraporn.n"],["komkrit.pr"],["panisara.n","mallika.to"],["chadaporn.sa"],["yasumin.t"],["jutharat.ka"],["nutchanat.p"],["parinya.si"],["sawitree.ton"],["siriyakorn.y","nithus.d","pornpoom.t","kittiyakorn.h"],["kittipa.j"],["theerawut.b"],["anusit.k"],["pantip.to"],["mewika.p"],["suriya.r"]],[["pantip.to"],["nithus.d"],["panisara.n","mallika.to"],["chadaporn.sa"],["kittipa.j"],["mewika.p"],["komkrit.pr"],["sawitree.ton"],["anusit.k"],["pattaraporn.n","siriyakorn.y","kittiyakorn.h","yasumin.t"],["pornpoom.t"],["parinya.si"],["theerawut.b"],["jutharat.ka"],["suriya.r"],["nutchanat.p"]],[["yasumin.t"],["chadaporn.sa"],["pantip.to","mallika.to"],["mewika.p"],["jutharat.ka"],["kittipa.j"],["komkrit.pr"],["suriya.r"],["pornpoom.t"],["siriyakorn.y","nithus.d","kittiyakorn.h","nutchanat.p"],["parinya.si"],["anusit.k"],["panisara.n"],["pattaraporn.n"],["sawitree.ton"],["theerawut.b"]],[["nutchanat.p"],["anusit.k"],["pantip.to","suriya.r"],["mewika.p"],["pattaraporn.n"],["mallika.to"],["panisara.n"],["siriyakorn.y"],["jutharat.ka"],["kittipa.j","nithus.d","pornpoom.t","kittiyakorn.h"],["sawitree.ton"],["chadaporn.sa"],["parinya.si"],["theerawut.b"],["yasumin.t"],["komkrit.pr"]],[["suriya.r"],["jutharat.ka"],["chadaporn.sa","parinya.si"],["yasumin.t"],["nithus.d"],["kittiyakorn.h"],["mewika.p"],["nutchanat.p"],["theerawut.b"],["pantip.to","kittipa.j","mallika.to","pornpoom.t"],["anusit.k"],["komkrit.pr"],["pattaraporn.n"],["siriyakorn.y"],["panisara.n"],["sawitree.ton"]],[["mallika.to"],["pantip.to"],["pattaraporn.n","siriyakorn.y"],["kittipa.j"],["sawitree.ton"],["komkrit.pr"],["yasumin.t"],["anusit.k"],["mewika.p"],["nithus.d","pornpoom.t","kittiyakorn.h","nutchanat.p"],["jutharat.ka"],["parinya.si"],["theerawut.b"],["suriya.r"],["chadaporn.sa"],["panisara.n"]],[["siriyakorn.y"],["suriya.r"],["chadaporn.sa","parinya.si"],["pattaraporn.n"],["panisara.n"],["theerawut.b"],["mewika.p"],["sawitree.ton"],["anusit.k"],["kittipa.j","nithus.d","kittiyakorn.h","nutchanat.p"],["yasumin.t"],["jutharat.ka"],["komkrit.pr"],["pornpoom.t"],["mallika.to"],["pantip.to"]]];
 
     let currentSchedule = { weeks: [], holidays: [] };
     let originalSchedule = { weeks: [], holidays: [] };
@@ -2181,6 +2232,7 @@
         month: month,
         monthSchedules: monthSchedules,
         agents: AGENTS,
+        agentNameMap: AGENT_NAME_MAP,
         adminPin: currentAdminPin,
         allowUserSwap: allowUserSwap,
         weekdayColumns: WEEKDAY_COLUMNS,
@@ -2200,11 +2252,20 @@
         if (result && result.success) {
           if (result.data) {
             const cloudData = result.data;
-            if (cloudData.monthSchedules && typeof cloudData.monthSchedules === 'object') {
-              monthSchedules = cloudData.monthSchedules;
+            if (cloudData.agentNameMap && typeof cloudData.agentNameMap === 'object') {
+              AGENT_NAME_MAP = Object.assign({}, AGENT_NAME_MAP, cloudData.agentNameMap);
             }
             if (Array.isArray(cloudData.agents) && cloudData.agents.length > 0) {
               AGENTS = cloudData.agents;
+            }
+            if (cloudData.monthSchedules && typeof cloudData.monthSchedules === 'object') {
+              monthSchedules = cloudData.monthSchedules;
+              Object.keys(monthSchedules).forEach(k => {
+                if (monthSchedules[k]) {
+                  reconcileScheduleNames(monthSchedules[k].schedule);
+                  reconcileScheduleNames(monthSchedules[k].originalSchedule);
+                }
+              });
             }
             if (Array.isArray(cloudData.weekdayColumns)) {
               WEEKDAY_COLUMNS = cloudData.weekdayColumns;
@@ -2387,6 +2448,8 @@
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const curData = getOrInitMonthSchedule(yearAD, month);
+      reconcileScheduleNames(curData.schedule);
+      reconcileScheduleNames(curData.originalSchedule);
       currentSchedule = curData.schedule;
       originalSchedule = curData.originalSchedule;
       swapHistory = curData.swapHistory || [];
@@ -2597,12 +2660,16 @@
       const key = `${yearAD}-${month}`;
       if (monthSchedules[key]) {
         if (!monthSchedules[key].leaves) monthSchedules[key].leaves = {};
+        reconcileScheduleNames(monthSchedules[key].schedule);
+        reconcileScheduleNames(monthSchedules[key].originalSchedule);
         return monthSchedules[key];
       }
       if (HISTORICAL_SCHEDULES[key]) {
+        const hSched = JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key]));
+        reconcileScheduleNames(hSched);
         monthSchedules[key] = {
-          schedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
-          originalSchedule: JSON.parse(JSON.stringify(HISTORICAL_SCHEDULES[key])),
+          schedule: hSched,
+          originalSchedule: JSON.parse(JSON.stringify(hSched)),
           swapHistory: [],
           leaves: {}
         };
@@ -2640,6 +2707,7 @@
       });
 
       const sched = { weeks: generatedWeeks, holidays: generatedHolidays };
+      reconcileScheduleNames(sched);
       monthSchedules[key] = {
         schedule: sched,
         originalSchedule: JSON.parse(JSON.stringify(sched)),
@@ -4540,9 +4608,26 @@
     // TAB 4: AGENTS MANAGER
     function renderAgentsEditor() {
       const grid = document.getElementById("agentsGrid");
+      if (!grid) return;
       grid.innerHTML = "";
       AGENTS.forEach((ag, idx) => {
-        grid.innerHTML += `<div style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:6px 10px;border:1px solid var(--border);border-radius:6px;"><span style="font-weight:700;width:24px;color:var(--muted);">${idx+1}.</span><input type="text" class="agent-name-input" data-idx="${idx}" value="${ag}" style="width:100%; border:1px solid var(--border); padding:4px 6px; border-radius:4px; font-family:inherit;"></div>`;
+        const thName = AGENT_NAME_MAP[ag] || "";
+        grid.innerHTML += `
+          <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700; color:var(--primary); font-size:12px;">👤 เจ้าหน้าที่คนที่ ${idx+1}</span>
+              <span style="font-size:10px; color:var(--muted); background:#f1f5f9; padding:1px 6px; border-radius:4px;">ลำดับหมุนเวร #${idx+1}</span>
+            </div>
+            <div>
+              <label style="font-size:10.5px; font-weight:600; color:var(--muted); display:block; margin-bottom:2px;">Username (ภาษาอังกฤษ):</label>
+              <input type="text" class="agent-name-input agent-username-input" data-idx="${idx}" value="${ag}" placeholder="เช่น ${ag}" style="width:100%; border:1px solid var(--border); padding:5px 8px; border-radius:6px; font-size:12px; font-weight:600; font-family:inherit; color:var(--primary);">
+            </div>
+            <div>
+              <label style="font-size:10.5px; font-weight:600; color:var(--muted); display:block; margin-bottom:2px;">ชื่อ-นามสกุล / ชื่อเล่น (ไทย):</label>
+              <input type="text" class="agent-thname-input" data-idx="${idx}" value="${thName}" placeholder="เช่น ${thName || 'ชื่อภาษาไทย'}" style="width:100%; border:1px solid var(--border); padding:5px 8px; border-radius:6px; font-size:12px; font-family:inherit;">
+            </div>
+          </div>
+        `;
       });
     }
 
@@ -5064,16 +5149,160 @@
     }
 
     function saveAgentNames() {
-      document.querySelectorAll(".agent-name-input").forEach(inp => {
-        const idx = parseInt(inp.dataset.idx, 10);
-        const val = inp.value.trim();
-        if (val) AGENTS[idx] = val;
+      const usernameInputs = document.querySelectorAll(".agent-username-input");
+      const thNameInputs = document.querySelectorAll(".agent-thname-input");
+      
+      const renamePairs = [];
+
+      usernameInputs.forEach((inp, idx) => {
+        const oldUsername = AGENTS[idx];
+        const newUsername = inp.value.trim() || oldUsername;
+        const thInp = thNameInputs[idx];
+        const oldThaiName = AGENT_NAME_MAP[oldUsername] || "";
+        const newThaiName = thInp ? thInp.value.trim() : oldThaiName;
+
+        if (oldUsername !== newUsername || oldThaiName !== newThaiName) {
+          renamePairs.push({ oldUsername, newUsername, oldThaiName, newThaiName, idx });
+        }
       });
+
+      if (renamePairs.length === 0) {
+        showToast("ℹ️ ไม่มีการเปลี่ยนแปลงรายชื่อ");
+        return;
+      }
+
+      // 1. Update AGENTS and AGENT_NAME_MAP
+      renamePairs.forEach(pair => {
+        const { oldUsername, newUsername, newThaiName, idx } = pair;
+        AGENTS[idx] = newUsername;
+
+        if (newThaiName) {
+          AGENT_NAME_MAP[newUsername] = newThaiName;
+        } else if (AGENT_NAME_MAP[oldUsername]) {
+          AGENT_NAME_MAP[newUsername] = AGENT_NAME_MAP[oldUsername];
+        }
+        if (oldUsername !== newUsername && AGENT_NAME_MAP[oldUsername]) {
+          delete AGENT_NAME_MAP[oldUsername];
+        }
+      });
+
+      // 2. Helper to replace name in a schedule object
+      function replaceNameInSchedule(sched, oldName, newName) {
+        if (!sched) return;
+        if (Array.isArray(sched.weeks)) {
+          sched.weeks.forEach(w => {
+            if (Array.isArray(w.assignments)) {
+              w.assignments.forEach(colList => {
+                if (Array.isArray(colList)) {
+                  for (let s = 0; s < colList.length; s++) {
+                    if (colList[s] === oldName) {
+                      colList[s] = newName;
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+        if (Array.isArray(sched.holidays)) {
+          sched.holidays.forEach(h => {
+            if (Array.isArray(h.shifts)) {
+              for (let s = 0; s < h.shifts.length; s++) {
+                if (h.shifts[s] === oldName) {
+                  h.shifts[s] = newName;
+                }
+              }
+            }
+          });
+        }
+      }
+
+      // 3. Propagate replacement to currentSchedule, originalSchedule, and all monthSchedules
+      renamePairs.forEach(pair => {
+        const { oldUsername, newUsername, newThaiName } = pair;
+        if (oldUsername === newUsername) return;
+
+        replaceNameInSchedule(currentSchedule, oldUsername, newUsername);
+        replaceNameInSchedule(originalSchedule, oldUsername, newUsername);
+
+        Object.keys(monthSchedules).forEach(key => {
+          const mData = monthSchedules[key];
+          if (!mData) return;
+          replaceNameInSchedule(mData.schedule, oldUsername, newUsername);
+          replaceNameInSchedule(mData.originalSchedule, oldUsername, newUsername);
+
+          // Update leaves
+          if (mData.leaves && typeof mData.leaves === 'object') {
+            Object.keys(mData.leaves).forEach(slotKey => {
+              const l = mData.leaves[slotKey];
+              if (l && l.agent === oldUsername) {
+                l.agent = newUsername;
+              }
+            });
+          }
+
+          // Update swap history
+          if (Array.isArray(mData.swapHistory)) {
+            mData.swapHistory.forEach(item => {
+              if (item.agentA && item.agentA.username === oldUsername) {
+                item.agentA.username = newUsername;
+                item.agentA.thName = newThaiName || AGENT_NAME_MAP[newUsername] || newUsername;
+              }
+              if (item.agentB && item.agentB.username === oldUsername) {
+                item.agentB.username = newUsername;
+                item.agentB.thName = newThaiName || AGENT_NAME_MAP[newUsername] || newUsername;
+              }
+              if (item.detail && item.detail.includes(oldUsername)) {
+                item.detail = item.detail.split(oldUsername).join(newUsername);
+              }
+              if (item.summaryAtoB && item.summaryAtoB.includes(oldUsername)) {
+                item.summaryAtoB = item.summaryAtoB.split(oldUsername).join(newUsername);
+              }
+              if (item.summaryBtoA && item.summaryBtoA.includes(oldUsername)) {
+                item.summaryBtoA = item.summaryBtoA.split(oldUsername).join(newUsername);
+              }
+            });
+          }
+        });
+
+        // HISTORICAL_SCHEDULES
+        Object.keys(HISTORICAL_SCHEDULES).forEach(key => {
+          replaceNameInSchedule(HISTORICAL_SCHEDULES[key], oldUsername, newUsername);
+        });
+
+        // WEEKDAY_ROTATION_MATRIX
+        if (Array.isArray(WEEKDAY_ROTATION_MATRIX)) {
+          WEEKDAY_ROTATION_MATRIX.forEach(week => {
+            if (Array.isArray(week)) {
+              week.forEach(col => {
+                if (Array.isArray(col)) {
+                  for (let s = 0; s < col.length; s++) {
+                    if (col[s] === oldUsername) col[s] = newUsername;
+                  }
+                }
+              });
+            }
+          });
+        }
+
+        // HOLIDAY_ROTATION_AGENTS
+        if (Array.isArray(HOLIDAY_ROTATION_AGENTS)) {
+          for (let h = 0; h < HOLIDAY_ROTATION_AGENTS.length; h++) {
+            if (HOLIDAY_ROTATION_AGENTS[h] === oldUsername) {
+              HOLIDAY_ROTATION_AGENTS[h] = newUsername;
+            }
+          }
+        }
+      });
+
+      // 4. Update UI
       updateAdminModeUI();
       populateFilterDropdowns();
       renderAllViews();
-      showToast("บันทึกรายชื่อเรียบร้อย");
-      triggerAutoSaveToCloud("บันทึกรายชื่อเจ้าหน้าที่");
+      renderAgentsEditor();
+
+      showToast(`💾 บันทึกและอัปเดตรายชื่อสำเร็จ (${renamePairs.length} คน) ข้อมูลกะเวรเชื่อมโยงอัตโนมัติเรียบร้อย`);
+      triggerAutoSaveToCloud(`บันทึกรายชื่อเจ้าหน้าที่ (${renamePairs.length} คน)`);
     }
 
     function populateFilterDropdowns() {
