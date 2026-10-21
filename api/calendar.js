@@ -118,7 +118,8 @@ module.exports = async (req, res) => {
 
   const isDownload = req.query.download === '1';
 
-  // Fetch system state from MongoDB
+  try {
+    // Fetch system state from MongoDB
   const uri = process.env.MONGODB_URI;
   let payload = null;
 
@@ -145,8 +146,36 @@ module.exports = async (req, res) => {
   const weekdayColumns = payload.weekdayColumns || [];
   const holidayShiftMeta = payload.holidayShiftMeta || [];
 
-  const thName = agentNameMap[agent] ? `คุณ${agentNameMap[agent]}` : agent;
+  // Resolve target agent ID and Thai display name
+  let targetId = agent;
+  let targetThaiName = agent;
+
+  // Check if agent param matches Thai name or English ID
+  const cleanAgent = agent.replace(/^คุณ\s*/, '').trim();
+  for (const [engId, th] of Object.entries(agentNameMap)) {
+    if (engId.toLowerCase() === agent.toLowerCase() || th === cleanAgent) {
+      targetId = engId;
+      targetThaiName = th;
+      break;
+    }
+  }
+
+  if (agentNameMap[targetId]) {
+    targetThaiName = agentNameMap[targetId];
+  }
+
+  const thName = `คุณ${targetThaiName}`;
   const calName = `ตารางเวร - ${thName}`;
+
+  function isAgentMatch(name) {
+    if (!name) return false;
+    const cleanName = name.replace(/^คุณ\s*/, '').trim();
+    return name === targetId || 
+           name.toLowerCase() === targetId.toLowerCase() ||
+           name === targetThaiName ||
+           cleanName === targetThaiName ||
+           agentNameMap[name] === targetThaiName;
+  }
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -195,7 +224,7 @@ module.exports = async (req, res) => {
           if (!Array.isArray(names)) return;
 
           names.forEach((name, sIdx) => {
-            if (name !== agent) return;
+            if (!isAgentMatch(name)) return;
 
             const col = weekdayColumns[cIdx] || {};
             const colCustom = w.customTimes && w.customTimes[cIdx];
@@ -266,7 +295,7 @@ module.exports = async (req, res) => {
         if (!Array.isArray(h.shifts)) return;
 
         h.shifts.forEach((shName, sIdx) => {
-          if (shName !== agent) return;
+          if (!isAgentMatch(shName)) return;
 
           const meta = holidayShiftMeta[sIdx] || { time: '08.00-17.00', breakTime: '' };
           const timeRange = parseTimeRange(meta.time);
@@ -319,4 +348,10 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Disposition', `${disposition}; filename="shift-${agent}.ics"`);
 
   res.status(200).send(icsContent);
+  } catch (err) {
+    console.error('Calendar generation error:', err);
+    if (!res.headersSent) {
+      res.status(500).send('Error generating calendar feed: ' + err.message);
+    }
+  }
 };

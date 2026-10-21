@@ -572,7 +572,10 @@
       currentCalendarSyncAgent = agentName || (AGENTS && AGENTS[0]) || "";
       const nameElem = document.getElementById("calendarModalAgentName");
       if (nameElem) {
-        nameElem.textContent = currentCalendarSyncAgent;
+        const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[currentCalendarSyncAgent])
+          ? `คุณ${AGENT_NAME_MAP[currentCalendarSyncAgent]}`
+          : currentCalendarSyncAgent;
+        nameElem.textContent = `${th} (${currentCalendarSyncAgent})`;
       }
 
       const host = window.location.host;

@@ -66,7 +66,12 @@ const server = http.createServer((req, res) => {
 
   // Calendar sync feed API
   if (pathname === '/api/calendar') {
-    calendarHandler(req, res);
+    calendarHandler(req, res).catch(err => {
+      console.error('Calendar route error:', err);
+      if (!res.headersSent) {
+        res.status(500).send('Error: ' + err.message);
+      }
+    });
     return;
   }
 
