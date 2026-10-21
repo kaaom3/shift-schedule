@@ -920,3 +920,17 @@
       }).join("");
     }
 
+    // Explicit global window bindings for inline HTML onclick handlers
+    if (typeof window !== "undefined") {
+      window.openDailySwapModal = openDailySwapModal;
+      window.closeDailySwapModal = closeDailySwapModal;
+      window.executeDailySwap = executeDailySwap;
+      window.deleteDailySwap = deleteDailySwap;
+      window.onDailySwapDateChange = onDailySwapDateChange;
+      window.onDailySwapAgentAChange = onDailySwapAgentAChange;
+      window.onDailySwapAgentBChange = onDailySwapAgentBChange;
+      window.toggleDailySwapCrossDayUI = toggleDailySwapCrossDayUI;
+      window.getDailySwapsForMonth = getDailySwapsForMonth;
+      window.getEffectiveAssignmentsForDay = getEffectiveAssignmentsForDay;
+    }
+
