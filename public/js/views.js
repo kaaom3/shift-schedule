@@ -578,15 +578,29 @@
         nameElem.textContent = `${th} (${currentCalendarSyncAgent})`;
       }
 
-      const host = window.location.host;
-      const protocol = window.location.protocol;
-      const isHttps = protocol === "https:";
+      let apiHost = window.location.host;
+      let apiProtocol = window.location.protocol;
 
+      // Always route to live Vercel backend if running on GitHub Pages (static) or local file
+      if (typeof window !== "undefined" && window.location) {
+        if (window.location.hostname && (window.location.hostname.includes("github.io") || window.location.protocol === "file:")) {
+          apiHost = "shift-schedule-f6di.vercel.app";
+          apiProtocol = "https:";
+        } else if (typeof mongoApiEndpoint === "string" && mongoApiEndpoint.startsWith("http")) {
+          try {
+            const u = new URL(mongoApiEndpoint);
+            apiHost = u.host;
+            apiProtocol = u.protocol;
+          } catch (e) {}
+        }
+      }
+
+      const isHttps = apiProtocol === "https:";
       // Base URL for API
-      const baseUrl = `${protocol}//${host}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`;
+      const baseUrl = `${apiProtocol}//${apiHost}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`;
       // Webcal URL for iOS / macOS 1-tap subscription
       const webcalUrl = isHttps 
-        ? `webcal://${host}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`
+        ? `webcal://${apiHost}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`
         : baseUrl;
 
       const iphoneBtn = document.getElementById("calendarIphoneBtn");
@@ -663,7 +677,16 @@
 
     function downloadCurrentAgentICS() {
       if (!currentCalendarSyncAgent) return;
-      const url = `/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}&download=1`;
+      let apiBase = "";
+      if (typeof window !== "undefined" && window.location && (window.location.hostname.includes("github.io") || window.location.protocol === "file:")) {
+        apiBase = "https://shift-schedule-f6di.vercel.app";
+      } else if (typeof mongoApiEndpoint === "string" && mongoApiEndpoint.startsWith("http")) {
+        try {
+          const u = new URL(mongoApiEndpoint);
+          apiBase = `${u.protocol}//${u.host}`;
+        } catch (e) {}
+      }
+      const url = `${apiBase}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}&download=1`;
       const a = document.createElement("a");
       a.href = url;
       a.download = `ตารางเวร_${currentCalendarSyncAgent}.ics`;
