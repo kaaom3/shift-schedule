@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const scheduleHandler = require('./api/schedule');
 const healthHandler = require('./api/health');
+const calendarHandler = require('./api/calendar');
 
 // Read port from environment or fallback to 3000
 const PORT = process.env.PORT || 3000;
@@ -33,10 +34,17 @@ function sendFile(res, filePath, contentType) {
 }
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
 
-  // Mock res.status(code).json(data) helper for Vercel handler compatibility
+  // Populate req.query from searchParams
+  const queryObj = {};
+  for (const [k, v] of parsedUrl.searchParams.entries()) {
+    queryObj[k] = v;
+  }
+  req.query = queryObj;
+
+  // Mock res.status(code).json(data) & res.send(data) helpers for Vercel handler compatibility
   res.status = function(code) {
     this.statusCode = code;
     return this;
@@ -46,6 +54,21 @@ const server = http.createServer((req, res) => {
     this.end(JSON.stringify(data));
     return this;
   };
+  res.send = function(data) {
+    if (typeof data === 'object' && !Buffer.isBuffer(data)) {
+      this.setHeader('Content-Type', 'application/json; charset=utf-8');
+      this.end(JSON.stringify(data));
+    } else {
+      this.end(data);
+    }
+    return this;
+  };
+
+  // Calendar sync feed API
+  if (pathname === '/api/calendar') {
+    calendarHandler(req, res);
+    return;
+  }
 
   // Helper to read JSON body for API routes
   if (pathname === '/api/schedule' || pathname === '/api/health') {
@@ -94,6 +117,7 @@ server.listen(PORT, () => {
   console.log(`🚀 Shift Schedule Server is running on port ${PORT}`);
   console.log(`🔗 Local URL: http://localhost:${PORT}`);
   console.log(`📡 API URL:   http://localhost:${PORT}/api/schedule`);
+  console.log(`📅 Calendar:  http://localhost:${PORT}/api/calendar?agent=...`);
   console.log(`🩺 Health:    http://localhost:${PORT}/api/health`);
   console.log(`==================================================\n`);
 });
