@@ -82,7 +82,7 @@ function showJdTooltip(event, wIdx, cIdx) {
 
   el.innerHTML = `
     <div class="jd-tip-header">
-      <span class="jd-tip-title">ช่องที่ ${cIdx + 1} (${col.code}) • ${roles.join(" / ")}</span>
+      <span class="jd-tip-title">ช่องที่ ${cIdx + 1} • ${roles.join(" / ")}</span>
       <span class="jd-tip-time">${shiftTime}</span>
     </div>
     <div class="jd-tip-role">
@@ -290,14 +290,14 @@ function renderMasterWeekdayTable() {
           const lClass = getLeaveClass(leave.leaveType);
           const leaveTitle = `${leave.leaveType}${leave.note ? ': ' + leave.note : ''}`;
           const clickAction = isAdminMode 
-            ? `openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', '${col.code}')`
+            ? `openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')`
             : `showToast('🏖️ ${n}: ${leave.leaveType} ${leave.note || ''}')`;
           leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
         }
 
         let adminLeaveAddBtn = "";
         if (isAdminMode && !leave && n && n !== "-") {
-          adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', '${col.code}')" title="บันทึกการลา">+🏖️</span>`;
+          adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')" title="บันทึกการลา">+🏖️</span>`;
         }
         
         const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";

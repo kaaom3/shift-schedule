@@ -210,7 +210,7 @@
         html += `
           <div style="background:${isOverridden ? '#fff7ed' : '#f8fafc'}; border:1px solid ${isOverridden ? '#fed7aa' : 'var(--border)'}; border-radius:8px; padding:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-weight:700; font-size:12px; color:var(--primary);">ช่องที่ ${cIdx + 1} (${col.code}) • ${col.role}</span>
+              <span style="font-weight:700; font-size:12px; color:var(--primary);">ช่องที่ ${cIdx + 1} • ${col.role}</span>
               ${isOverridden ? `<span style="font-size:10px; color:#c2410c; font-weight:700; background:#ffedd5; padding:1px 5px; border-radius:4px;">⚡ กำหนดเอง</span>` : ''}
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
@@ -601,7 +601,7 @@
           <div style="background:#f8fafc; border:1px solid var(--border-dark); border-radius:10px; padding:16px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
               <div>
-                <strong style="color:var(--primary); font-size:15px;">กะที่ ${idx + 1} [รหัส: ${col.code}]</strong>
+                <strong style="color:var(--primary); font-size:15px;">กะที่ ${idx + 1}</strong>
                 <span style="font-size:12px; color:var(--secondary); margin-left:8px;">• ${col.role || roles.join(" / ")}</span>
               </div>
               <span style="font-size:12px; color:var(--muted); background:#f1f5f9; padding:2px 8px; border-radius:6px; font-weight:600;">👥 จำนวนคน: ${col.slots} คน</span>

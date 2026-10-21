@@ -89,11 +89,11 @@
         <button class="tab-btn" id="tabBtnHourly" onclick="switchTab('hourlyTab', this); renderHourlyHeadcountTable();">
           ⏱️ 4. เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount)
         </button>
-        <button class="tab-btn admin-only" id="tabBtnMatrix" onclick="switchTab('matrixTab', this)">
+        <button class="tab-btn admin-only" id="tabBtnMatrix" onclick="switchTab('matrixTab', this)" style="display: none !important;">
           ⚖️ 5. ตรวจสอบโควตา & กะ Call (Matrix Check)
         </button>
         <button class="tab-btn admin-only" id="tabBtnAgents" onclick="switchTab('agentsTab', this)">
-          👥 6. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
+          👥 5. จัดการรายชื่อทีม (<span id="agentCountBadge">20</span> คน)
         </button>
       </div>
 
@@ -484,7 +484,7 @@
     </section>
 
     <!-- TAB 5: ตรวจสอบโควตา (Matrix Check) -->
-    <section id="matrixTab" class="panel">
+    <section id="matrixTab" class="panel" style="display: none !important;">
       <div class="card">
         <div class="card-header">
           <div class="card-title">
@@ -766,7 +766,20 @@
           💡 ตรวจสอบข้อความด้านล่าง แล้วกดปุ่ม <strong>"คัดลอกข้อความ"</strong> เพื่อนำไปวางส่งในกลุ่ม LINE ได้ทันที
         </p>
         <div style="position:relative;">
-          <textarea id="lineBriefTextArea" readonly style="width:100%; height:320px; padding:12px; border:1px solid var(--border-dark); border-radius:8px; font-family:'Fira Code', 'Consolas', 'Courier New', monospace; font-size:12.5px; line-height:1.5; background:#f8fafc; color:#0f172a; resize:vertical;"></textarea>
+          <textarea id="lineBriefTextArea" style="width:100%; height:380px; padding:12px; border:1px solid var(--border-dark); border-radius:8px; font-family:'Sarabun', 'Prompt', sans-serif; font-size:13px; line-height:1.6; background:#ffffff; color:#0f172a; resize:vertical;"></textarea>
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="toggleExtraStaffEditor()" style="font-size: 11px; padding: 2px 8px; color: var(--muted);">
+            ⚙️ ปรับแต่งรายชื่อทีมงานประจำกะ (Fixed Staff)
+          </button>
+        </div>
+        <div id="extraStaffEditorContainer" style="display: none; margin-top: 8px; background: #f8fafc; border: 1px dashed var(--border-dark); border-radius: 6px; padding: 10px; font-size: 11.5px;">
+          <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">รายชื่อทีมงานประจำกะ (1 บรรทัดต่อ 1 คน: เวลา,ชื่อ,หน้าที่):</div>
+          <textarea id="extraStaffInputArea" style="width: 100%; height: 110px; font-size: 11px; font-family: monospace; padding: 6px; border: 1px solid var(--border); border-radius: 4px;"></textarea>
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="resetExtraStaffToDefault()" style="font-size: 10.5px; padding: 2px 6px;">คืนค่าเริ่มต้น</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveExtraStaffFromEditor()" style="font-size: 10.5px; padding: 2px 8px;">บันทึก</button>
+          </div>
         </div>
       </div>
       <div class="modal-box-footer" style="justify-content:space-between;">
@@ -858,6 +871,19 @@
           💡 สามารถระบุเวลาเข้างานและเวลาพักเฉพาะสัปดาห์นี้ได้ โดยจะไม่ส่งผลกระทบต่อสัปดาห์อื่นๆ ในเดือนนี้
         </p>
         <div id="weekTimeModalGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:10px; max-height:400px; overflow-y:auto; padding-right:4px;">
+        </div>
+        <div style="margin-top: 8px; display: flex; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="toggleExtraStaffEditor()" style="font-size: 11px; padding: 2px 8px; color: var(--muted);">
+            ⚙️ ปรับแต่งรายชื่อทีมงานประจำกะ (Fixed Staff)
+          </button>
+        </div>
+        <div id="extraStaffEditorContainer" style="display: none; margin-top: 8px; background: #f8fafc; border: 1px dashed var(--border-dark); border-radius: 6px; padding: 10px; font-size: 11.5px;">
+          <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">รายชื่อทีมงานประจำกะ (1 บรรทัดต่อ 1 คน: เวลา,ชื่อ,หน้าที่):</div>
+          <textarea id="extraStaffInputArea" style="width: 100%; height: 110px; font-size: 11px; font-family: monospace; padding: 6px; border: 1px solid var(--border); border-radius: 4px;"></textarea>
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="resetExtraStaffToDefault()" style="font-size: 10.5px; padding: 2px 6px;">คืนค่าเริ่มต้น</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveExtraStaffFromEditor()" style="font-size: 10.5px; padding: 2px 8px;">บันทึก</button>
+          </div>
         </div>
       </div>
       <div class="modal-box-footer" style="justify-content:space-between;">

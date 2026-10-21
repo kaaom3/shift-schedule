@@ -122,7 +122,7 @@
           wsWd.getRow(6).height = 26;
           WEEKDAY_COLUMNS.forEach((col, idx) => {
             const cell = wsWd.getCell(6, idx + 2);
-            cell.value = `${col.role} (${col.code})`;
+            cell.value = col.role;
             cell.font = { name: 'Sarabun', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
             cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -613,7 +613,7 @@
             const rowData = [
               'เวรวันทำการ',
               `ช่องที่ ${idx + 1}`,
-              col.code,
+              'กะที่ ' + (idx + 1),
               col.role,
               `${col.time} น.`,
               col.breakTime,
@@ -684,7 +684,7 @@
           hSlot.push(`ช่องที่ ${idx + 1}`);
           hTime.push(c.time);
           hBreak.push(c.breakTime);
-          hRole.push(`${c.role} (${c.code})`);
+          hRole.push(c.role);
           hJd.push(c.jd.join("\n"));
         });
         wdAoa.push(hSlot); wdAoa.push(hTime); wdAoa.push(hBreak); wdAoa.push(hRole); wdAoa.push(hJd);

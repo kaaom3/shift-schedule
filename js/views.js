@@ -42,121 +42,280 @@
       document.getElementById("lineBriefModal").classList.remove("show");
     }
 
+    function findWeekIndexForDay(sched, day) {
+      if (!sched || !Array.isArray(sched.weeks)) return 0;
+      for (let idx = 0; idx < sched.weeks.length; idx++) {
+        const w = sched.weeks[idx];
+        if (Array.isArray(w.days) && w.days.includes(day)) return idx;
+        if (w.label) {
+          const m = w.label.match(/(\d+)\s*-\s*(\d+)/);
+          if (m) {
+            const start = parseInt(m[1], 10);
+            const end = parseInt(m[2], 10);
+            if (day >= start && day <= end) return idx;
+          } else {
+            const single = w.label.match(/(\d+)/);
+            if (single && parseInt(single[1], 10) === day) return idx;
+          }
+        }
+      }
+      return 0;
+    }
+
+    let DEFAULT_LINE_EXTRA_STAFF = [
+      { time: "07.00-16.00", name: "อนัญญา", role: "" },
+      { time: "08.30-17.30", name: "สมเกียรติ", role: "" },
+      { time: "08.30-17.30", name: "นุสรา", role: "" },
+      { time: "08.30-17.30", name: "กชกร", role: "" },
+      { time: "08.30-17.30", name: "เสกสรร", role: "" },
+      { time: "11.30-20.30", name: "กิติภูมิ", role: "" }
+    ];
+
+    function getLineExtraStaff() {
+      try {
+        const saved = localStorage.getItem("LINE_EXTRA_STAFF");
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+      return DEFAULT_LINE_EXTRA_STAFF;
+    }
+
+    function saveLineExtraStaff(staffList) {
+      try {
+        localStorage.setItem("LINE_EXTRA_STAFF", JSON.stringify(staffList));
+      } catch (e) {}
+    }
+
+    function getLineBriefRoleTag(cIdx, col) {
+      const defaultRoleTags = {
+        0: "(รับ Call/ECE)",
+        1: "(รับ Mail/Self Service/PK)",
+        2: "(รับ Call)",
+        3: "(รับ Self Service)",
+        4: "(รับ ECE)",
+        5: "(รับ Mail/PK)",
+        6: "(รับ Follow)",
+        7: "(รับ ECE)",
+        8: "(รับ Follow)",
+        9: "(รับ Call)",
+        10: "(รับ Self Service)",
+        11: "(รับ ECE/Call)",
+        12: "(รับ ECE)",
+        13: "(รับ Call)",
+        14: "(รับ Self Service/PK/Mail)",
+        15: "(รับ Call)"
+      };
+      if (defaultRoleTags[cIdx]) return defaultRoleTags[cIdx];
+      if (!col || !col.role) return "";
+      const r = col.role.trim();
+      return r.startsWith("รับ") ? `(${r})` : `(รับ ${r})`;
+    }
+
+    function formatLineShiftHeader(timeStr) {
+      let cleanTime = String(timeStr || "").replace(/ น\.?$/, "").trim();
+      cleanTime = cleanTime.replace(/^0(\d\.)/, "$1");
+      return `ช่วงเวลา ${cleanTime} น.`;
+    }
+
+    function getAgentLineName(ag) {
+      if (!ag) return "";
+      if (typeof AGENT_NAME_MAP !== 'undefined' && AGENT_NAME_MAP[ag]) {
+        return AGENT_NAME_MAP[ag];
+      }
+      return ag;
+    }
+
     function generateLineBriefText(day) {
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
-      const yearTH = yearAD + 543;
-      const dt = new Date(yearAD, month - 1, day);
-      const dow = dt.getDay();
-      const dayName = THAI_DAYS[dow];
+      const dStr = String(day).padStart(2, '0');
+      const mStr = String(month).padStart(2, '0');
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
       const leaves = getMonthLeaves(yearAD, month);
 
-      const holiday = sched.holidays.find(h => h.date === day);
+      const holiday = sched.holidays && sched.holidays.find(h => h.date === day);
 
-      let text = "";
       if (holiday) {
-        text += `📢 รายงานเวรปฏิบัติงาน First Tier (วันหยุด)\n`;
-        text += `📅 วัน${dayName}ที่ ${day} ${THAI_MONTHS[month]} ${yearTH}\n`;
-        if (holiday.note) {
-          text += `🏦 วันหยุดพิเศษ: ${holiday.note}\n`;
-        } else {
-          text += `🏢 ประจำวันหยุดสุดสัปดาห์ (${holiday.dayName})\n`;
-        }
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
+        let text = `เรียนทีม   แจ้งรายชื่อทีมงานประจำวันที่ ${dStr}/${mStr}/${yearAD} (${holiday.dayName} - วันหยุด${holiday.note ? ': ' + holiday.note : ''})\n`;
+        const holShiftsDef = [
+          { time: "08.00-17.00", label: "เวร 1", sIdx: 0 },
+          { time: "09.00-18.00", label: "เวร 2", sIdx: 1 },
+          { time: "10.00-19.00", label: "เวร 3", sIdx: 2 },
+          { time: "13.30-22.30", label: "เวร 4", sIdx: 3 }
+        ];
 
         const holidayLeaves = [];
-        holiday.shifts.forEach((ag, sIdx) => {
-          const meta = HOLIDAY_SHIFT_META[sIdx];
-          const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
-          const hIdx = sched.holidays.indexOf(holiday);
-          const lKey = `H_${hIdx}_${sIdx}`;
+        const hIdx = sched.holidays.indexOf(holiday);
+
+        let isFirstGroup = true;
+        holShiftsDef.forEach(sh => {
+          const ag = holiday.shifts[sh.sIdx];
+          const thName = getAgentLineName(ag);
+          const lKey = `H_${hIdx}_${sh.sIdx}`;
           const leave = leaves[lKey];
 
-          text += `⏰ เวร ${meta.time} น. (พัก ${meta.breakTime})\n`;
+          if (!isFirstGroup) text += "\n";
+          text += `${formatLineShiftHeader(sh.time)}\n`;
           if (leave) {
-            text += `• ${ag}${thName} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n\n`;
-            holidayLeaves.push(`${ag}${thName} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
+            text += `- ${thName} (${sh.label}) [${leave.leaveType}]\n`;
+            holidayLeaves.push(`${thName} (${leave.leaveType}${leave.note ? ': ' + leave.note : ''})`);
           } else {
-            text += `• ${ag}${thName} | ประจำเวร\n\n`;
+            text += `- ${thName} (${sh.label})\n`;
           }
+          isFirstGroup = false;
         });
 
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
-        text += `🏖️ สรุปพนักงานแจ้งลาวันนี้:\n`;
+        text += `\nแจ้งรายชื่อการลา\n`;
         if (holidayLeaves.length > 0) {
-          holidayLeaves.forEach(l => { text += `• ${l}\n`; });
+          holidayLeaves.forEach(l => { text += `- ${l}\n`; });
         } else {
-          text += `(ไม่มีพนักงานแจ้งลา ปฏิบัติงานครบทุกท่าน)\n`;
+          text += `-\n`;
         }
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
-        text += `✨ ขอให้ทุกคนปฏิบัติงานด้วยความราบรื่นและปลอดภัยครับ ✨`;
-      } else {
-        const cal = buildCalendarWeeksAndHolidays(yearAD, month);
-        let matchedWIdx = 0;
-        cal.weeks.forEach((w, wIdx) => {
-          if (w.days && w.days.includes(day)) {
-            matchedWIdx = wIdx;
-          }
+        return text;
+      }
+
+      // WEEKDAY
+      const matchedWIdx = findWeekIndexForDay(sched, day);
+      const week = (sched && sched.weeks) ? (sched.weeks[matchedWIdx] || sched.weeks[0]) : null;
+      const customTimes = (week && week.customTimes) || {};
+
+      let text = `เรียนทีม   แจ้งรายชื่อทีมงานประจำวันที่ ${dStr}/${mStr}/${yearAD}(WFH)\n`;
+
+      const extraStaffList = getLineExtraStaff();
+
+      const shiftTimeOrder = [
+        "07.00-16.00",
+        "08.00-17.00",
+        "08.30-17.30",
+        "09.00-18.00",
+        "10.00-19.00",
+        "11.00-20.00",
+        "11.30-20.30",
+        "12.00-21.00",
+        "13.30-22.30"
+      ];
+
+      const timeGroups = {};
+      shiftTimeOrder.forEach(t => {
+        timeGroups[t] = { time: t, columns: [], extraStaff: [] };
+      });
+
+      extraStaffList.forEach(extra => {
+        let cleanTime = String(extra.time || "").replace(/ น\.?$/, "").trim();
+        if (!cleanTime.startsWith("0") && cleanTime.length === 10) cleanTime = "0" + cleanTime;
+        if (!timeGroups[cleanTime]) {
+          timeGroups[cleanTime] = { time: cleanTime, columns: [], extraStaff: [] };
+          shiftTimeOrder.push(cleanTime);
+        }
+        timeGroups[cleanTime].extraStaff.push(extra);
+      });
+
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        let shiftTime = customTimes[cIdx]?.time || col.time;
+        shiftTime = String(shiftTime || "").replace(/ น\.?$/, "").trim();
+        if (!shiftTime.startsWith("0") && shiftTime.length === 10) shiftTime = "0" + shiftTime;
+        if (!timeGroups[shiftTime]) {
+          timeGroups[shiftTime] = { time: shiftTime, columns: [], extraStaff: [] };
+          shiftTimeOrder.push(shiftTime);
+        }
+        timeGroups[shiftTime].columns.push({ col, cIdx });
+      });
+
+      const weekdayLeaves = [];
+      let isFirst = true;
+
+      shiftTimeOrder.forEach(shiftKey => {
+        const group = timeGroups[shiftKey];
+        if (!group) return;
+
+        const lines = [];
+
+        group.extraStaff.forEach(ex => {
+          const roleStr = ex.role ? (` ${ex.role}`) : "";
+          lines.push(`- ${ex.name}${roleStr}`);
         });
 
-        const week = sched.weeks[matchedWIdx] || sched.weeks[0];
-        const customTimes = (week && week.customTimes) || {};
-
-        text += `📢 รายงานเวรปฏิบัติงาน First Tier\n`;
-        text += `📅 วัน${dayName}ที่ ${day} ${THAI_MONTHS[month]} ${yearTH}\n`;
-        text += `🏢 ประจำสัปดาห์: ${week ? week.label : ''}\n`;
-        if (week && week.customTimes && Object.keys(week.customTimes).length > 0) {
-          text += `⚡ (สัปดาห์นี้มีกะเวลาพิเศษเฉพาะสัปดาห์)\n`;
-        }
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
-
-        const timeGroups = {};
-        WEEKDAY_COLUMNS.forEach((col, cIdx) => {
-          const shiftTime = customTimes[cIdx]?.time || col.time;
-          const breakTime = customTimes[cIdx]?.breakTime || col.breakTime;
-          const key = `${shiftTime}__${breakTime}`;
-          if (!timeGroups[key]) {
-            timeGroups[key] = { time: shiftTime, breakTime: breakTime, columns: [] };
-          }
-          timeGroups[key].columns.push({ col, cIdx });
-        });
-
-        const weekdayLeaves = [];
-
-        Object.values(timeGroups).forEach(group => {
-          text += `⏰ เวลา ${group.time} น. (พัก ${group.breakTime})\n`;
-          group.columns.forEach(({ col, cIdx }) => {
-            const agents = (week && week.assignments && week.assignments[cIdx]) || [];
-            agents.forEach((ag, sIdx) => {
-              const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
-              const lKey = `W_${matchedWIdx}_${cIdx}_${sIdx}`;
-              const leave = leaves[lKey];
-              const slotBreak = (cIdx === 9) ? (sIdx < 2 ? " [พัก 13.00 น.]" : " [พัก 13.30 น.]") : "";
-
-              if (leave) {
-                text += `• ช่อง ${col.code}: ${ag}${thName}${slotBreak} | ${col.role} ⚠️ [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]\n`;
-                weekdayLeaves.push(`ช่อง ${col.code}: ${ag}${thName}${slotBreak} - ${leave.leaveType} ${leave.note ? `(${leave.note})` : ''}`);
-              } else {
-                text += `• ช่อง ${col.code}: ${ag}${thName}${slotBreak} | ${col.role}\n`;
-              }
-            });
+        let orderedColumns = group.columns;
+        if (shiftKey === "08.30-17.30") {
+          orderedColumns = [...group.columns].sort((a, b) => {
+            const order = { 6: 1, 8: 2, 7: 3, 9: 4 };
+            return (order[a.cIdx] || 99) - (order[b.cIdx] || 99);
           });
-          text += `\n`;
+        }
+
+        orderedColumns.forEach(({ col, cIdx }) => {
+          const agents = (week && week.assignments && week.assignments[cIdx]) || [];
+          agents.forEach((ag, sIdx) => {
+            if (!ag || ag === "-") return;
+            const thName = getAgentLineName(ag);
+            const lKey = `W_${matchedWIdx}_${cIdx}_${sIdx}`;
+            const leave = leaves[lKey];
+            const roleTag = getLineBriefRoleTag(cIdx, col);
+
+            lines.push(`- ${thName} ${roleTag}`);
+            if (leave) {
+              weekdayLeaves.push(`${thName} (${leave.leaveType}${leave.note ? ': ' + leave.note : ''})`);
+            }
+          });
         });
 
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
-        text += `🏖️ สรุปพนักงานแจ้งลาวันนี้:\n`;
-        if (weekdayLeaves.length > 0) {
-          weekdayLeaves.forEach(l => { text += `• ${l}\n`; });
-        } else {
-          text += `(ไม่มีพนักงานแจ้งลา ปฏิบัติงานครบทุกท่าน)\n`;
+        if (lines.length > 0) {
+          if (!isFirst) text += "\n";
+          text += `${formatLineShiftHeader(group.time)}\n`;
+          text += lines.join("\n") + "\n";
+          isFirst = false;
         }
-        text += `━━━━━━━━━━━━━━━━━━━━\n`;
-        text += `✨ ขอให้ทุกคนปฏิบัติงานด้วยความราบรื่นและปลอดภัยครับ ✨`;
+      });
+
+      text += `\nแจ้งรายชื่อการลา\n`;
+      if (weekdayLeaves.length > 0) {
+        weekdayLeaves.forEach(l => { text += `- ${l}\n`; });
+      } else {
+        text += `-\n`;
       }
 
       return text;
+    }
+
+    function toggleExtraStaffEditor() {
+      const container = document.getElementById("extraStaffEditorContainer");
+      if (!container) return;
+      if (container.style.display === "none" || container.style.display === "") {
+        container.style.display = "block";
+        const staff = getLineExtraStaff();
+        const area = document.getElementById("extraStaffInputArea");
+        if (area) area.value = staff.map(s => `${s.time},${s.name},${s.role || ''}`).join("\n");
+      } else {
+        container.style.display = "none";
+      }
+    }
+
+    function saveExtraStaffFromEditor() {
+      const area = document.getElementById("extraStaffInputArea");
+      if (!area) return;
+      const lines = area.value.split("\n");
+      const list = [];
+      lines.forEach(l => {
+        const parts = l.split(",");
+        if (parts.length >= 2 && parts[1].trim()) {
+          list.push({
+            time: parts[0].trim(),
+            name: parts[1].trim(),
+            role: (parts[2] || "").trim()
+          });
+        }
+      });
+      saveLineExtraStaff(list);
+      if (typeof showToast === "function") showToast("บันทึกรายชื่อทีมงานประจำกะเรียบร้อยแล้ว");
+      document.getElementById("extraStaffEditorContainer").style.display = "none";
+      updateLineBriefPreview();
+    }
+
+    function resetExtraStaffToDefault() {
+      saveLineExtraStaff(DEFAULT_LINE_EXTRA_STAFF);
+      if (typeof showToast === "function") showToast("คืนค่ารายชื่อทีมงานประจำกะเป็นค่าเริ่มต้นแล้ว");
+      const container = document.getElementById("extraStaffEditorContainer");
+      if (container) container.style.display = "none";
+      updateLineBriefPreview();
     }
 
     function updateLineBriefPreview() {
@@ -264,7 +423,7 @@
                 <span style="color: #b45309; font-weight:700;">☕ ${breakTime}</span>
               </div>
               <div class="shift-box-role" style="font-weight:600; color:var(--text); margin-top:3px;">
-                💼 ช่องที่ ${matchedCIdx + 1} (${matchedCol.code}) • ${matchedCol.role}
+                💼 ช่องที่ ${matchedCIdx + 1} • ${matchedCol.role}
               </div>
               ${leaveChipHtml}
               ${jdPreview}

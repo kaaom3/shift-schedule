@@ -100,7 +100,7 @@
       let periodA = "";
       if (slotA.type === "WEEKDAY") {
         const colA = WEEKDAY_COLUMNS[slotA.cIdx];
-        roleA = `${colA.role} (${colA.code})`;
+        roleA = colA.role;
         timeA = colA.time;
         periodA = `${slotA.label || `สัปดาห์ที่ ${slotA.wIdx + 1}`} (ช่องที่ ${slotA.cIdx + 1})`;
         descA = `${periodA} • ${roleA} [${timeA}]`;
@@ -120,7 +120,7 @@
       let periodB = "";
       if (slotB.type === "WEEKDAY") {
         const colB = WEEKDAY_COLUMNS[slotB.cIdx];
-        roleB = `${colB.role} (${colB.code})`;
+        roleB = colB.role;
         timeB = colB.time;
         periodB = `${slotB.label || `สัปดาห์ที่ ${slotB.wIdx + 1}`} (ช่องที่ ${slotB.cIdx + 1})`;
         descB = `${periodB} • ${roleB} [${timeB}]`;
