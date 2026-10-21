@@ -213,6 +213,7 @@ module.exports = async (req, res) => {
 
     const sched = mData.schedule || {};
     const leaves = mData.leaves || {};
+    const dailySwaps = mData.dailySwaps || [];
 
     // 1. Weekday shifts for this agent
     if (Array.isArray(sched.weeks)) {

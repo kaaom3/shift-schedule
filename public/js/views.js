@@ -242,8 +242,12 @@
           });
         }
 
+        const effectiveAssignments = (typeof getEffectiveAssignmentsForDay === 'function')
+          ? getEffectiveAssignmentsForDay(yearAD, month, day, sched)
+          : ((week && week.assignments) || []);
+
         orderedColumns.forEach(({ col, cIdx }) => {
-          const agents = (week && week.assignments && week.assignments[cIdx]) || [];
+          const agents = effectiveAssignments[cIdx] || [];
           agents.forEach((ag, sIdx) => {
             if (!ag || ag === "-") return;
             const thName = getAgentLineName(ag);
@@ -450,6 +454,7 @@
                 💼 ช่องที่ ${matchedCIdx + 1} • ${matchedCol.role}
               </div>
               ${leaveChipHtml}
+              ${dailySwapChipHtml}
               ${jdPreview}
             </div>
           `;
@@ -541,9 +546,14 @@
 
             <!-- Card Footer -->
             <div class="agent-card-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-              <button class="btn btn-outline btn-sm" onclick="openCalendarSyncModal('${ag}')" style="color:#0284c7; border-color:#93c5fd; background:#f0f9ff; font-weight:700; padding:3px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px;" title="ซิงค์ตารางเวรคุณ ${ag} เข้า iPhone, Outlook, หรือ MS Teams">
-                <span>📅</span> ซิงค์ปฏิทิน
-              </button>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="openDailySwapModal('${ag}')" style="color:#0369a1; border-color:#bae6fd; background:#f0f9ff; font-weight:700; padding:3px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px;" title="ขอสลับเวรเฉพาะรายวัน">
+                  <span>🔀</span> สลับกะรายวัน
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="openCalendarSyncModal('${ag}')" style="color:#0284c7; border-color:#93c5fd; background:#f0f9ff; font-weight:700; padding:3px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px;" title="ซิงค์ตารางเวรคุณ ${ag} เข้า iPhone, Google, Outlook, หรือ MS Teams">
+                  <span>📅</span> ซิงค์ปฏิทิน
+                </button>
+              </div>
               <button class="btn btn-outline btn-sm" onclick="highlightAndJumpToMaster('${ag}')" style="padding:3px 8px; font-size:11px;" title="ไฮไลท์ชื่อ ${ag} ในหน้าตารางรวม">
                 🔍 ไฮไลท์ในตารางรวม
               </button>
@@ -2060,11 +2070,15 @@
       `;
       thead.innerHTML = headHtml;
 
+      const effectiveAssignments = (isSpecificDay && typeof getEffectiveAssignmentsForDay === 'function')
+        ? getEffectiveAssignmentsForDay(yearAD, month, targetDay, sched)
+        : ((week && week.assignments) || []);
+
       // Pre-evaluate slot leave status
       const slotLeaveStatus = agentSlots.map(slot => {
         let agentName = "-";
-        if (week && week.assignments && week.assignments[slot.colIdx]) {
-          agentName = week.assignments[slot.colIdx][slot.slotIdx] || "-";
+        if (effectiveAssignments && effectiveAssignments[slot.colIdx]) {
+          agentName = effectiveAssignments[slot.colIdx][slot.slotIdx] || "-";
         }
         if (!agentName || agentName.trim() === "") agentName = "-";
 

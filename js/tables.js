@@ -304,8 +304,20 @@ function renderMasterWeekdayTable() {
         else if (isLockedForUser) tagTitle = `🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)${slotBreakLabel}`;
         else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName}${slotBreakLabel} (คลิกเพื่อสลับต่อได้)`;
 
+        // Check daily swap badge for this agent in this week
+        let dailySwapBadgeHTML = "";
+        const mDailySwaps = (typeof getDailySwapsForMonth === 'function') ? getDailySwapsForMonth(yearAD, month) : [];
+        const weekDays = (w && Array.isArray(w.days) && w.days.length > 0) ? w.days : [];
+        const hasDailySwap = mDailySwaps.some(sw => {
+          const isAg = sw.agentA === n || sw.agentB === n;
+          return isAg && (weekDays.includes(sw.dateA) || weekDays.includes(sw.dateB));
+        });
+        if (hasDailySwap) {
+          dailySwapBadgeHTML = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:9.5px; padding:1px 5px; margin-left:3px; cursor:pointer;" onclick="event.stopPropagation(); openDailySwapModal('${n}')" title="มีสลับกะรายวันในสัปดาห์นี้ (คลิกเพื่อดูรายละเอียด)">🔀 สลับรายวัน</span>`;
+        }
+
         const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML}</div>`;
+        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
       };
 
       let tagsHTML = "";

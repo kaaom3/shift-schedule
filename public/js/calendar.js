@@ -77,6 +77,7 @@
       const key = `${yearAD}-${month}`;
       if (monthSchedules[key]) {
         if (!monthSchedules[key].leaves) monthSchedules[key].leaves = {};
+        if (!monthSchedules[key].dailySwaps) monthSchedules[key].dailySwaps = [];
         reconcileScheduleNames(monthSchedules[key].schedule);
         reconcileScheduleNames(monthSchedules[key].originalSchedule);
         return monthSchedules[key];
@@ -88,7 +89,8 @@
           schedule: hSched,
           originalSchedule: JSON.parse(JSON.stringify(hSched)),
           swapHistory: [],
-          leaves: {}
+          leaves: {},
+          dailySwaps: []
         };
         return monthSchedules[key];
       }

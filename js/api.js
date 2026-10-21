@@ -31,11 +31,13 @@
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const curKey = `${yearAD}-${month}`;
       const existingLeaves = (monthSchedules[curKey] && monthSchedules[curKey].leaves) || {};
+      const existingDailySwaps = (monthSchedules[curKey] && monthSchedules[curKey].dailySwaps) || [];
       monthSchedules[curKey] = {
         schedule: currentSchedule,
         originalSchedule: originalSchedule,
         swapHistory: swapHistory,
-        leaves: existingLeaves
+        leaves: existingLeaves,
+        dailySwaps: existingDailySwaps
       };
 
       return {

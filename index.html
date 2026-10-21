@@ -98,6 +98,9 @@
       </div>
 
       <div class="tab-tools">
+        <button class="btn btn-outline btn-sm" onclick="openDailySwapModal()" style="color:#0369a1; border-color:#bae6fd; background:#f0f9ff; font-weight:700;" title="บันทึกขอสลับกะเฉพาะรายวัน (Daily Shift Swap)">
+          🔀 สลับกะรายวัน
+        </button>
         <button class="btn btn-outline btn-sm" onclick="openDirectLeaveModal()" style="color:#c2410c; border-color:#fed7aa; background:#fff7ed; font-weight:700;" title="บันทึกการลา / แก้ไขการลา">
           🏖️ แจ้งลงลา
         </button>
@@ -1043,6 +1046,112 @@
       </div>
       <div class="modal-box-footer" style="justify-content:flex-end;">
         <button class="btn btn-outline" onclick="closeCalendarSyncModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Shift Swap Modal -->
+  <div class="modal-backdrop" id="dailySwapModal">
+    <div class="modal-box" style="max-width: 580px; border: 2px solid #0284c7; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🔀</span>
+          <span>บันทึกการสลับเวรรายวัน (Daily Shift Swap)</span>
+        </h3>
+        <button onclick="closeDailySwapModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body" style="overflow-y: auto;">
+        
+        <!-- Info Banner -->
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:12px; color:#0369a1; line-height:1.45;">
+          💡 <strong>สลับเฉพาะบางวัน:</strong> การสลับเวรรายวันจะไม่กระทบกับวันอื่นๆ ในสัปดาห์ ตารางใน Line Brief, Headcount และ Calendar Sync จะอัพเดตเฉพาะวันที่เลือกโดยอัตโนมัติครับ
+        </div>
+
+        <!-- Step 1: Select Date -->
+        <div style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">
+            📅 1. เลือกวันที่ต้องการสลับกะ:
+          </label>
+          <select id="dailySwapDateSelect" onchange="onDailySwapDateChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-weight:600; color:#0c4a6e; background:#f8fafc;">
+            <!-- Populated dynamically with working days -->
+          </select>
+        </div>
+
+        <!-- Step 2: Swap Partners -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px;">
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:8px;">
+            👥 2. เลือกคู่ที่ต้องการสลับกะในวันนี้:
+          </div>
+
+          <!-- Person A -->
+          <div style="margin-bottom:10px;">
+            <label style="font-size:11px; font-weight:700; color:#0369a1;">👤 ผู้ขอสลับ (คนที่ 1):</label>
+            <select id="dailySwapAgentA" onchange="onDailySwapAgentAChange()" style="width:100%; padding:7px 10px; border:1px solid #93c5fd; border-radius:6px; font-size:12.5px; font-weight:600; background:#f0f9ff; color:#0c4a6e; margin-top:2px;">
+              <!-- Populated dynamically -->
+            </select>
+            <div id="dailySwapShiftAPreview" style="font-size:11px; color:#64748b; margin-top:3px; padding-left:2px;">-</div>
+          </div>
+
+          <div style="text-align:center; margin:4px 0;">
+            <span style="font-size:16px; background:#f1f5f9; padding:2px 8px; border-radius:12px; border:1px solid #cbd5e1;">🔁 สลับกะกับ</span>
+          </div>
+
+          <!-- Person B -->
+          <div style="margin-top:6px;">
+            <label style="font-size:11px; font-weight:700; color:#15803d;">👤 ผู้รับสลับ (คนที่ 2):</label>
+            <select id="dailySwapAgentB" onchange="onDailySwapAgentBChange()" style="width:100%; padding:7px 10px; border:1px solid #86efac; border-radius:6px; font-size:12.5px; font-weight:600; background:#f0fdf4; color:#14532d; margin-top:2px;">
+              <!-- Populated dynamically -->
+            </select>
+            <div id="dailySwapShiftBPreview" style="font-size:11px; color:#64748b; margin-top:3px; padding-left:2px;">-</div>
+          </div>
+        </div>
+
+        <!-- Step 3: Swap Type Options (Same day vs Cross day) -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+          <div style="font-size:11.5px; font-weight:700; color:#334155; margin-bottom:6px;">🔄 รูปแบบการสลับ:</div>
+          <div style="display:flex; gap:16px; align-items:center;">
+            <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+              <input type="radio" name="dailySwapType" value="SAME_DAY" checked onchange="toggleDailySwapCrossDayUI(false)">
+              <span>สลับกะในวันเดียวกัน</span>
+            </label>
+            <label style="font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+              <input type="radio" name="dailySwapType" value="CROSS_DAY" onchange="toggleDailySwapCrossDayUI(true)">
+              <span>สลับข้ามวัน</span>
+            </label>
+          </div>
+          <div id="dailySwapCrossDayWrap" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+            <label style="font-size:11px; font-weight:700; color:#0f172a;">📅 วันที่คนที่ 2 จะเข้าเวรแทนคนที่ 1:</label>
+            <select id="dailySwapDateBSelect" style="width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-top:3px;">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Step 4: Reason / Note -->
+        <div style="margin-bottom:14px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">
+            📝 เหตุผล / หมายเหตุ:
+          </label>
+          <input type="text" id="dailySwapReason" placeholder="เช่น แลกกะเนื่องจากติดธุระส่วนตัวช่วงเช้า" style="width:100%; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;">
+        </div>
+
+        <!-- Step 5: Active Daily Swaps in Current Month -->
+        <div style="border-top:1px solid #e2e8f0; padding-top:12px;">
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span>📋 รายการสลับเวรรายวันในเดือนนี้</span>
+            <span id="dailySwapCountBadge" class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10px;">0 รายการ</span>
+          </div>
+          <div id="dailySwapsListContainer" style="display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-box-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn btn-outline" onclick="closeDailySwapModal()">ปิดหน้าต่าง</button>
+        <button class="btn btn-primary" onclick="executeDailySwap()" style="background:#0284c7; border-color:#0369a1; font-weight:700;">
+          ✅ ยืนยันบันทึกการสลับกะ
+        </button>
       </div>
     </div>
   </div>

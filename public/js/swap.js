@@ -457,3 +457,466 @@
 
     // TAB 2: INDIVIDUAL CARDS (Redesigned without '1. คุณ' prefix)
 
+    // =========================================================================
+    // DAILY SHIFT SWAP CONTROLLER (Daily Exceptions / Overrides)
+    // =========================================================================
+
+    function getDailySwapsForMonth(yearAD, month) {
+      const key = `${yearAD}-${month}`;
+      const mData = monthSchedules[key];
+      if (!mData) return [];
+      if (!mData.dailySwaps) mData.dailySwaps = [];
+      return mData.dailySwaps;
+    }
+
+    /**
+     * Given a month, day, and schedule, return effective assignments for each weekday column
+     * where any active daily swap on this day has been applied.
+     */
+    function getEffectiveAssignmentsForDay(yearAD, month, day, sched) {
+      if (!sched || !Array.isArray(sched.weeks)) return [];
+      const wIdx = findWeekIndexForDay(sched, day);
+      const week = sched.weeks[wIdx];
+      if (!week || !Array.isArray(week.assignments)) return [];
+
+      // Deep clone assignments for this week: [col0: [agent...], col1: [...], ...]
+      const eff = week.assignments.map(arr => Array.isArray(arr) ? [...arr] : []);
+
+      const swaps = getDailySwapsForMonth(yearAD, month);
+      if (!swaps || swaps.length === 0) return eff;
+
+      swaps.forEach(sw => {
+        // Same-day swap: both dateA and dateB match day
+        if (sw.dateA === day && sw.dateB === day) {
+          if (sw.shiftA && sw.shiftB) {
+            const { cIdx: cA, sIdx: sA } = sw.shiftA;
+            const { cIdx: cB, sIdx: sB } = sw.shiftB;
+            if (eff[cA] && eff[cB]) {
+              eff[cA][sA] = sw.agentB;
+              eff[cB][sB] = sw.agentA;
+            }
+          }
+        } else {
+          // Cross-day swap
+          if (sw.dateA === day && sw.shiftA) {
+            const { cIdx: cA, sIdx: sA } = sw.shiftA;
+            if (eff[cA]) eff[cA][sA] = sw.agentB;
+          }
+          if (sw.dateB === day && sw.shiftB) {
+            const { cIdx: cB, sIdx: sB } = sw.shiftB;
+            if (eff[cB]) eff[cB][sB] = sw.agentA;
+          }
+        }
+      });
+
+      return eff;
+    }
+
+    /**
+     * Open Daily Swap Modal
+     */
+    function openDailySwapModal(preselectAgent = "", preselectDate = null) {
+      if (isViewingOriginal) {
+        showToast("ℹ️ กำลังดูตารางต้นฉบับ ไม่สามารถสลับเวรได้ กรุณาสลับไปดูตารางปัจจุบัน");
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode) {
+        showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวรแล้ว หากจำเป็นต้องสลับกรุณาแจ้งหัวหน้างาน");
+        return;
+      }
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const sched = currentSchedule;
+
+      // 1. Populate Date Select with working days
+      const dateSelect = document.getElementById("dailySwapDateSelect");
+      const dateBSelect = document.getElementById("dailySwapDateBSelect");
+      if (!dateSelect) return;
+
+      dateSelect.innerHTML = "";
+      if (dateBSelect) dateBSelect.innerHTML = "";
+
+      const cal = buildCalendarWeeksAndHolidays(yearAD, month);
+      const holidayDates = new Set((sched.holidays || []).map(h => Number(h.date)));
+      const daysInMonth = new Date(yearAD, month, 0).getDate();
+
+      const workingDays = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(yearAD, month - 1, d);
+        const dow = dt.getDay();
+        if (dow >= 1 && dow <= 5 && !holidayDates.has(d)) {
+          workingDays.push(d);
+          const dowName = THAI_DAYS[dow];
+          const mShort = THAI_MONTHS_SHORT[month];
+          const wIdx = findWeekIndexForDay(sched, d);
+          const opt = document.createElement("option");
+          opt.value = d;
+          opt.textContent = `วันที่ ${d} ${mShort} (${dowName}) - สัปดาห์ที่ ${wIdx + 1}`;
+          dateSelect.appendChild(opt);
+
+          if (dateBSelect) {
+            const optB = document.createElement("option");
+            optB.value = d;
+            optB.textContent = `วันที่ ${d} ${mShort} (${dowName}) - สัปดาห์ที่ ${wIdx + 1}`;
+            dateBSelect.appendChild(optB);
+          }
+        }
+      }
+
+      // Default date selection
+      if (preselectDate && workingDays.includes(Number(preselectDate))) {
+        dateSelect.value = preselectDate;
+      } else {
+        const today = new Date();
+        if (today.getFullYear() === yearAD && (today.getMonth() + 1) === month && workingDays.includes(today.getDate())) {
+          dateSelect.value = today.getDate();
+        } else if (workingDays.length > 0) {
+          dateSelect.value = workingDays[0];
+        }
+      }
+
+      // Reset radio to SAME_DAY
+      const radios = document.getElementsByName("dailySwapType");
+      radios.forEach(r => { if (r.value === "SAME_DAY") r.checked = true; });
+      toggleDailySwapCrossDayUI(false);
+
+      // Reset reason
+      const reasonInput = document.getElementById("dailySwapReason");
+      if (reasonInput) reasonInput.value = "";
+
+      // Populate Agents for selected Date
+      onDailySwapDateChange(preselectAgent);
+
+      // Render Active Swaps List
+      renderActiveDailySwapsList();
+
+      // Show modal
+      document.getElementById("dailySwapModal").classList.add("show");
+    }
+
+    function closeDailySwapModal() {
+      const modal = document.getElementById("dailySwapModal");
+      if (modal) modal.classList.remove("show");
+    }
+
+    function toggleDailySwapCrossDayUI(isCrossDay) {
+      const wrap = document.getElementById("dailySwapCrossDayWrap");
+      if (wrap) {
+        wrap.style.display = isCrossDay ? "block" : "none";
+      }
+    }
+
+    function onDailySwapDateChange(desiredAgentA = "") {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const day = parseInt(document.getElementById("dailySwapDateSelect").value, 10);
+      const sched = currentSchedule;
+
+      const wIdx = findWeekIndexForDay(sched, day);
+      const week = sched.weeks && sched.weeks[wIdx];
+      const customTimes = (week && week.customTimes) || {};
+
+      const selectA = document.getElementById("dailySwapAgentA");
+      if (!selectA) return;
+      selectA.innerHTML = "";
+
+      // Gather all working slots in this week
+      const rosterList = [];
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        const list = (week && week.assignments && week.assignments[cIdx]) || [];
+        const shiftTime = customTimes[cIdx]?.time || col.time;
+        list.forEach((ag, sIdx) => {
+          if (ag && ag !== "-") {
+            rosterList.push({
+              agent: ag,
+              cIdx,
+              sIdx,
+              wIdx,
+              time: shiftTime,
+              role: col.role,
+              breakTime: customTimes[cIdx]?.breakTime || col.breakTime
+            });
+          }
+        });
+      });
+
+      // Sort by agent Thai name
+      rosterList.sort((a, b) => {
+        const nameA = AGENT_NAME_MAP[a.agent] || a.agent;
+        const nameB = AGENT_NAME_MAP[b.agent] || b.agent;
+        return nameA.localeCompare(nameB, 'th');
+      });
+
+      rosterList.forEach(item => {
+        const th = AGENT_NAME_MAP[item.agent] || item.agent;
+        const opt = document.createElement("option");
+        opt.value = JSON.stringify(item);
+        opt.textContent = `คุณ${th} • กะ ${item.time} (${item.role})`;
+        selectA.appendChild(opt);
+      });
+
+      // If desiredAgentA is specified, select it
+      if (desiredAgentA) {
+        for (let i = 0; i < selectA.options.length; i++) {
+          try {
+            const data = JSON.parse(selectA.options[i].value);
+            if (data.agent === desiredAgentA) {
+              selectA.selectedIndex = i;
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+
+      onDailySwapAgentAChange();
+    }
+
+    function onDailySwapAgentAChange() {
+      const selectA = document.getElementById("dailySwapAgentA");
+      const selectB = document.getElementById("dailySwapAgentB");
+      const prevA = document.getElementById("dailySwapShiftAPreview");
+      if (!selectA || !selectB) return;
+
+      let itemA = null;
+      try {
+        itemA = JSON.parse(selectA.value);
+      } catch (e) {}
+
+      if (prevA && itemA) {
+        prevA.innerHTML = `⏰ เวลากะ: <strong>${itemA.time}</strong> • หน้าที่: <strong>${itemA.role}</strong> ${itemA.breakTime ? `(พัก ${itemA.breakTime})` : ''}`;
+      }
+
+      // Populate selectB excluding itemA.agent
+      selectB.innerHTML = "";
+      for (let i = 0; i < selectA.options.length; i++) {
+        try {
+          const item = JSON.parse(selectA.options[i].value);
+          if (!itemA || item.agent !== itemA.agent) {
+            const th = AGENT_NAME_MAP[item.agent] || item.agent;
+            const opt = document.createElement("option");
+            opt.value = selectA.options[i].value;
+            opt.textContent = `คุณ${th} • กะ ${item.time} (${item.role})`;
+            selectB.appendChild(opt);
+          }
+        } catch (e) {}
+      }
+
+      onDailySwapAgentBChange();
+    }
+
+    function onDailySwapAgentBChange() {
+      const selectB = document.getElementById("dailySwapAgentB");
+      const prevB = document.getElementById("dailySwapShiftBPreview");
+      if (!selectB) return;
+
+      let itemB = null;
+      try {
+        itemB = JSON.parse(selectB.value);
+      } catch (e) {}
+
+      if (prevB && itemB) {
+        prevB.innerHTML = `⏰ เวลากะ: <strong>${itemB.time}</strong> • หน้าที่: <strong>${itemB.role}</strong> ${itemB.breakTime ? `(พัก ${itemB.breakTime})` : ''}`;
+      }
+    }
+
+    function executeDailySwap() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const dayA = parseInt(document.getElementById("dailySwapDateSelect").value, 10);
+
+      const selectA = document.getElementById("dailySwapAgentA");
+      const selectB = document.getElementById("dailySwapAgentB");
+      if (!selectA || !selectB || !selectA.value || !selectB.value) {
+        showToast("⚠️ กรุณาเลือกคู่ที่ต้องการสลับกะ");
+        return;
+      }
+
+      let itemA = null;
+      let itemB = null;
+      try {
+        itemA = JSON.parse(selectA.value);
+        itemB = JSON.parse(selectB.value);
+      } catch (e) {
+        showToast("⚠️ เกิดข้อผิดพลาดในการอ่านข้อมูลกะ");
+        return;
+      }
+
+      if (itemA.agent === itemB.agent) {
+        showToast("⚠️ ไม่สามารถสลับกะกับตนเองได้");
+        return;
+      }
+
+      let isCrossDay = false;
+      const typeRadios = document.getElementsByName("dailySwapType");
+      for (const r of typeRadios) {
+        if (r.checked && r.value === "CROSS_DAY") isCrossDay = true;
+      }
+
+      let dayB = dayA;
+      if (isCrossDay) {
+        dayB = parseInt(document.getElementById("dailySwapDateBSelect").value, 10) || dayA;
+      }
+
+      const reason = (document.getElementById("dailySwapReason").value || "").trim();
+
+      const thA = AGENT_NAME_MAP[itemA.agent] || itemA.agent;
+      const thB = AGENT_NAME_MAP[itemB.agent] || itemB.agent;
+      const mShort = THAI_MONTHS_SHORT[month];
+
+      const swapRecord = {
+        id: "DSWAP_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+        yearAD,
+        month,
+        dateA: dayA,
+        dateB: dayB,
+        isCrossDay,
+        agentA: itemA.agent,
+        agentB: itemB.agent,
+        agentAName: thA,
+        agentBName: thB,
+        shiftA: {
+          wIdx: itemA.wIdx,
+          cIdx: itemA.cIdx,
+          sIdx: itemA.sIdx,
+          time: itemA.time,
+          role: itemA.role
+        },
+        shiftB: {
+          wIdx: itemB.wIdx,
+          cIdx: itemB.cIdx,
+          sIdx: itemB.sIdx,
+          time: itemB.time,
+          role: itemB.role
+        },
+        reason,
+        createdAt: new Date().toISOString()
+      };
+
+      const key = `${yearAD}-${month}`;
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      if (!mData.dailySwaps) mData.dailySwaps = [];
+      mData.dailySwaps.push(swapRecord);
+
+      // Add to audit swapHistory
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      const dayText = isCrossDay 
+        ? `วันที่ ${dayA} และ ${dayB} ${mShort}` 
+        : `วันที่ ${dayA} ${mShort}`;
+
+      const historyItem = {
+        id: swapRecord.id,
+        tag: "[สลับเวรรายวัน]",
+        date: dateStr,
+        time: timeStr,
+        personA: thA,
+        descA: `กะเดิม: ${itemA.time} (${itemA.role})`,
+        personB: thB,
+        descB: `กะเดิม: ${itemB.time} (${itemB.role})`,
+        month: month,
+        yearAD: yearAD,
+        note: `สลับเฉพาะ${dayText}${reason ? ' • ' + reason : ''}`
+      };
+
+      if (!swapHistory) swapHistory = [];
+      swapHistory.unshift(historyItem);
+      mData.swapHistory = swapHistory;
+
+      // Trigger Cloud Auto-Save
+      triggerAutoSaveToCloud(`สลับเวรรายวัน: คุณ${thA} 🔁 คุณ${thB} (${dayText})`);
+
+      // Refresh Views
+      renderMasterWeekdayTable();
+      renderIndividualCards();
+      renderHourlyHeadcountTable();
+      renderSwapHistoryTable();
+
+      showToast(`🔀 บันทึกการสลับกะรายวัน (${dayText}) คุณ${thA} 🔁 คุณ${thB} เรียบร้อยแล้ว`);
+      closeDailySwapModal();
+    }
+
+    function deleteDailySwap(swapId) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const key = `${yearAD}-${month}`;
+      const mData = monthSchedules[key];
+      if (!mData || !Array.isArray(mData.dailySwaps)) return;
+
+      const idx = mData.dailySwaps.findIndex(s => s.id === swapId);
+      if (idx === -1) return;
+
+      const removed = mData.dailySwaps.splice(idx, 1)[0];
+
+      // Add audit log for cancellation
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      const historyItem = {
+        id: "CAN_" + Date.now(),
+        tag: "[ยกเลิกสลับเวรรายวัน]",
+        date: dateStr,
+        time: timeStr,
+        personA: removed.agentAName,
+        descA: `คืนค่ากะเดิม: ${removed.shiftA.time}`,
+        personB: removed.agentBName,
+        descB: `คืนค่ากะเดิม: ${removed.shiftB.time}`,
+        month: month,
+        yearAD: yearAD,
+        note: `ยกเลิกการสลับเวรของวันที่ ${removed.dateA}`
+      };
+
+      if (!swapHistory) swapHistory = [];
+      swapHistory.unshift(historyItem);
+      mData.swapHistory = swapHistory;
+
+      triggerAutoSaveToCloud(`ยกเลิกการสลับเวรรายวัน: คุณ${removed.agentAName} 🔁 คุณ${removed.agentBName}`);
+
+      renderActiveDailySwapsList();
+      renderMasterWeekdayTable();
+      renderIndividualCards();
+      renderHourlyHeadcountTable();
+      renderSwapHistoryTable();
+
+      showToast(`🗑️ ยกเลิกการสลับกะรายวันวันที่ ${removed.dateA} เรียบร้อยแล้ว (คืนค่ากะเดิม)`);
+    }
+
+    function renderActiveDailySwapsList() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const container = document.getElementById("dailySwapsListContainer");
+      const badge = document.getElementById("dailySwapCountBadge");
+      if (!container) return;
+
+      const swaps = getDailySwapsForMonth(yearAD, month);
+      if (badge) badge.textContent = `${swaps.length} รายการ`;
+
+      if (swaps.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:12px; color:var(--muted); font-size:11.5px; background:#f8fafc; border-radius:6px;">✨ ยังไม่มีการสลับเวรรายวันในเดือนนี้</div>`;
+        return;
+      }
+
+      const mShort = THAI_MONTHS_SHORT[month];
+      container.innerHTML = swaps.map(sw => {
+        const dText = sw.isCrossDay ? `วันที่ ${sw.dateA} และ ${sw.dateB} ${mShort}` : `วันที่ ${sw.dateA} ${mShort}`;
+        return `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 10px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div>
+              <div style="font-weight:700; color:#0369a1;">
+                📅 ${dText}: <strong>คุณ${sw.agentAName}</strong> (${sw.shiftA.time}) 🔁 <strong>คุณ${sw.agentBName}</strong> (${sw.shiftB.time})
+              </div>
+              <div style="font-size:10.5px; color:#64748b; margin-top:2px;">
+                หน้าที่: ${sw.shiftA.role} 🔁 ${sw.shiftB.role} ${sw.reason ? `• <em>${sw.reason}</em>` : ''}
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="deleteDailySwap('${sw.id}')" style="color:#ef4444; border-color:#fca5a5; background:white; font-size:11px; padding:2px 8px; white-space:nowrap;" title="ยกเลิกการสลับนี้และคืนค่ากะเดิม">
+              🗑️ ยกเลิก
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
