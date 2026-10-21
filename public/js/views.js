@@ -407,8 +407,9 @@
           }
 
           const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)
-            ? `<div style="font-size:10.5px; color:#64748b; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:4px; line-height:1.4;">
-                ${matchedCol.jd.map(j => `<div>• ${j}</div>`).join("")}
+            ? `<div style="font-size:11.5px; font-weight:600; color:#0f172a; margin-top:6px; background:#f8fafc; border:1px solid #bfdbfe; border-left:3.5px solid #2563eb; border-radius:6px; padding:6px 8px; line-height:1.45;">
+                <div style="font-size:9.5px; font-weight:700; color:#2563eb; margin-bottom:3px; text-transform:uppercase;">📋 หน้าที่งาน (JD):</div>
+                ${matchedCol.jd.map(j => `<div style="position:relative; padding-left:12px; margin-bottom:2px;"><span style="position:absolute; left:0; color:#2563eb; font-weight:800;">•</span>${j}</div>`).join("")}
                </div>`
             : "";
 

@@ -347,9 +347,9 @@ function renderMasterWeekdayTable() {
             .replace(/\s+น\./g, '&nbsp;น.')
             .replace(/นาที\s+คู่/g, 'นาทีคู่')
             .replace(/นาที\s+คี่/g, 'นาทีคี่');
-          return `<div class="jd-line-item">• ${cleanL}</div>`;
+          return `<div class="jd-line-item"><span class="jd-bullet">•</span>${cleanL}</div>`;
         }).join("");
-        html += `<td>${formattedLines}</td>`;
+        html += `<td><div class="jd-card-inner"><div class="jd-card-header">📋 หน้าที่งาน (JD)</div>${formattedLines}</div></td>`;
       });
       html += `</tr>`;
     }
@@ -465,9 +465,9 @@ function renderMasterHolidayTable() {
           const cleanL = escapeHtml(l)
             .replace(/(\d{1,2}\.\d{2})\s+น\./g, '$1&nbsp;น.')
             .replace(/\s+น\./g, '&nbsp;น.');
-          return `<div class="jd-line-item">• ${cleanL}</div>`;
+          return `<div class="jd-line-item"><span class="jd-bullet">•</span>${cleanL}</div>`;
         }).join("");
-        html += `<td>${formattedLines}</td>`;
+        html += `<td><div class="jd-card-inner"><div class="jd-card-header">📋 หน้าที่งาน (JD)</div>${formattedLines}</div></td>`;
       });
       if (isAdminMode) html += `<td></td>`;
       html += `</tr>`;
