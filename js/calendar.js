@@ -286,3 +286,29 @@
     
     // JD & Shift Times Management
 
+
+    // Helper to find which week contains a given day
+    function findWeekIndexForDay(sched, day) {
+      if (!sched || !Array.isArray(sched.weeks)) return 0;
+      const d = Number(day);
+      for (let idx = 0; idx < sched.weeks.length; idx++) {
+        const w = sched.weeks[idx];
+        if (Array.isArray(w.days) && w.days.includes(d)) return idx;
+        if (w.label) {
+          const m = w.label.match(/(\d+)\s*-\s*(\d+)/);
+          if (m) {
+            const start = parseInt(m[1], 10);
+            const end = parseInt(m[2], 10);
+            if (d >= start && d <= end) return idx;
+          } else {
+            const single = w.label.match(/(\d+)/);
+            if (single && parseInt(single[1], 10) === d) return idx;
+          }
+        }
+      }
+      return 0;
+    }
+
+    if (typeof window !== "undefined") {
+      window.findWeekIndexForDay = findWeekIndexForDay;
+    }

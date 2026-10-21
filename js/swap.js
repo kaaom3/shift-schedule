@@ -201,6 +201,7 @@
     // SWAP HISTORY TABLE & AUDIT LOG VIEWER
     // =========================================================================
     function renderSwapHistoryTable() {
+      if (typeof initSwapHub === "function") initSwapHub();
       if (typeof renderActiveSwapsHub === "function") renderActiveSwapsHub();
       const tbody = document.getElementById("swapHistoryTableBody");
       if (!tbody) return;
@@ -859,9 +860,9 @@
         date: dateStr,
         time: timeStr,
         personA: removed.agentAName,
-        descA: `คืนค่ากะเดิม: ${removed.shiftA.time}`,
+        descA: `คืนค่ากะเดิม: ${(removed.shiftA && removed.shiftA.time) || "-"}`,
         personB: removed.agentBName,
-        descB: `คืนค่ากะเดิม: ${removed.shiftB.time}`,
+        descB: `คืนค่ากะเดิม: ${(removed.shiftB && removed.shiftB.time) || "-"}`,
         month: month,
         yearAD: yearAD,
         performedBy: performedBy,
@@ -926,7 +927,13 @@
     let currentSwapHubType = "DAILY"; // "DAILY" | "WEEKLY" | "HOLIDAY"
     let swapHubWorkingAgents = [];
 
-    function initSwapHub() {
+    function initSwapHub(force = false) {
+      const dateSelect = document.getElementById("swapHubDailyDateSelect");
+      if (!dateSelect) return;
+      if (!force && dateSelect.options && dateSelect.options.length > 0) {
+        renderActiveSwapsHub();
+        return;
+      }
       onSwapHubTypeChange(currentSwapHubType, false);
       renderActiveSwapsHub();
     }
@@ -1510,6 +1517,56 @@
       onSwapHubTypeChange(currentSwapHubType, false);
     }
 
+    
+    function revertWeeklySwap(historyId) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const key = `${yearAD}-${month}`;
+      const mData = monthSchedules[key];
+      if (!mData || !Array.isArray(mData.swapHistory)) return;
+
+      const idx = mData.swapHistory.findIndex(h => h.id === historyId);
+      if (idx === -1) return;
+
+      const item = mData.swapHistory[idx];
+      if (item.slotA && item.slotB) {
+        const week = mData.schedule.weeks[item.slotA.wIdx];
+        if (week && week.assignments) {
+          week.assignments[item.slotA.cIdx][item.slotA.sIdx] = item.slotA.agent;
+          week.assignments[item.slotB.cIdx][item.slotB.sIdx] = item.slotB.agent;
+        }
+      }
+
+      mData.swapHistory.splice(idx, 1);
+
+      const now = new Date();
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      const cancelAudit = {
+        id: "CAN_" + Date.now(),
+        tag: "[ยกเลิกสลับเวรทั้งสัปดาห์]",
+        date: dateStr,
+        time: timeStr,
+        personA: item.personA,
+        descA: "คืนค่ากะเดิม",
+        personB: item.personB,
+        descB: "คืนค่ากะเดิม",
+        month: month,
+        yearAD: yearAD,
+        performedBy: performedBy,
+        note: `ยกเลิกการสลับเวรทั้งสัปดาห์: คุณ${item.personA} ⇄ คุณ${item.personB}`
+      };
+      mData.swapHistory.unshift(cancelAudit);
+
+      currentSchedule = mData.schedule;
+      triggerAutoSaveToCloud(`ยกเลิกสลับเวรทั้งสัปดาห์: คุณ${item.personA} ⇄ คุณ${item.personB} โดย ${performedBy}`);
+      if (typeof renderAllViews === "function") renderAllViews();
+      renderActiveSwapsHub();
+      showToast(`🗑️ ยกเลิกการสลับเวรทั้งสัปดาห์เรียบร้อยแล้ว (คืนค่ากะเดิม)`);
+    }
+  
     function renderActiveSwapsHub() {
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
@@ -1527,15 +1584,35 @@
         return;
       }
 
-      container.innerHTML = dailySwaps.map(sw => {
+      const mData = monthSchedules[`${yearAD}-${month}`];
+      const weeklySwaps = (mData && Array.isArray(mData.swapHistory)) 
+        ? mData.swapHistory.filter(h => h && (h.tag === "[สลับเวรทั้งสัปดาห์]" || h.tag === "[สลับเวรวันหยุด]") && h.slotA && h.slotB) 
+        : [];
+
+      const totalActiveCount = dailySwaps.length + weeklySwaps.length;
+      if (badge) badge.textContent = `${totalActiveCount} รายการ`;
+
+      if (totalActiveCount === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 18px; color: var(--muted); font-size: 12px; grid-column: 1 / -1; background: #f8fafc; border-radius: 8px;">✨ ยังไม่มีรายการสลับเวรในเดือนนี้</div>`;
+        return;
+      }
+
+      let html = "";
+
+      // 1. Daily Swaps
+      html += dailySwaps.map(sw => {
         const dText = sw.isCrossDay ? `วันที่ ${sw.dateA} และ ${sw.dateB} ${mShort}` : `วันที่ ${sw.dateA} ${mShort}`;
         const opText = sw.performedBy || "ผู้ใช้งานในระบบ";
+        const tA = (sw.shiftA && sw.shiftA.time) || "-";
+        const rA = (sw.shiftA && sw.shiftA.role) || "-";
+        const tB = (sw.shiftB && sw.shiftB.time) || "-";
+        const rB = (sw.shiftB && sw.shiftB.role) || "-";
         return `
           <div class="active-swap-card">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
               <div>
                 <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10.5px; margin-bottom:4px; display:inline-block;">
-                  📅 ${dText}
+                  📅 ${dText} (สลับกะรายวัน)
                 </span>
                 <div style="font-weight:700; color:#0f172a; font-size:12.5px;">
                   คุณ${sw.agentAName} 🔁 คุณ${sw.agentBName}
@@ -1546,8 +1623,8 @@
               </button>
             </div>
             <div style="font-size:11.5px; color:#475569; background:#f8fafc; padding:6px 8px; border-radius:6px; line-height:1.45;">
-              <div>• <strong>คุณ${sw.agentAName}:</strong> ${sw.shiftB.time} (${sw.shiftB.role})</div>
-              <div>• <strong>คุณ${sw.agentBName}:</strong> ${sw.shiftA.time} (${sw.shiftA.role})</div>
+              <div>• <strong>คุณ${sw.agentAName}:</strong> ${tB} (${rB})</div>
+              <div>• <strong>คุณ${sw.agentBName}:</strong> ${tA} (${rA})</div>
               ${sw.reason ? `<div style="color:#0284c7; margin-top:3px; font-style:italic;">💬 เหตุผล: ${sw.reason}</div>` : ''}
             </div>
             <div style="font-size:10.5px; color:#94a3b8; display:flex; align-items:center; gap:4px;">
@@ -1556,6 +1633,38 @@
           </div>
         `;
       }).join("");
+
+      // 2. Weekly / Holiday Swaps
+      html += weeklySwaps.map(sw => {
+        const opText = sw.performedBy || "ผู้ใช้งานในระบบ";
+        return `
+          <div class="active-swap-card" style="border-left-color: #7c3aed;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div>
+                <span class="badge" style="background:#f5f3ff; color:#6d28d9; font-size:10.5px; margin-bottom:4px; display:inline-block;">
+                  🏢 ${sw.tag || '[สลับทั้งสัปดาห์]'}
+                </span>
+                <div style="font-weight:700; color:#0f172a; font-size:12.5px;">
+                  คุณ${sw.personA} 🔁 คุณ${sw.personB}
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="revertWeeklySwap('${sw.id}')" style="color:#ef4444; border-color:#fca5a5; background:white; font-size:11px; padding:3px 8px; white-space:nowrap;" title="ยกเลิกการสลับนี้และคืนค่ากะเดิม">
+                ↩️ ยกเลิก / คืนค่าเดิม
+              </button>
+            </div>
+            <div style="font-size:11.5px; color:#475569; background:#f8fafc; padding:6px 8px; border-radius:6px; line-height:1.45;">
+              <div>• <strong>คุณ${sw.personA}:</strong> ${sw.descA || '-'}</div>
+              <div>• <strong>คุณ${sw.personB}:</strong> ${sw.descB || '-'}</div>
+              ${sw.note ? `<div style="color:#7c3aed; margin-top:3px; font-style:italic;">💬 รายละเอียด: ${sw.note}</div>` : ''}
+            </div>
+            <div style="font-size:10.5px; color:#94a3b8; display:flex; align-items:center; gap:4px;">
+              <span>👤</span> <span>ดำเนินการโดย: <strong>${opText}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = html;
     }
 
     // Explicit global window bindings for inline HTML onclick handlers
@@ -1583,5 +1692,6 @@
       window.updateSwapHubPreview = updateSwapHubPreview;
       window.executeSwapHubSwap = executeSwapHubSwap;
       window.renderActiveSwapsHub = renderActiveSwapsHub;
+      window.revertWeeklySwap = revertWeeklySwap;
     }
 

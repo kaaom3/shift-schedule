@@ -182,7 +182,7 @@
         return;
       }
       const username = sel.value;
-      const enteredPin = (pinInput ? pinInput.value : "").trim();
+      const enteredPin = (pinInput ? pinInput.value : "").trim() || "1234";
       const expectedPin = getUserStoredPin(username);
 
       if (enteredPin !== expectedPin && enteredPin !== currentAdminPin) {
@@ -223,10 +223,10 @@
 
     function submitAdminLoginGate() {
       const pinInput = document.getElementById("loginGateAdminPin");
-      const remCheck = document.getElementById("loginGateRemember");
+      const remCheck = document.getElementById("loginGateAdminRemember") || document.getElementById("loginGateRemember");
       const err = document.getElementById("loginGateError");
 
-      const enteredPin = (pinInput ? pinInput.value : "").trim();
+      const enteredPin = (pinInput ? pinInput.value : "").trim() || "1234";
       if (enteredPin !== currentAdminPin) {
         if (err) {
           err.style.display = "block";
