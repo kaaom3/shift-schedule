@@ -591,10 +591,13 @@
       const wkMetrics = document.getElementById("hourlyWeekdayMetricsContainer");
       const wkFootnote = document.getElementById("hourlyWeekdayFootnote");
 
+      const dayContainer = document.getElementById("hourlyDaySelectContainer");
+
       if (mode === "WEEKDAY") {
         if (wkBtn) { wkBtn.className = "btn btn-sm btn-primary"; wkBtn.style.background = ""; wkBtn.style.color = ""; }
         if (holBtn) { holBtn.className = "btn btn-sm"; holBtn.style.background = "transparent"; holBtn.style.color = "var(--muted)"; }
         if (wkContainer) wkContainer.style.display = "flex";
+        if (dayContainer) dayContainer.style.display = "flex";
         if (holContainer) holContainer.style.display = "none";
         if (wkMetrics) wkMetrics.style.display = "block";
         if (wkFootnote) wkFootnote.style.display = "block";
@@ -602,6 +605,7 @@
         if (wkBtn) { wkBtn.className = "btn btn-sm"; wkBtn.style.background = "transparent"; wkBtn.style.color = "var(--muted)"; }
         if (holBtn) { holBtn.className = "btn btn-sm btn-primary"; holBtn.style.background = ""; holBtn.style.color = ""; }
         if (wkContainer) wkContainer.style.display = "none";
+        if (dayContainer) dayContainer.style.display = "none";
         if (holContainer) holContainer.style.display = "flex";
         if (wkMetrics) wkMetrics.style.display = "none";
         if (wkFootnote) wkFootnote.style.display = "none";
@@ -1806,11 +1810,50 @@
       { label: "21.00-22.30", start: 21.0, end: 22.5, text: "21:00 - 22:30" }
     ];
 
+    function onHourlyWeekChange() {
+      const weekSelect = document.getElementById("hourlyWeekSelect");
+      if (weekSelect) {
+        selectedHourlyWeekIndex = parseInt(weekSelect.value, 10) || 0;
+      }
+      updateHourlyDaySelectOptions();
+      renderHourlyHeadcountTable();
+    }
+
+    function updateHourlyDaySelectOptions(forceVal) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const daySelect = document.getElementById("hourlyDaySelect");
+      if (!daySelect || !sched || !sched.weeks) return;
+
+      const week = sched.weeks[selectedHourlyWeekIndex] || sched.weeks[0];
+      const weekDays = getWeekWorkingDays(week, yearAD, month, sched);
+      const curVal = forceVal !== undefined ? forceVal : daySelect.value;
+
+      const THAI_DAY_NAMES_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+      const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+
+      let dayOpts = `<option value="ALL">📅 ภาพรวมสัปดาห์ (แสดงคนลาทุกวัน)</option>`;
+      weekDays.forEach(d => {
+        const dt = new Date(yearAD, month - 1, d);
+        const dayName = THAI_DAY_NAMES_SHORT[dt.getDay()] || "";
+        dayOpts += `<option value="${d}">${dayName} ${d} ${mShort} (คำนวณหักคนลา)</option>`;
+      });
+      daySelect.innerHTML = dayOpts;
+
+      if (curVal && (curVal === "ALL" || weekDays.includes(parseInt(curVal, 10)))) {
+        daySelect.value = curVal;
+      } else {
+        daySelect.value = "ALL";
+      }
+    }
+
     function renderHourlyHeadcountTable() {
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
       if (!sched || !sched.weeks) return;
 
       const weekSelect = document.getElementById("hourlyWeekSelect");
+      const daySelect = document.getElementById("hourlyDaySelect");
       const holSelect = document.getElementById("hourlyHolidaySelect");
 
       // 1. Update week dropdown options
@@ -1823,6 +1866,11 @@
           weekSelect.value = "0";
         }
         selectedHourlyWeekIndex = parseInt(weekSelect.value, 10) || 0;
+      }
+
+      // Update day select options if needed
+      if (daySelect && (!daySelect.options || daySelect.options.length <= 1)) {
+        updateHourlyDaySelectOptions();
       }
 
       // 2. Update holiday dropdown options
@@ -1850,6 +1898,15 @@
     }
 
     function renderHourlyWeekdayView(sched, thead, tbody, tfoot, timelineDiv) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const leaves = getMonthLeaves(yearAD, month);
+
+      const daySelect = document.getElementById("hourlyDaySelect");
+      const selectedDayVal = daySelect ? daySelect.value : "ALL";
+      const isSpecificDay = (selectedDayVal !== "ALL" && !isNaN(parseInt(selectedDayVal, 10)));
+      const targetDay = isSpecificDay ? parseInt(selectedDayVal, 10) : null;
+
       const week = (sched && sched.weeks) ? (sched.weeks[selectedHourlyWeekIndex] || sched.weeks[0]) : null;
       const timeSlots = HORIZONTAL_SUMMARY_SPEC.time_slots;
       const agentSlots = HORIZONTAL_SUMMARY_SPEC.agent_slots;
@@ -1868,46 +1925,83 @@
       `;
       thead.innerHTML = headHtml;
 
-      // 2. Table Body (20 Duty Slots from Active_Agents_Horizontal_Summary)
-      let bodyHtml = "";
-      agentSlots.forEach((slot, rowIdx) => {
+      // Pre-evaluate slot leave status
+      const slotLeaveStatus = agentSlots.map(slot => {
         let agentName = "-";
         if (week && week.assignments && week.assignments[slot.colIdx]) {
           agentName = week.assignments[slot.colIdx][slot.slotIdx] || "-";
         }
         if (!agentName || agentName.trim() === "") agentName = "-";
 
+        const slotKey = `W_${selectedHourlyWeekIndex}_${slot.colIdx}_${slot.slotIdx}`;
+        const leave = leaves[slotKey];
+        const isSlotOnLeave = isSpecificDay ? isLeaveOnDay(leave, targetDay) : false;
+
+        return { agentName, leave, isSlotOnLeave };
+      });
+
+      // 2. Table Body (20 Duty Slots from Active_Agents_Horizontal_Summary)
+      let bodyHtml = "";
+      agentSlots.forEach((slot, rowIdx) => {
+        const { agentName, leave, isSlotOnLeave } = slotLeaveStatus[rowIdx];
+
+        // Format agent cell HTML
+        let agentBadgeHtml = "";
+        if (isSpecificDay) {
+          if (isSlotOnLeave) {
+            agentBadgeHtml = `<span class="leave-chip leave-${getLeaveClass(leave.leaveType)}" style="font-size:9.5px; padding:1px 5px; margin-left:3px;" title="${leave.leaveType}${leave.note ? ': ' + leave.note : ''}">${getLeaveIcon(leave.leaveType)} ${leave.leaveType}</span>`;
+          }
+        } else {
+          if (leave) {
+            const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+            const dText = getLeaveDatesBadgeText(leave, mShort);
+            agentBadgeHtml = `<span class="leave-chip leave-${getLeaveClass(leave.leaveType)}" style="font-size:9.5px; padding:1px 5px; margin-left:3px;" title="${leave.leaveType} (${dText})">${getLeaveIcon(leave.leaveType)} ${dText}</span>`;
+          }
+        }
+
         bodyHtml += `<tr>`;
         bodyHtml += `<td class="sticky-col-no" style="font-weight: 700; color: var(--muted);">${slot.no}</td>`;
         bodyHtml += `<td class="sticky-col-role" style="font-weight: 600; text-align: left;">${safeEscape(slot.role)}</td>`;
         bodyHtml += `<td class="sticky-col-shift" style="color: var(--muted); font-size: 11px;">${slot.shift}</td>`;
         bodyHtml += `<td class="sticky-col-break" style="color: #c2410c; font-weight: 600; font-size: 11px;">${slot.break}</td>`;
-        bodyHtml += `<td class="sticky-col-agent" style="font-weight: 700; color: #1e3a8a; text-align: left;">${safeEscape(agentName)}</td>`;
+        bodyHtml += `<td class="sticky-col-agent" style="font-weight: 700; color: #1e3a8a; text-align: left;">${safeEscape(agentName)} ${agentBadgeHtml}</td>`;
 
         for (let tIdx = 0; tIdx < timeSlots.length; tIdx++) {
-          // In Excel Row 30 (Slot 20), AH30:AK30 (21:00-22:30) is merged across 4 cols
           if (slot.no === 20 && tIdx === 28) {
-            bodyHtml += `<td colspan="4" class="duty-pill-voice" style="padding: 4px 2px; font-size: 10px; font-weight: 700; background: #e3f2fd; color: #1e40af; border: 1px solid #bfdbfe;" title="All (Call+Mail+ECE+Self Service +Realtime)">All (Mixed)</td>`;
-            tIdx += 3; // skip 29, 30, 31
+            if (isSlotOnLeave) {
+              bodyHtml += `<td colspan="4" class="duty-pill-leave" style="padding: 4px 2px; font-size: 10px; font-weight: 700; text-align:center;" title="ลางาน">${getLeaveIcon(leave.leaveType)} ลา (${leave.leaveType})</td>`;
+            } else {
+              bodyHtml += `<td colspan="4" class="duty-pill-voice" style="padding: 4px 2px; font-size: 10px; font-weight: 700; background: #e3f2fd; color: #1e40af; border: 1px solid #bfdbfe;" title="All (Call+Mail+ECE+Self Service +Realtime)">All (Mixed)</td>`;
+            }
+            tIdx += 3;
             continue;
           }
 
           const val = slot.intervals[tIdx];
           let cellHtml = "";
-          if (!val || val === "") {
-            cellHtml = `<span class="duty-offshift">-</span>`;
-          } else if (val === "Break") {
-            cellHtml = `<span class="duty-pill duty-pill-break">Break</span>`;
-          } else if (val.includes("Call")) {
-            let label = val;
-            if (val === "Call") label = "Call";
-            else if (val === "Call+ECE") label = "Call+ECE";
-            else if (val.startsWith("All (Call+")) label = "All (Mixed)";
-            cellHtml = `<span class="duty-pill duty-pill-voice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+
+          if (isSlotOnLeave) {
+            if (!val || val === "") {
+              cellHtml = `<span class="duty-offshift">-</span>`;
+            } else {
+              cellHtml = `<span class="duty-pill duty-pill-leave" title="${safeEscape(leave.leaveType)}">${getLeaveIcon(leave.leaveType)} ลา</span>`;
+            }
           } else {
-            let label = val;
-            if (val.startsWith("FU Ex/16App")) label = "FU Ex/16App";
-            cellHtml = `<span class="duty-pill duty-pill-nonvoice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+            if (!val || val === "") {
+              cellHtml = `<span class="duty-offshift">-</span>`;
+            } else if (val === "Break") {
+              cellHtml = `<span class="duty-pill duty-pill-break">Break</span>`;
+            } else if (val.includes("Call")) {
+              let label = val;
+              if (val === "Call") label = "Call";
+              else if (val === "Call+ECE") label = "Call+ECE";
+              else if (val.startsWith("All (Call+")) label = "All (Mixed)";
+              cellHtml = `<span class="duty-pill duty-pill-voice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+            } else {
+              let label = val;
+              if (val.startsWith("FU Ex/16App")) label = "FU Ex/16App";
+              cellHtml = `<span class="duty-pill duty-pill-nonvoice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+            }
           }
 
           bodyHtml += `<td style="padding: 3px 2px;">${cellHtml}</td>`;
@@ -1917,11 +2011,46 @@
       });
       tbody.innerHTML = bodyHtml;
 
-      // 3. Table Footer (Staffing Summary Rows 32-41 from Excel)
+      // 3. Dynamic Calculation for Staffing Summary Rows (Rows 32-41 from Excel)
+      const dynamicCounts = summaryRows.map(r => [...r.counts]);
+      const leaveCounts = new Array(32).fill(0);
+
+      if (isSpecificDay) {
+        agentSlots.forEach((slot, rowIdx) => {
+          const { isSlotOnLeave } = slotLeaveStatus[rowIdx];
+          if (isSlotOnLeave) {
+            slot.intervals.forEach((val, tIdx) => {
+              if (val && val !== "") {
+                if (val === "Break") {
+                  dynamicCounts[6][tIdx] = Math.max(0, dynamicCounts[6][tIdx] - 1);
+                  leaveCounts[tIdx]++;
+                } else {
+                  dynamicCounts[0][tIdx] = Math.max(0, dynamicCounts[0][tIdx] - 1); // Total Active
+                  leaveCounts[tIdx]++;
+                  if (val.includes("Call")) {
+                    dynamicCounts[1][tIdx] = Math.max(0, dynamicCounts[1][tIdx] - 1);
+                  } else if (val.includes("ECE")) {
+                    dynamicCounts[2][tIdx] = Math.max(0, dynamicCounts[2][tIdx] - 1);
+                  } else if (val.includes("Self")) {
+                    dynamicCounts[3][tIdx] = Math.max(0, dynamicCounts[3][tIdx] - 1);
+                  } else if (val.includes("Mail") || val.includes("Monitor") || val.includes("Realtime")) {
+                    dynamicCounts[4][tIdx] = Math.max(0, dynamicCounts[4][tIdx] - 1);
+                  } else {
+                    dynamicCounts[5][tIdx] = Math.max(0, dynamicCounts[5][tIdx] - 1);
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+
+      // 4. Table Footer
+      const daySummaryTitle = isSpecificDay ? `ประจำวันที่ระบุ (คำนวณหักยอดคนลาจริง)` : `ภาพรวมสัปดาห์ (Base Staffing Template)`;
       let footHtml = `
         <tr class="summary-header-row">
           <th colspan="37" style="background: #102a43; color: #ffffff; text-align: left; padding: 8px 14px; font-size: 12px; font-weight: 800;">
-            📊 สรุปความจุผู้ปฏิบัติงานและช่วงพัก (Voice / Non-Voice Staffing &amp; Break Summary)
+            📊 สรุปความจุผู้ปฏิบัติงานและช่วงพัก (${daySummaryTitle})
           </th>
         </tr>
         <tr class="summary-subhead-row">
@@ -1930,7 +2059,7 @@
         </tr>
       `;
 
-      summaryRows.forEach(sRow => {
+      summaryRows.forEach((sRow, rIdx) => {
         const cat = sRow.category.trim();
         let trClass = "";
         let labelStyle = "";
@@ -1960,17 +2089,58 @@
 
         footHtml += `<tr class="${trClass}">`;
         footHtml += `<td colspan="5" class="summary-sticky-label" style="${labelStyle}">${safeEscape(sRow.category)}</td>`;
-        sRow.counts.forEach(cnt => {
+        dynamicCounts[rIdx].forEach(cnt => {
           footHtml += `<td style="${cellStyle}">${cnt > 0 ? cnt : '-'}</td>`;
         });
         footHtml += `</tr>`;
+
+        // Insert "On Leave" row right after Non-Voice rows (before Break row) if someone is on leave
+        if (rIdx === 5 && leaveCounts.some(c => c > 0)) {
+          footHtml += `<tr class="summary-row-leave">`;
+          footHtml += `<td colspan="5" class="summary-sticky-label" style="background:#fff7ed; color:#c2410c; font-weight:700; padding-left:24px !important;">  • 🏖️ พนักงานที่ลางาน (On Leave)</td>`;
+          leaveCounts.forEach(cnt => {
+            footHtml += `<td style="font-weight:700; color:#c2410c;">${cnt > 0 ? cnt : '-'}</td>`;
+          });
+          footHtml += `</tr>`;
+        }
       });
 
       tfoot.innerHTML = footHtml;
 
-      // 4. Render Visual Capacity Timeline (Active staff per 30 mins)
-      if (summaryRows.length > 0) {
-        renderTimelineBars(timeSlots, summaryRows[0].counts, timelineDiv);
+      // 5. Render Visual Capacity Timeline (Active staff per 30 mins)
+      if (dynamicCounts.length > 0) {
+        renderTimelineBars(timeSlots, dynamicCounts[0], timelineDiv);
+      }
+
+      // 6. Update KPI Cards above the table
+      const totalStaffEl = document.getElementById("hourlyKpiTotalStaff");
+      const staffSubEl = document.getElementById("hourlyKpiStaffSub");
+      const peakActiveEl = document.getElementById("hourlyKpiPeakActive");
+      const maxVoiceEl = document.getElementById("hourlyKpiMaxVoice");
+      const peakBreakEl = document.getElementById("hourlyKpiPeakBreak");
+
+      if (totalStaffEl) {
+        const maxLeave = Math.max(...leaveCounts);
+        if (maxLeave > 0) {
+          totalStaffEl.innerHTML = `<span style="color:#ea580c;">${20 - maxLeave} คน</span>`;
+          if (staffSubEl) staffSubEl.innerHTML = `<span style="color:#c2410c; font-weight:600;">(ลางาน ${maxLeave} คน จาก 20 กะ)</span>`;
+        } else {
+          totalStaffEl.innerText = "20 คน";
+          if (staffSubEl) staffSubEl.innerText = "กำลังพล First Tier ประจำวัน (20 กะงาน)";
+        }
+      }
+
+      if (peakActiveEl) {
+        const maxAct = Math.max(...dynamicCounts[0]);
+        peakActiveEl.innerText = `${maxAct} คน`;
+      }
+      if (maxVoiceEl) {
+        const maxV = Math.max(...dynamicCounts[1]);
+        maxVoiceEl.innerText = `${maxV} คน`;
+      }
+      if (peakBreakEl) {
+        const maxB = Math.max(...dynamicCounts[6]);
+        peakBreakEl.innerText = `${maxB} คน`;
       }
     }
 

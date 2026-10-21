@@ -385,7 +385,12 @@
             </div>
             <div id="hourlyWeekSelectContainer" style="display: flex; align-items: center; gap: 6px;">
               <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">สัปดาห์:</label>
-              <select id="hourlyWeekSelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              <select id="hourlyWeekSelect" onchange="onHourlyWeekChange()" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary); background: var(--card-bg);">
+              </select>
+            </div>
+            <div id="hourlyDaySelectContainer" style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--muted);">ระบุวัน:</label>
+              <select id="hourlyDaySelect" onchange="renderHourlyHeadcountTable()" style="padding: 4px 8px; border: 1px solid #93c5fd; border-radius: 6px; font-size: 12px; font-weight: 700; color: #0369a1; background: #f0f9ff;">
               </select>
             </div>
             <div id="hourlyHolidaySelectContainer" style="display: none; align-items: center; gap: 6px;">
@@ -401,27 +406,27 @@
 <!-- KPI Summary Metrics (Active Agents Horizontal Summary Rows 5-6) -->
           <div class="hourly-kpi-grid">
             <div class="hourly-kpi-card kpi-card-staff">
-              <div class="kpi-label">👥 พนักงานทั้งหมด (Total Staff)</div>
-              <div class="kpi-val">20 คน</div>
-              <div class="kpi-sub">กำลังพล First Tier ประจำวัน (20 กะงาน)</div>
+              <div class="kpi-label">👥 พนักงานปฏิบัติงานจริง (Active Staff)</div>
+              <div class="kpi-val" id="hourlyKpiTotalStaff">20 คน</div>
+              <div class="kpi-sub" id="hourlyKpiStaffSub">กำลังพล First Tier ประจำวัน (20 กะงาน)</div>
             </div>
 
             <div class="hourly-kpi-card kpi-card-peak">
               <div class="kpi-label">🔥 ช่วงคนทำงานสูงสุด (Peak Active)</div>
-              <div class="kpi-val">20 คน</div>
-              <div class="kpi-sub">ช่วงเวลา 14:30 &amp; 15:30 น.</div>
+              <div class="kpi-val" id="hourlyKpiPeakActive">20 คน</div>
+              <div class="kpi-sub" id="hourlyKpiPeakSub">ช่วงเวลา 14:30 &amp; 15:30 น.</div>
             </div>
 
             <div class="hourly-kpi-card kpi-card-voice">
               <div class="kpi-label">📞 กำลังรับสายสูงสุด (Max Voice Agents)</div>
-              <div class="kpi-val">11 คน</div>
-              <div class="kpi-sub">ช่วงเวลา 15:30 - 16:00 น.</div>
+              <div class="kpi-val" id="hourlyKpiMaxVoice">11 คน</div>
+              <div class="kpi-sub" id="hourlyKpiVoiceSub">ช่วงเวลา 15:30 - 16:00 น.</div>
             </div>
 
             <div class="hourly-kpi-card kpi-card-break">
               <div class="kpi-label">☕ ช่วงคนไปพักสูงสุด (Peak Break)</div>
-              <div class="kpi-val">6 คน</div>
-              <div class="kpi-sub">ช่วงเวลา 13:30 - 14:30 น.</div>
+              <div class="kpi-val" id="hourlyKpiPeakBreak">6 คน</div>
+              <div class="kpi-sub" id="hourlyKpiBreakSub">ช่วงเวลา 13:30 - 14:30 น.</div>
             </div>
 
             <div class="hourly-kpi-card kpi-card-core">
@@ -439,6 +444,7 @@
               <span class="legend-pill legend-pill-nonvoice">🟩 Non-Voice (/Mail/ECE/Self/RT/FU Ex/16App)</span>
               <span class="legend-pill legend-pill-break">🟧 Break (ช่วงพัก)</span>
               <span class="legend-pill legend-pill-offshift">⬜ Off-Shift (นอกเวลากะ)</span>
+              <span class="legend-pill" style="background:#ffedd5; color:#c2410c; border:1px solid #fdba74; font-weight:700;">🏖️ Leave (ลางาน/ตัดยอดคน)</span>
             </div>
           </div>
 
