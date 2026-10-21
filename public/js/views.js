@@ -388,53 +388,1220 @@
     let selectedHourlyWeekIndex = 0;
     let selectedHourlyHolidayIndex = 0;
 
+    function safeEscape(str) {
+      if (typeof escapeHtml === 'function') return escapeHtml(str);
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     function setHourlyMode(mode) {
       currentHourlyMode = mode;
       const wkBtn = document.getElementById("hourlyModeWeekdayBtn");
       const holBtn = document.getElementById("hourlyModeHolidayBtn");
       const wkContainer = document.getElementById("hourlyWeekSelectContainer");
       const holContainer = document.getElementById("hourlyHolidaySelectContainer");
+      const wkMetrics = document.getElementById("hourlyWeekdayMetricsContainer");
+      const wkFootnote = document.getElementById("hourlyWeekdayFootnote");
 
       if (mode === "WEEKDAY") {
         if (wkBtn) { wkBtn.className = "btn btn-sm btn-primary"; wkBtn.style.background = ""; wkBtn.style.color = ""; }
         if (holBtn) { holBtn.className = "btn btn-sm"; holBtn.style.background = "transparent"; holBtn.style.color = "var(--muted)"; }
         if (wkContainer) wkContainer.style.display = "flex";
         if (holContainer) holContainer.style.display = "none";
+        if (wkMetrics) wkMetrics.style.display = "block";
+        if (wkFootnote) wkFootnote.style.display = "block";
       } else {
         if (wkBtn) { wkBtn.className = "btn btn-sm"; wkBtn.style.background = "transparent"; wkBtn.style.color = "var(--muted)"; }
         if (holBtn) { holBtn.className = "btn btn-sm btn-primary"; holBtn.style.background = ""; holBtn.style.color = ""; }
         if (wkContainer) wkContainer.style.display = "none";
         if (holContainer) holContainer.style.display = "flex";
+        if (wkMetrics) wkMetrics.style.display = "none";
+        if (wkFootnote) wkFootnote.style.display = "none";
       }
       renderHourlyHeadcountTable();
     }
 
-    const HOURLY_TIME_SLOTS_WEEKDAY = [
-      { label: "07.00", start: 7.0, end: 8.0, text: "07:00 - 08:00" },
-      { label: "08.00", start: 8.0, end: 8.5, text: "08:00 - 08:30" },
-      { label: "08.30", start: 8.5, end: 9.0, text: "08:30 - 09:00" },
-      { label: "09.00", start: 9.0, end: 9.5, text: "09:00 - 09:30" },
-      { label: "09.30", start: 9.5, end: 10.0, text: "09:30 - 10:00" },
-      { label: "10.00", start: 10.0, end: 10.5, text: "10:00 - 10:30" },
-      { label: "10.30", start: 10.5, end: 11.0, text: "10:30 - 11:00" },
-      { label: "11.00", start: 11.0, end: 11.5, text: "11:00 - 11:30" },
-      { label: "11.30", start: 11.5, end: 12.0, text: "11:30 - 12:00" },
-      { label: "12.00", start: 12.0, end: 12.5, text: "12:00 - 12:30" },
-      { label: "12.30", start: 12.5, end: 13.0, text: "12:30 - 13:00" },
-      { label: "13.00", start: 13.0, end: 13.5, text: "13:00 - 13:30" },
-      { label: "13.30", start: 13.5, end: 14.0, text: "13:30 - 14:00" },
-      { label: "14.00", start: 14.0, end: 14.5, text: "14:00 - 14:30" },
-      { label: "14.30", start: 14.5, end: 15.0, text: "14:30 - 15:00" },
-      { label: "15.00-16.00", start: 15.0, end: 16.0, text: "15:00 - 16:00" },
-      { label: "16.00", start: 16.0, end: 16.5, text: "16:00 - 16:30" },
-      { label: "16.30", start: 16.5, end: 17.0, text: "16:30 - 17:00" },
-      { label: "17.00", start: 17.0, end: 17.5, text: "17:00 - 17:30" },
-      { label: "17.30", start: 17.5, end: 18.0, text: "17:30 - 18:00" },
-      { label: "18.00", start: 18.0, end: 19.0, text: "18:00 - 19:00" },
-      { label: "19.00", start: 19.0, end: 20.0, text: "19:00 - 20:00" },
-      { label: "20.00", start: 20.0, end: 21.0, text: "20:00 - 21:00" },
-      { label: "21.00-22.30", start: 21.0, end: 22.5, text: "21:00 - 22:30" }
-    ];
+    const HORIZONTAL_SUMMARY_SPEC = {
+  "time_slots": [
+    "07:00",
+    "07:30",
+    "08:00",
+    "08:30",
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "12:00",
+    "12:30",
+    "13:00",
+    "13:30",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00",
+    "18:30",
+    "19:00",
+    "19:30",
+    "20:00",
+    "20:30",
+    "21:00",
+    "21:30",
+    "22:00",
+    "22:30"
+  ],
+  "agent_slots": [
+    {
+      "no": 1,
+      "role": "รับสาย 1 (7.00)",
+      "shift": "07:00-16:00",
+      "break": "11:00",
+      "colIdx": 0,
+      "slotIdx": 0,
+      "intervals": [
+        "Call+ECE",
+        "Call+ECE",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 2,
+      "role": "Mixed/All 1(7.00)",
+      "shift": "08:00-17:00",
+      "break": "12:00",
+      "colIdx": 1,
+      "slotIdx": 0,
+      "intervals": [
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Break",
+        "Break",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 3,
+      "role": "รับสาย 2 (8.00)",
+      "shift": "08:00-17:00",
+      "break": "11:30",
+      "colIdx": 2,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 4,
+      "role": "รับสาย 3 (8.00)",
+      "shift": "08:00-17:00",
+      "break": "11:30",
+      "colIdx": 2,
+      "slotIdx": 1,
+      "intervals": [
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 5,
+      "role": "Mixed/All 2(8.00)",
+      "shift": "08:00-17:00",
+      "break": "13:00",
+      "colIdx": 3,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Break",
+        "Break",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 6,
+      "role": "ECE 1 (8.00)",
+      "shift": "08:00-17:00",
+      "break": "12:00",
+      "colIdx": 4,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "Break",
+        "Break",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 7,
+      "role": "Mail  (8.00)",
+      "shift": "08:00-17:00",
+      "break": "13:30",
+      "colIdx": 5,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Break",
+        "Break",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "Mail/RT",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 8,
+      "role": "Mixed/All 3(8.30)",
+      "shift": "08:30-17:30",
+      "break": "12:30",
+      "colIdx": 6,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "Break",
+        "Break",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 9,
+      "role": "ECE 2 (8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:00",
+      "colIdx": 7,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "Break",
+        "Break",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 10,
+      "role": "Mixed/All 3(8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:30",
+      "colIdx": 8,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "Break",
+        "Break",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "FU Ex/16App/FU SR/FU SOS",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 11,
+      "role": "รับสาย 5 (8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:00",
+      "colIdx": 9,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 12,
+      "role": "รับสาย 6 (8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:00",
+      "colIdx": 9,
+      "slotIdx": 1,
+      "intervals": [
+        "",
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 13,
+      "role": "รับสาย 7 (8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:30",
+      "colIdx": 9,
+      "slotIdx": 2,
+      "intervals": [
+        "",
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 14,
+      "role": "รับสาย 8 (8.30)",
+      "shift": "08:30-17:30",
+      "break": "13:30",
+      "colIdx": 9,
+      "slotIdx": 3,
+      "intervals": [
+        "",
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 15,
+      "role": "Mixed/All 4 (9.00)",
+      "shift": "09:00-18:00",
+      "break": "14:00",
+      "colIdx": 10,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Break",
+        "Break",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 16,
+      "role": "Mixed/All 5 (9.00)",
+      "shift": "09:00-18:00",
+      "break": "14:00",
+      "colIdx": 11,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 17,
+      "role": "ECE 3 (10.00)",
+      "shift": "10:00-19:00",
+      "break": "13:30",
+      "colIdx": 12,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "Break",
+        "Break",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "ECE",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 18,
+      "role": "รับสาย 9 (11.00)",
+      "shift": "11:00-20:00",
+      "break": "14:00",
+      "colIdx": 13,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 19,
+      "role": "Mixed/All 8 (12.00)",
+      "shift": "12:00-21:00",
+      "break": "15:00",
+      "colIdx": 14,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Self",
+        "Break",
+        "Break",
+        "Self",
+        "Self",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "Mail/Self/RT",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "no": 20,
+      "role": "Mixed/All 9 (13.30)",
+      "shift": "13:30-22:30",
+      "break": "16:00",
+      "colIdx": 15,
+      "slotIdx": 0,
+      "intervals": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Mail/RT",
+        "Mail/RT",
+        "Call",
+        "Call",
+        "Call",
+        "Break",
+        "Break",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call",
+        "Call+ECE",
+        "Call+ECE",
+        "All (Call+Mail+ECE+Self Service +Realtime)",
+        "All (Call+Mail+ECE+Self Service +Realtime)",
+        "All (Call+Mail+ECE+Self Service +Realtime)",
+        "All (Call+Mail+ECE+Self Service +Realtime)"
+      ]
+    }
+  ],
+  "summary_rows": [
+    {
+      "category": "1. Total Active",
+      "counts": [
+        2,
+        2,
+        7,
+        14,
+        16,
+        16,
+        17,
+        17,
+        17,
+        15,
+        15,
+        17,
+        14,
+        11,
+        12,
+        17,
+        19,
+        19,
+        18,
+        17,
+        13,
+        6,
+        4,
+        4,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "    •  Call",
+      "counts": [
+        1,
+        1,
+        3,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        5,
+        6,
+        8,
+        6,
+        4,
+        5,
+        8,
+        10,
+        10,
+        9,
+        8,
+        6,
+        3,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "    • ECE",
+      "counts": [
+        1,
+        1,
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "    • Self Service ",
+      "counts": [
+        1,
+        1,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "    •Realtime/Mail (Monitor)",
+      "counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "    • FollowEx/16App/Follow /Follow SR/",
+      "counts": [
+        0,
+        0,
+        0,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "category": "2. รวมคนที่ไปพัก (On Break)",
+      "counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        3,
+        4,
+        2,
+        5,
+        9,
+        8,
+        3,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "category": "3. พนักงานที่ยังไม่เข้า / ออกกะแล้ว (Off-Shift)",
+      "counts": [
+        18,
+        18,
+        13,
+        6,
+        4,
+        4,
+        3,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        7,
+        14,
+        16,
+        16,
+        17,
+        17,
+        18,
+        18,
+        19,
+        19,
+        19,
+        19
+      ]
+    }
+  ]
+};
 
     const HOURLY_TIME_SLOTS_HOLIDAY = [
       { label: "08.00-09.00", start: 8.0, end: 9.0, text: "08:00 - 09:00" },
@@ -454,30 +1621,6 @@
       { label: "19.00-20.00", start: 19.0, end: 20.0, text: "19:00 - 20:00" },
       { label: "20.00-21.00", start: 20.0, end: 21.0, text: "20:00 - 21:00" },
       { label: "21.00-22.30", start: 21.0, end: 22.5, text: "21:00 - 22:30" }
-    ];
-
-    // 20 Individual Duty Slots for Weekday Check
-    const WEEKDAY_DUTY_SLOTS = [
-      { name: "รับสาย 1 (07.00 Call)", colIdx: 0, slotIdx: 0, timeStr: "07.00-16.00", breakStr: "พัก 11.00-12.00", start: 7.0, end: 16.0, bStart: 11.0, bEnd: 12.0 },
-      { name: "รับสาย 2 (07.00 Mail)", colIdx: 1, slotIdx: 0, timeStr: "07.00-16.00", breakStr: "พัก 12.00-13.00", start: 7.0, end: 16.0, bStart: 12.0, bEnd: 13.0 },
-      { name: "รับสาย 3 (08.00 Call 1)", colIdx: 2, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 11.30-12.30", start: 8.0, end: 17.0, bStart: 11.5, bEnd: 12.5 },
-      { name: "รับสาย 4 (08.00 Call 2)", colIdx: 2, slotIdx: 1, timeStr: "08.00-17.00", breakStr: "พัก 12.00-13.00", start: 8.0, end: 17.0, bStart: 12.0, bEnd: 13.0 },
-      { name: "รับสาย 5 (08.00 Self)", colIdx: 3, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 13.00-14.00", start: 8.0, end: 17.0, bStart: 13.0, bEnd: 14.0 },
-      { name: "รับสาย 6 (08.00 ECE)", colIdx: 4, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 12.00-13.00", start: 8.0, end: 17.0, bStart: 12.0, bEnd: 13.0 },
-      { name: "รับสาย 7 (08.00 Mail)", colIdx: 5, slotIdx: 0, timeStr: "08.00-17.00", breakStr: "พัก 13.00-14.00", start: 8.0, end: 17.0, bStart: 13.0, bEnd: 14.0 },
-      { name: "รับสาย 8 (08.30 Aging คู่)", colIdx: 6, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 12.30-13.30", start: 8.5, end: 17.5, bStart: 12.5, bEnd: 13.5 },
-      { name: "รับสาย 9 (08.30 ECE)", colIdx: 7, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
-      { name: "รับสาย 10 (08.30 Aging คี่)", colIdx: 8, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
-      { name: "รับสาย 11 (08.30 Call 1)", colIdx: 9, slotIdx: 0, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
-      { name: "รับสาย 12 (08.30 Call 2)", colIdx: 9, slotIdx: 1, timeStr: "08.30-17.30", breakStr: "พัก 13.00-14.00", start: 8.5, end: 17.5, bStart: 13.0, bEnd: 14.0 },
-      { name: "รับสาย 13 (08.30 Call 3)", colIdx: 9, slotIdx: 2, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
-      { name: "รับสาย 14 (08.30 Call 4)", colIdx: 9, slotIdx: 3, timeStr: "08.30-17.30", breakStr: "พัก 13.30-14.30", start: 8.5, end: 17.5, bStart: 13.5, bEnd: 14.5 },
-      { name: "รับสาย 15 (09.00 Self)", colIdx: 10, slotIdx: 0, timeStr: "09.00-18.00", breakStr: "พัก 14.00-15.00", start: 9.0, end: 18.0, bStart: 14.0, bEnd: 15.0 },
-      { name: "รับสาย 16 (09.00 C+Ef)", colIdx: 11, slotIdx: 0, timeStr: "09.00-18.00", breakStr: "พัก 14.00-15.00", start: 9.0, end: 18.0, bStart: 14.0, bEnd: 15.0 },
-      { name: "รับสาย 17 (10.00)", colIdx: 12, slotIdx: 0, timeStr: "10.00-19.00", breakStr: "พัก 13.30-14.30", start: 10.0, end: 19.0, bStart: 13.5, bEnd: 14.5 },
-      { name: "รับสาย 18 (11.00)", colIdx: 13, slotIdx: 0, timeStr: "11.00-20.00", breakStr: "พัก 14.00-15.00", start: 11.0, end: 20.0, bStart: 14.0, bEnd: 15.0 },
-      { name: "รับสาย 19 (12.00)", colIdx: 14, slotIdx: 0, timeStr: "12.00-21.00", breakStr: "พัก 15.00-16.00", start: 12.0, end: 21.0, bStart: 15.0, bEnd: 16.0 },
-      { name: "รับสาย 20 (13.30)", colIdx: 15, slotIdx: 0, timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0 }
     ];
 
     function renderHourlyHeadcountTable() {
@@ -524,80 +1667,128 @@
     }
 
     function renderHourlyWeekdayView(sched, thead, tbody, tfoot, timelineDiv) {
-      const week = sched.weeks[selectedHourlyWeekIndex] || sched.weeks[0];
-      const slots = HOURLY_TIME_SLOTS_WEEKDAY;
+      const week = (sched && sched.weeks) ? (sched.weeks[selectedHourlyWeekIndex] || sched.weeks[0]) : null;
+      const timeSlots = HORIZONTAL_SUMMARY_SPEC.time_slots;
+      const agentSlots = HORIZONTAL_SUMMARY_SPEC.agent_slots;
+      const summaryRows = HORIZONTAL_SUMMARY_SPEC.summary_rows;
 
-      // Table Header
+      // 1. Table Header
       let headHtml = `
         <tr>
-          <th style="min-width: 140px; text-align: left;">กะงาน (Shift)</th>
-          <th style="min-width: 90px;">เวลาทำงาน</th>
-          <th style="min-width: 105px;">เวลาพัก</th>
-          <th style="min-width: 110px; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
-          ${slots.map(s => `<th style="min-width: 48px; padding: 4px 2px; font-size: 11px;">${s.label}</th>`).join("")}
+          <th class="sticky-col-no" style="width: 36px;">No.</th>
+          <th class="sticky-col-role" style="text-align: left;">Agent Role (หน้าที่งาน)</th>
+          <th class="sticky-col-shift">Shift (เวลางาน)</th>
+          <th class="sticky-col-break">Break</th>
+          <th class="sticky-col-agent" style="text-align: left; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
+          ${timeSlots.map(t => `<th style="min-width: 46px; font-size: 11px; padding: 6px 2px;">${t}</th>`).join("")}
         </tr>
       `;
       thead.innerHTML = headHtml;
 
-      // Track sums per slot
-      const colWorking = new Array(slots.length).fill(0);
-      const colBreak = new Array(slots.length).fill(0);
-
-      // Table Body
+      // 2. Table Body (20 Duty Slots from Active_Agents_Horizontal_Summary)
       let bodyHtml = "";
-      WEEKDAY_DUTY_SLOTS.forEach(duty => {
+      agentSlots.forEach((slot, rowIdx) => {
         let agentName = "-";
-        if (week && week.assignments && week.assignments[duty.colIdx]) {
-          agentName = week.assignments[duty.colIdx][duty.slotIdx] || "-";
+        if (week && week.assignments && week.assignments[slot.colIdx]) {
+          agentName = week.assignments[slot.colIdx][slot.slotIdx] || "-";
         }
+        if (!agentName || agentName.trim() === "") agentName = "-";
 
         bodyHtml += `<tr>`;
-        bodyHtml += `<td style="text-align: left; font-weight: 600; font-size: 11.5px; white-space: nowrap;">${duty.name}</td>`;
-        bodyHtml += `<td style="color: var(--muted); font-size: 11px;">${duty.timeStr}</td>`;
-        bodyHtml += `<td style="color: #d97706; font-size: 11px;">${duty.breakStr}</td>`;
-        bodyHtml += `<td style="font-weight: 700; color: var(--primary); font-size: 12px;">${agentName}</td>`;
+        bodyHtml += `<td class="sticky-col-no" style="font-weight: 700; color: var(--muted);">${slot.no}</td>`;
+        bodyHtml += `<td class="sticky-col-role" style="font-weight: 600; text-align: left;">${safeEscape(slot.role)}</td>`;
+        bodyHtml += `<td class="sticky-col-shift" style="color: var(--muted); font-size: 11px;">${slot.shift}</td>`;
+        bodyHtml += `<td class="sticky-col-break" style="color: #c2410c; font-weight: 600; font-size: 11px;">${slot.break}</td>`;
+        bodyHtml += `<td class="sticky-col-agent" style="font-weight: 700; color: #1e3a8a; text-align: left;">${safeEscape(agentName)}</td>`;
 
-        slots.forEach((s, sIdx) => {
-          const mid = (s.start + s.end) / 2.0;
-          const isWorkingTime = (duty.start <= mid && mid < duty.end);
-          const isBreakTime = (duty.bStart <= mid && mid < duty.bEnd);
-
-          if (isWorkingTime) {
-            if (isBreakTime) {
-              colBreak[sIdx]++;
-              bodyHtml += `<td style="background: rgba(245,158,11,0.12); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 4px; background:#fef3c7; color:#b45309; border-radius:4px; font-size:10px; font-weight:700;">พัก</span></td>`;
-            } else {
-              colWorking[sIdx]++;
-              bodyHtml += `<td style="background: rgba(16,185,129,0.06); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 6px; background:#dcfce7; color:#15803d; border-radius:4px; font-weight:700; font-size:11px;">1</span></td>`;
-            }
-          } else {
-            bodyHtml += `<td style="color: rgba(148,163,184,0.3); font-size: 11px;">-</td>`;
+        for (let tIdx = 0; tIdx < timeSlots.length; tIdx++) {
+          // In Excel Row 30 (Slot 20), AH30:AK30 (21:00-22:30) is merged across 4 cols
+          if (slot.no === 20 && tIdx === 28) {
+            bodyHtml += `<td colspan="4" class="duty-pill-voice" style="padding: 4px 2px; font-size: 10px; font-weight: 700; background: #e3f2fd; color: #1e40af; border: 1px solid #bfdbfe;" title="All (Call+Mail+ECE+Self Service +Realtime)">All (Mixed)</td>`;
+            tIdx += 3; // skip 29, 30, 31
+            continue;
           }
-        });
+
+          const val = slot.intervals[tIdx];
+          let cellHtml = "";
+          if (!val || val === "") {
+            cellHtml = `<span class="duty-offshift">-</span>`;
+          } else if (val === "Break") {
+            cellHtml = `<span class="duty-pill duty-pill-break">Break</span>`;
+          } else if (val.includes("Call")) {
+            let label = val;
+            if (val === "Call") label = "Call";
+            else if (val === "Call+ECE") label = "Call+ECE";
+            else if (val.startsWith("All (Call+")) label = "All (Mixed)";
+            cellHtml = `<span class="duty-pill duty-pill-voice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+          } else {
+            let label = val;
+            if (val.startsWith("FU Ex/16App")) label = "FU Ex/16App";
+            cellHtml = `<span class="duty-pill duty-pill-nonvoice" title="${safeEscape(val)}">${safeEscape(label)}</span>`;
+          }
+
+          bodyHtml += `<td style="padding: 3px 2px;">${cellHtml}</td>`;
+        }
 
         bodyHtml += `</tr>`;
       });
       tbody.innerHTML = bodyHtml;
 
-      // Table Footer with Totals
+      // 3. Table Footer (Staffing Summary Rows 32-41 from Excel)
       let footHtml = `
-        <tr style="background: rgba(59,130,246,0.08); font-weight: 700;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: var(--text);">รวมปฏิบัติงาน (Total Working)</td>
-          ${colWorking.map((w, i) => `<td style="font-size: 12px; color: var(--primary); font-weight: 700;">${w + colBreak[i]}</td>`).join("")}
+        <tr class="summary-header-row">
+          <th colspan="37" style="background: #102a43; color: #ffffff; text-align: left; padding: 8px 14px; font-size: 12px; font-weight: 800;">
+            📊 สรุปความจุผู้ปฏิบัติงานและช่วงพัก (Voice / Non-Voice Staffing &amp; Break Summary)
+          </th>
         </tr>
-        <tr style="background: rgba(245,158,11,0.08); font-weight: 700;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: #d97706;">รวมคนที่พัก (Staff on Break)</td>
-          ${colBreak.map(b => `<td style="font-size: 12px; color: #d97706;">${b > 0 ? b : '-'}</td>`).join("")}
-        </tr>
-        <tr style="background: #1e293b; color: #38bdf8; font-weight: 800; font-size: 12.5px;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: #fde047;">⚡ รวมรับสายสุทธิ (Net On-Duty Staff)</td>
-          ${colWorking.map(w => `<td style="color: #38bdf8; font-size: 13px;">${w}</td>`).join("")}
+        <tr class="summary-subhead-row">
+          <th colspan="5" class="summary-sticky-label" style="background: #243b53; color: #ffffff; font-weight: 700; padding: 6px 12px;">Staffing Category</th>
+          ${timeSlots.map(t => `<th style="background: #243b53; color: #ffffff; font-size: 11px; padding: 6px 2px;">${t}</th>`).join("")}
         </tr>
       `;
+
+      summaryRows.forEach(sRow => {
+        const cat = sRow.category.trim();
+        let trClass = "";
+        let labelStyle = "";
+        let cellStyle = "";
+
+        if (cat.includes("Total Active")) {
+          trClass = "summary-row-active";
+          labelStyle = "background: #dceefb; color: #102a43; font-weight: 800; font-size: 12px;";
+          cellStyle = "font-weight: 800; font-size: 12px; color: #102a43;";
+        } else if (cat.includes("Call")) {
+          trClass = "summary-row-voice";
+          labelStyle = "background: #e3f2fd; color: #1e40af; font-weight: 700; padding-left: 24px !important;";
+          cellStyle = "font-weight: 700; color: #1e40af;";
+        } else if (cat.includes("On Break")) {
+          trClass = "summary-row-break";
+          labelStyle = "background: #fff3e0; color: #c2410c; font-weight: 700;";
+          cellStyle = "font-weight: 700; color: #c2410c;";
+        } else if (cat.includes("Off-Shift")) {
+          trClass = "summary-row-offshift";
+          labelStyle = "background: #f0f4f8; color: #64748b; font-weight: 500;";
+          cellStyle = "color: #64748b;";
+        } else {
+          trClass = "summary-row-nonvoice";
+          labelStyle = "background: #e8f5e9; color: #15803d; font-weight: 600; padding-left: 24px !important;";
+          cellStyle = "color: #15803d; font-weight: 600;";
+        }
+
+        footHtml += `<tr class="${trClass}">`;
+        footHtml += `<td colspan="5" class="summary-sticky-label" style="${labelStyle}">${safeEscape(sRow.category)}</td>`;
+        sRow.counts.forEach(cnt => {
+          footHtml += `<td style="${cellStyle}">${cnt > 0 ? cnt : '-'}</td>`;
+        });
+        footHtml += `</tr>`;
+      });
+
       tfoot.innerHTML = footHtml;
 
-      // Render Visual Timeline
-      renderTimelineBars(slots, colWorking, timelineDiv);
+      // 4. Render Visual Capacity Timeline (Active staff per 30 mins)
+      if (summaryRows.length > 0) {
+        renderTimelineBars(timeSlots, summaryRows[0].counts, timelineDiv);
+      }
     }
 
     function renderHourlyHolidayView(sched, thead, tbody, tfoot, timelineDiv) {
@@ -607,20 +1798,21 @@
 
       let headHtml = `
         <tr>
-          <th style="min-width: 140px; text-align: left;">กะงานวันหยุด (Holiday Shift)</th>
-          <th style="min-width: 90px;">เวลาทำงาน</th>
-          <th style="min-width: 105px;">เวลาพัก</th>
-          <th style="min-width: 110px; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
-          ${slots.map(s => `<th style="min-width: 52px; padding: 4px 2px; font-size: 11px;">${s.label}</th>`).join("")}
+          <th class="sticky-col-no" style="width: 36px;">No.</th>
+          <th class="sticky-col-role" style="text-align: left;">กะงานวันหยุด (Holiday Shift)</th>
+          <th class="sticky-col-shift">เวลาทำงาน</th>
+          <th class="sticky-col-break">เวลาพัก</th>
+          <th class="sticky-col-agent" style="text-align: left; color: #fde047;">เจ้าหน้าที่ (Agent)</th>
+          ${slots.map(s => `<th style="min-width: 52px; padding: 6px 2px; font-size: 11px;">${s.label}</th>`).join("")}
         </tr>
       `;
       thead.innerHTML = headHtml;
 
       const holShiftsDef = [
-        { name: "เวร 1 (08.00-17.00 น.)", timeStr: "08.00-17.00", breakStr: "พัก 13.30-14.30", start: 8.0, end: 17.0, bStart: 13.5, bEnd: 14.5, sIdx: 0 },
-        { name: "เวร 2 (09.00-18.00 น.)", timeStr: "09.00-18.00", breakStr: "พัก 14.30-15.30", start: 9.0, end: 18.0, bStart: 14.5, bEnd: 15.5, sIdx: 1 },
-        { name: "เวร 3 (10.00-19.00 น.)", timeStr: "10.00-19.00", breakStr: "พัก 14.00-15.00", start: 10.0, end: 19.0, bStart: 14.0, bEnd: 15.0, sIdx: 2 },
-        { name: "เวร 4 (13.30-22.30 น.)", timeStr: "13.30-22.30", breakStr: "พัก 16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0, sIdx: 3 }
+        { no: 1, name: "เวร 1 (08.00-17.00 น.)", timeStr: "08.00-17.00", breakStr: "13.30-14.30", start: 8.0, end: 17.0, bStart: 13.5, bEnd: 14.5, sIdx: 0 },
+        { no: 2, name: "เวร 2 (09.00-18.00 น.)", timeStr: "09.00-18.00", breakStr: "14.30-15.30", start: 9.0, end: 18.0, bStart: 14.5, bEnd: 15.5, sIdx: 1 },
+        { no: 3, name: "เวร 3 (10.00-19.00 น.)", timeStr: "10.00-19.00", breakStr: "14.00-15.00", start: 10.0, end: 19.0, bStart: 14.0, bEnd: 15.0, sIdx: 2 },
+        { no: 4, name: "เวร 4 (13.30-22.30 น.)", timeStr: "13.30-22.30", breakStr: "16.00-17.00", start: 13.5, end: 22.5, bStart: 16.0, bEnd: 17.0, sIdx: 3 }
       ];
 
       const colWorking = new Array(slots.length).fill(0);
@@ -630,12 +1822,14 @@
       holShiftsDef.forEach(hDef => {
         let agentName = "-";
         if (hol && hol.shifts) agentName = hol.shifts[hDef.sIdx] || "-";
+        if (!agentName || agentName.trim() === "") agentName = "-";
 
         bodyHtml += `<tr>`;
-        bodyHtml += `<td style="text-align: left; font-weight: 600; font-size: 11.5px; white-space: nowrap;">${hDef.name}</td>`;
-        bodyHtml += `<td style="color: var(--muted); font-size: 11px;">${hDef.timeStr}</td>`;
-        bodyHtml += `<td style="color: #d97706; font-size: 11px;">${hDef.breakStr}</td>`;
-        bodyHtml += `<td style="font-weight: 700; color: var(--primary); font-size: 12px;">${agentName}</td>`;
+        bodyHtml += `<td class="sticky-col-no" style="font-weight: 700; color: var(--muted);">${hDef.no}</td>`;
+        bodyHtml += `<td class="sticky-col-role" style="text-align: left; font-weight: 600; font-size: 11.5px; white-space: nowrap;">${hDef.name}</td>`;
+        bodyHtml += `<td class="sticky-col-shift" style="color: var(--muted); font-size: 11px;">${hDef.timeStr}</td>`;
+        bodyHtml += `<td class="sticky-col-break" style="color: #c2410c; font-weight: 600; font-size: 11px;">${hDef.breakStr}</td>`;
+        bodyHtml += `<td class="sticky-col-agent" style="font-weight: 700; color: #1e3a8a; text-align: left;">${safeEscape(agentName)}</td>`;
 
         slots.forEach((s, sIdx) => {
           const mid = (s.start + s.end) / 2.0;
@@ -645,13 +1839,13 @@
           if (isWorkingTime) {
             if (isBreakTime) {
               colBreak[sIdx]++;
-              bodyHtml += `<td style="background: rgba(245,158,11,0.12); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 4px; background:#fef3c7; color:#b45309; border-radius:4px; font-size:10px; font-weight:700;">พัก</span></td>`;
+              bodyHtml += `<td style="background: rgba(245,158,11,0.12); padding: 4px 2px;"><span class="duty-pill duty-pill-break">Break</span></td>`;
             } else {
               colWorking[sIdx]++;
-              bodyHtml += `<td style="background: rgba(16,185,129,0.06); padding: 4px 2px;"><span style="display:inline-block; padding: 2px 6px; background:#dcfce7; color:#15803d; border-radius:4px; font-weight:700; font-size:11px;">1</span></td>`;
+              bodyHtml += `<td style="background: rgba(59,130,246,0.06); padding: 4px 2px;"><span class="duty-pill duty-pill-voice">Call</span></td>`;
             }
           } else {
-            bodyHtml += `<td style="color: rgba(148,163,184,0.3); font-size: 11px;">-</td>`;
+            bodyHtml += `<td style="color: #cbd5e1; font-size: 11px;">-</td>`;
           }
         });
         bodyHtml += `</tr>`;
@@ -660,15 +1854,15 @@
 
       let footHtml = `
         <tr style="background: rgba(59,130,246,0.08); font-weight: 700;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: var(--text);">รวมปฏิบัติงาน (Total Working)</td>
+          <td colspan="5" class="summary-sticky-label" style="text-align: left; padding-left: 12px; color: var(--text);">รวมปฏิบัติงาน (Total Working)</td>
           ${colWorking.map((w, i) => `<td style="font-size: 12px; color: var(--primary); font-weight: 700;">${w + colBreak[i]}</td>`).join("")}
         </tr>
         <tr style="background: rgba(245,158,11,0.08); font-weight: 700;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: #d97706;">รวมคนที่พัก (Staff on Break)</td>
+          <td colspan="5" class="summary-sticky-label" style="text-align: left; padding-left: 12px; color: #d97706;">รวมคนที่พัก (Staff on Break)</td>
           ${colBreak.map(b => `<td style="font-size: 12px; color: #d97706;">${b > 0 ? b : '-'}</td>`).join("")}
         </tr>
         <tr style="background: #1e293b; color: #38bdf8; font-weight: 800; font-size: 12.5px;">
-          <td colspan="4" style="text-align: right; padding-right: 12px; color: #fde047;">⚡ รวมรับสายสุทธิ (Net On-Duty Staff)</td>
+          <td colspan="5" class="summary-sticky-label" style="text-align: left; padding-left: 12px; color: #fde047; background: #0f172a;">⚡ รวมรับสายสุทธิ (Net On-Duty Staff)</td>
           ${colWorking.map(w => `<td style="color: #38bdf8; font-size: 13px;">${w}</td>`).join("")}
         </tr>
       `;
@@ -681,9 +1875,10 @@
       if (!timelineDiv) return;
       let html = "";
       slots.forEach((s, idx) => {
-        const cnt = netCounts[idx];
+        const label = typeof s === 'string' ? s : (s.label || s);
+        const cnt = netCounts[idx] || 0;
         let color = "#8b5cf6"; // 1 person
-        let bg = "rgba(139,92,246,0.15)";
+        let bg = "rgba(139,92,246,0.12)";
         if (cnt >= 14) {
           color = "#10b981"; // peak
           bg = "rgba(16,185,129,0.15)";
@@ -695,13 +1890,13 @@
           bg = "rgba(245,158,11,0.15)";
         }
 
-        const heightPct = Math.max(16, Math.min(100, (cnt / 20) * 100));
+        const heightPct = Math.max(14, Math.min(100, (cnt / 20) * 100));
 
         html += `
-          <div style="flex: 1; min-width: 36px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 90px; background: ${bg}; border-radius: 6px; padding: 4px 2px; position: relative;">
-            <span style="font-size: 11px; font-weight: 800; color: ${color}; margin-bottom: 4px;">${cnt}</span>
+          <div style="flex: 1; min-width: 32px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 90px; background: ${bg}; border-radius: 6px; padding: 4px 1px; position: relative;" title="${label}: ${cnt} คน">
+            <span style="font-size: 11px; font-weight: 800; color: ${color}; margin-bottom: 3px;">${cnt}</span>
             <div style="width: 70%; height: ${heightPct}%; background: ${color}; border-radius: 4px 4px 0 0; transition: height 0.3s;"></div>
-            <span style="font-size: 9.5px; color: var(--muted); margin-top: 4px; white-space: nowrap; transform: scale(0.9);">${s.label}</span>
+            <span style="font-size: 9px; color: var(--muted); margin-top: 4px; white-space: nowrap; transform: scale(0.9);">${label}</span>
           </div>
         `;
       });

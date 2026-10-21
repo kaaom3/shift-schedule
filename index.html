@@ -394,32 +394,52 @@
         </div>
 
         <div class="card-body">
-          <!-- KPI Summary Metrics -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
-            <div style="background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(59,130,246,0.03)); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 12px 16px;">
-              <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase;">🔥 ช่วงเวลาเร่งด่วน (Peak Hours)</div>
-              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">08:30 - 17:00 น.</div>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" id="kpiPeakCoverage">กำลังพล On-Duty 11 - 19 คน</div>
+          <div id="hourlyWeekdayMetricsContainer">
+<!-- KPI Summary Metrics (Active Agents Horizontal Summary Rows 5-6) -->
+          <div class="hourly-kpi-grid">
+            <div class="hourly-kpi-card kpi-card-staff">
+              <div class="kpi-label">👥 พนักงานทั้งหมด (Total Staff)</div>
+              <div class="kpi-val">20 คน</div>
+              <div class="kpi-sub">กำลังพล First Tier ประจำวัน (20 กะงาน)</div>
             </div>
 
-            <div style="background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.03)); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; padding: 12px 16px;">
-              <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase;">☕ การสลับพักเที่ยง & บ่าย</div>
-              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">11:00 - 15:00 น.</div>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">กระจายพัก 4 รอบ ไม่กระทบสาย</div>
+            <div class="hourly-kpi-card kpi-card-peak">
+              <div class="kpi-label">🔥 ช่วงคนทำงานสูงสุด (Peak Active)</div>
+              <div class="kpi-val">20 คน</div>
+              <div class="kpi-sub">ช่วงเวลา 14:30 &amp; 15:30 น.</div>
             </div>
 
-            <div style="background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(217,119,6,0.03)); border: 1px solid rgba(245,158,11,0.25); border-radius: 10px; padding: 12px 16px;">
-              <div style="font-size: 11px; font-weight: 700; color: #d97706; text-transform: uppercase;">🌙 ครอบคลุมรอบวัน (All-Day)</div>
-              <div style="font-size: 20px; font-weight: 800; color: var(--text); margin-top: 4px;">07:00 - 22:30 น.</div>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">เช้าตรู่ 2 คน • กะดึก 1 คน</div>
+            <div class="hourly-kpi-card kpi-card-voice">
+              <div class="kpi-label">📞 กำลังรับสายสูงสุด (Max Voice Agents)</div>
+              <div class="kpi-val">11 คน</div>
+              <div class="kpi-sub">ช่วงเวลา 15:30 - 16:00 น.</div>
             </div>
 
-            <div style="background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(124,58,237,0.03)); border: 1px solid rgba(139,92,246,0.25); border-radius: 10px; padding: 12px 16px;">
-              <div style="font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase;">📊 สัดส่วนหน้าที่งาน (Roles)</div>
-              <div style="font-size: 15px; font-weight: 800; color: var(--text); margin-top: 4px;">Call 13 • Mail 5 • Self 2</div>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Log 2 • Follow SR 1 คน</div>
+            <div class="hourly-kpi-card kpi-card-break">
+              <div class="kpi-label">☕ ช่วงคนไปพักสูงสุด (Peak Break)</div>
+              <div class="kpi-val">6 คน</div>
+              <div class="kpi-sub">ช่วงเวลา 13:30 - 14:30 น.</div>
+            </div>
+
+            <div class="hourly-kpi-card kpi-card-core">
+              <div class="kpi-label">🏢 กะหลักของทีม (Core Shift)</div>
+              <div class="kpi-val">08:30 - 17:30 น.</div>
+              <div class="kpi-sub">เวลากะปฏิบัติงานมาตรฐาน (กะ 8.30)</div>
             </div>
           </div>
+
+          <!-- Color Legend Bar (Active Agents Horizontal Summary Row 8) -->
+          <div class="hourly-legend-bar">
+            <div class="legend-title">🎨 สัญลักษณ์สี (Color Legend):</div>
+            <div class="legend-items">
+              <span class="legend-pill legend-pill-voice">🟦 Voice (รับสาย)</span>
+              <span class="legend-pill legend-pill-nonvoice">🟩 Non-Voice (/Mail/ECE/Self/RT/FU Ex/16App)</span>
+              <span class="legend-pill legend-pill-break">🟧 Break (ช่วงพัก)</span>
+              <span class="legend-pill legend-pill-offshift">⬜ Off-Shift (นอกเวลากะ)</span>
+            </div>
+          </div>
+
+                    </div>
 
           <!-- Capacity Timeline Visualizer -->
           <div style="margin-bottom: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
@@ -437,11 +457,16 @@
 
           <!-- Main Table Container -->
           <div class="table-responsive">
-            <table class="roster-table" id="hourlyHeadcountTable" style="font-size: 11.5px; text-align: center;">
+            <table class="horizontal-matrix-table" id="hourlyHeadcountTable">
               <thead id="hourlyHead"></thead>
               <tbody id="hourlyBody"></tbody>
               <tfoot id="hourlyFoot"></tfoot>
             </table>
+          </div>
+
+                    <!-- Footnote from Excel Row 45 -->
+          <div id="hourlyWeekdayFootnote" style="margin-top: 14px; padding: 10px 14px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; font-size: 12px; color: #92400e; font-weight: 600;">
+            📌 หมายเหตุ: * ช่วงเวลา 19.00 - 20.00 น. จะเป็น Expert On ECE
           </div>
 
           <!-- Roles Distribution Detail Note -->
