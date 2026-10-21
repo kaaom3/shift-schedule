@@ -345,7 +345,12 @@ module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=600');
   const disposition = isDownload ? 'attachment' : 'inline';
-  res.setHeader('Content-Disposition', `${disposition}; filename="shift-${agent}.ics"`);
+  const asciiFilename = `shift-${encodeURIComponent(targetId || 'schedule')}.ics`;
+  const utf8Filename = encodeURIComponent(`ตารางเวร_${targetThaiName || targetId}.ics`);
+  res.setHeader(
+    'Content-Disposition',
+    `${disposition}; filename="${asciiFilename}"; filename*=UTF-8''${utf8Filename}`
+  );
 
   res.status(200).send(icsContent);
   } catch (err) {
