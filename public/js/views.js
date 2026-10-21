@@ -405,6 +405,31 @@
           const breakTime = getWeekdaySlotBreakTime(matchedCIdx, matchedSIdx, colCustom ? colCustom.breakTime : null);
           const isCustomTime = !!colCustom;
 
+          // Check daily swaps for this agent in this week
+          let dailySwapChipHtml = "";
+          const weekDays = (w && Array.isArray(w.days) && w.days.length > 0) ? w.days : [];
+          const mDailySwaps = (typeof getDailySwapsForMonth === 'function') ? getDailySwapsForMonth(yearAD, month) : [];
+          const agentSwapsInWeek = mDailySwaps.filter(sw => {
+            const isAg = sw.agentA === ag || sw.agentB === ag;
+            const wA = (typeof findWeekIndexForDay === 'function') ? findWeekIndexForDay(sched, sw.dateA) : -1;
+            const wB = (typeof findWeekIndexForDay === 'function') ? findWeekIndexForDay(sched, sw.dateB) : -1;
+            const inWeek = (weekDays.length > 0) ? (weekDays.includes(sw.dateA) || weekDays.includes(sw.dateB)) : (wA === wIdx || wB === wIdx);
+            return isAg && inWeek;
+          });
+
+          if (agentSwapsInWeek.length > 0) {
+            dailySwapChipHtml = agentSwapsInWeek.map(sw => {
+              const isA = sw.agentA === ag;
+              const myDate = isA ? sw.dateA : sw.dateB;
+              const partner = isA ? sw.agentBName : sw.agentAName;
+              const newTime = isA ? sw.shiftB.time : sw.shiftA.time;
+              const newRole = isA ? sw.shiftB.role : sw.shiftA.role;
+              return `<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:4px; padding:3px 7px; margin-top:4px; font-size:10.5px; color:#15803d;">
+                🔀 <strong>วันที่ ${myDate} ${monthShort}:</strong> เปลี่ยนเป็นกะ <strong>${newTime}</strong> (${newRole}) <em>[สลับกับคุณ${partner}]</em>
+              </div>`;
+            }).join("");
+          }
+
           // Check leave
           const lKey = `W_${wIdx}_${matchedCIdx}_${matchedSIdx}`;
           const leave = leaves[lKey];

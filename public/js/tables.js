@@ -310,7 +310,9 @@ function renderMasterWeekdayTable() {
         const weekDays = (w && Array.isArray(w.days) && w.days.length > 0) ? w.days : [];
         const hasDailySwap = mDailySwaps.some(sw => {
           const isAg = sw.agentA === n || sw.agentB === n;
-          return isAg && (weekDays.includes(sw.dateA) || weekDays.includes(sw.dateB));
+          const wA = (typeof findWeekIndexForDay === 'function') ? findWeekIndexForDay(currentSchedule, sw.dateA) : -1;
+          const wB = (typeof findWeekIndexForDay === 'function') ? findWeekIndexForDay(currentSchedule, sw.dateB) : -1;
+          return isAg && ((weekDays.length > 0 && (weekDays.includes(sw.dateA) || weekDays.includes(sw.dateB))) || (wA === wIdx || wB === wIdx));
         });
         if (hasDailySwap) {
           dailySwapBadgeHTML = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:9.5px; padding:1px 5px; margin-left:3px; cursor:pointer;" onclick="event.stopPropagation(); openDailySwapModal('${n}')" title="มีสลับกะรายวันในสัปดาห์นี้ (คลิกเพื่อดูรายละเอียด)">🔀 สลับรายวัน</span>`;
