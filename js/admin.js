@@ -92,9 +92,21 @@
 
 
     // =========================================================================
-    // LEAVE MANAGEMENT MODAL (เปิดให้น้องลงลาเองได้ & เลือกวันได้ & ห้ามลาเวรวันหยุด)
+    // LEAVE MANAGEMENT MODAL (ปุ่มแจ้งลงลาแถบด้านบน + เปิดให้น้องลงลาเองได้ 100%)
     // =========================================================================
     let currentEditingLeaveSlot = null;
+
+    function openDirectLeaveModal() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+
+      // ตรวจสอบว่ามีการเลือกเน้นชื่อใครอยู่หรือไม่
+      const userFilter = document.getElementById("userFilterSelect");
+      const preselectedAgent = (userFilter && userFilter.value !== "ALL") ? userFilter.value : null;
+
+      populateLeaveModalSelectors(preselectedAgent);
+      document.getElementById("leaveRecordModal").classList.add("show");
+    }
 
     function openLeaveRecordModal(yearAD, month, type, idx1, idx2, sIdx, agentName, label, shiftInfo) {
       if (type === "HOLIDAY") {
@@ -106,21 +118,142 @@
         return;
       }
 
+      populateLeaveModalSelectors(agentName, idx1, idx2, sIdx);
+      document.getElementById("leaveRecordModal").classList.add("show");
+    }
+
+    function populateLeaveModalSelectors(selectedAgent, targetWIdx, targetCIdx, targetSIdx) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;
-      const week = sched.weeks && sched.weeks[idx1];
-      const weekDays = getWeekWorkingDays(week, yearAD, month, sched);
 
-      const slotKey = `W_${idx1}_${idx2}_${sIdx}`;
-      currentEditingLeaveSlot = { yearAD, month, type, idx1, idx2, sIdx, agentName, slotKey, weekDays, weekLabel: label };
+      const agentSelect = document.getElementById("leaveModalAgentSelect");
+      if (!agentSelect) return;
 
-      const thName = AGENT_NAME_MAP[agentName] ? ` (${AGENT_NAME_MAP[agentName]})` : "";
-      document.getElementById("leaveModalAgentName").innerText = `${agentName}${thName}`;
-      document.getElementById("leaveModalSlotDesc").innerText = `เวรวันทำการ: ${label} • ช่อง ${shiftInfo}`;
+      // Populate Agents
+      let agentHTML = "";
+      AGENTS.forEach(ag => {
+        const thName = AGENT_NAME_MAP[ag] ? ` (${AGENT_NAME_MAP[ag]})` : "";
+        agentHTML += `<option value="${ag}">${ag}${thName}</option>`;
+      });
+      agentSelect.innerHTML = agentHTML;
 
-      const currentLeave = getSlotLeave(yearAD, month, slotKey);
+      if (selectedAgent && AGENTS.includes(selectedAgent)) {
+        agentSelect.value = selectedAgent;
+      } else {
+        const userFilter = document.getElementById("userFilterSelect");
+        if (userFilter && userFilter.value !== "ALL" && AGENTS.includes(userFilter.value)) {
+          agentSelect.value = userFilter.value;
+        } else if (AGENTS.length > 0) {
+          agentSelect.value = AGENTS[0];
+        }
+      }
+
+      // Populate Weeks for this agent
+      updateLeaveModalWeekOptions(targetWIdx, targetCIdx, targetSIdx);
+      syncLeaveModalSlotData();
+    }
+
+    function updateLeaveModalWeekOptions(targetWIdx, targetCIdx, targetSIdx) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+
+      const agentSelect = document.getElementById("leaveModalAgentSelect");
+      const weekSelect = document.getElementById("leaveModalWeekSelect");
+      if (!agentSelect || !weekSelect) return;
+
+      const currentAgent = agentSelect.value;
+      const matchedSlots = [];
+
+      if (sched && Array.isArray(sched.weeks)) {
+        sched.weeks.forEach((w, wIdx) => {
+          if (Array.isArray(w.assignments)) {
+            w.assignments.forEach((names, cIdx) => {
+              if (Array.isArray(names)) {
+                names.forEach((name, sIdx) => {
+                  if (name === currentAgent) {
+                    const col = WEEKDAY_COLUMNS[cIdx] || {};
+                    const role = col.role || `ช่อง ${cIdx + 1}`;
+                    const time = col.time || "";
+                    matchedSlots.push({
+                      wIdx,
+                      cIdx,
+                      sIdx,
+                      key: `${wIdx}_${cIdx}_${sIdx}`,
+                      label: `${w.label} • ${time} (${role})`
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+
+      if (matchedSlots.length === 0) {
+        weekSelect.innerHTML = `<option value="">-- ไม่มีกะวันทำการในเดือนนี้ --</option>`;
+        weekSelect.disabled = true;
+      } else {
+        weekSelect.disabled = false;
+        weekSelect.innerHTML = matchedSlots.map(s => `
+          <option value="${s.key}">${s.label}</option>
+        `).join("");
+
+        if (targetWIdx !== undefined && targetCIdx !== undefined && targetSIdx !== undefined) {
+          const targetKey = `${targetWIdx}_${targetCIdx}_${targetSIdx}`;
+          weekSelect.value = targetKey;
+        }
+      }
+    }
+
+    function onLeaveModalAgentChange() {
+      updateLeaveModalWeekOptions();
+      syncLeaveModalSlotData();
+    }
+
+    function onLeaveModalWeekChange() {
+      syncLeaveModalSlotData();
+    }
+
+    function syncLeaveModalSlotData() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+
+      const agentSelect = document.getElementById("leaveModalAgentSelect");
+      const weekSelect = document.getElementById("leaveModalWeekSelect");
       const statusEl = document.getElementById("leaveModalCurrentStatus");
       const noteInput = document.getElementById("leaveModalNoteInput");
       const delBtn = document.getElementById("leaveModalDeleteBtn");
+      const daysContainer = document.getElementById("leaveModalDaysContainer");
+
+      if (!agentSelect || !weekSelect) return;
+
+      const agentName = agentSelect.value;
+      const weekVal = weekSelect.value;
+
+      if (!weekVal) {
+        currentEditingLeaveSlot = null;
+        if (statusEl) statusEl.innerHTML = `<span style="color:#64748b;">ไม่มีกะวันทำการที่เลือก</span>`;
+        if (daysContainer) daysContainer.innerHTML = `<div style="color:#94a3b8; font-size:12px;">ไม่มีวันที่ในสัปดาห์นี้</div>`;
+        if (delBtn) delBtn.style.display = "none";
+        updateLeaveDaysSummary();
+        return;
+      }
+
+      const [wIdxStr, cIdxStr, sIdxStr] = weekVal.split("_");
+      const idx1 = parseInt(wIdxStr, 10);
+      const idx2 = parseInt(cIdxStr, 10);
+      const sIdx = parseInt(sIdxStr, 10);
+
+      const week = sched.weeks && sched.weeks[idx1];
+      const weekDays = getWeekWorkingDays(week, yearAD, month, sched);
+      const slotKey = `W_${idx1}_${idx2}_${sIdx}`;
+
+      currentEditingLeaveSlot = { yearAD, month, type: "WEEKDAY", idx1, idx2, sIdx, agentName, slotKey, weekDays, weekLabel: week?.label || "" };
+
+      const currentLeave = getSlotLeave(yearAD, month, slotKey);
 
       // กำหนดวันที่ถูกเลือกเริ่มต้น
       let checkedDays = [];
@@ -135,7 +268,6 @@
       }
 
       // แสดง Checkbox วันที่ของสัปดาห์นี้
-      const daysContainer = document.getElementById("leaveModalDaysContainer");
       const THAI_DAY_NAMES_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
       const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
 
@@ -158,20 +290,22 @@
 
       if (currentLeave) {
         const datesStr = currentLeave.datesText ? ` [${currentLeave.datesText}]` : "";
-        statusEl.innerHTML = `สถานะปัจจุบัน: <strong style="color:#c2410c;">${getLeaveIcon(currentLeave.leaveType)} ${currentLeave.leaveType}${datesStr}</strong> ${currentLeave.note ? `(หมายเหตุ: ${currentLeave.note})` : ''}`;
-        noteInput.value = currentLeave.note || "";
+        if (statusEl) {
+          statusEl.innerHTML = `สถานะปัจจุบัน: <strong style="color:#c2410c;">${getLeaveIcon(currentLeave.leaveType)} ${currentLeave.leaveType}${datesStr}</strong> ${currentLeave.note ? `(หมายเหตุ: ${currentLeave.note})` : ''}`;
+        }
+        if (noteInput) noteInput.value = currentLeave.note || "";
         const radios = document.getElementsByName("leaveTypeRadio");
         for (let r of radios) {
           if (r.value === currentLeave.leaveType) r.checked = true;
         }
-        delBtn.style.display = "inline-block";
+        if (delBtn) delBtn.style.display = "inline-block";
       } else {
-        statusEl.innerHTML = `สถานะปัจจุบัน: <span style="color:#16a34a; font-weight:700;">🟢 ปฏิบัติงานตามปกติ (ยังไม่มีบันทึกการลา)</span>`;
-        noteInput.value = "";
-        delBtn.style.display = "none";
+        if (statusEl) {
+          statusEl.innerHTML = `สถานะปัจจุบัน: <span style="color:#16a34a; font-weight:700;">🟢 ปฏิบัติงานตามปกติ (ยังไม่มีบันทึกการลา)</span>`;
+        }
+        if (noteInput) noteInput.value = "";
+        if (delBtn) delBtn.style.display = "none";
       }
-
-      document.getElementById("leaveRecordModal").classList.add("show");
     }
 
     function onLeaveDayCheckboxChange(el, day) {

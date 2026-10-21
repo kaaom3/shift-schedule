@@ -296,12 +296,6 @@ function renderMasterWeekdayTable() {
           leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}${dLabel}</span>`;
         }
 
-        // เปิดให้น้องลงลาเองได้เลย (+🏖️)
-        let leaveAddBtn = "";
-        if (!leave && n && n !== "-") {
-          leaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')" title="ลงลา (คลิกเพื่อบันทึกการลา)">+🏖️</span>`;
-        }
-        
         const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
         const slotBreak = getWeekdaySlotBreakTime(cIdx, sIdx, colCustom?.breakTime);
         const slotBreakLabel = slotBreak ? ` (${slotBreak})` : "";
@@ -311,7 +305,7 @@ function renderMasterWeekdayTable() {
         else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName}${slotBreakLabel} (คลิกเพื่อสลับต่อได้)`;
 
         const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${leaveAddBtn} ${leaveChipHTML}</div>`;
+        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML}</div>`;
       };
 
       let tagsHTML = "";

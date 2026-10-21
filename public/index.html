@@ -98,6 +98,9 @@
       </div>
 
       <div class="tab-tools">
+        <button class="btn btn-outline btn-sm" onclick="openDirectLeaveModal()" style="color:#c2410c; border-color:#fed7aa; background:#fff7ed; font-weight:700;" title="บันทึกการลา / แก้ไขการลา">
+          🏖️ แจ้งลงลา
+        </button>
         <button class="btn btn-outline btn-sm" onclick="toggleJD()">
           👁️ <span id="jdToggleText">แสดง JD ในแถว</span>
         </button>
@@ -803,10 +806,25 @@
       </div>
       <div class="modal-box-body">
         <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px;">
-          <div style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase;">พนักงานและเวรที่เลือก:</div>
-          <div style="font-size:16px; font-weight:800; color:#9a3412; margin-top:3px;" id="leaveModalAgentName">-</div>
-          <div style="font-size:12px; color:#b45309; margin-top:2px;" id="leaveModalSlotDesc">-</div>
-          <div style="font-size:11.5px; color:#475569; margin-top:6px;" id="leaveModalCurrentStatus">-</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase; display:block; margin-bottom:4px;">
+                👤 พนักงาน:
+              </label>
+              <select id="leaveModalAgentSelect" onchange="onLeaveModalAgentChange()" style="width:100%; padding:6px 8px; border:1px solid #fdba74; border-radius:6px; font-size:12.5px; font-weight:600; background:#fff; color:#9a3412;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase; display:block; margin-bottom:4px;">
+                📅 สัปดาห์ / กะที่เข้างาน:
+              </label>
+              <select id="leaveModalWeekSelect" onchange="onLeaveModalWeekChange()" style="width:100%; padding:6px 8px; border:1px solid #fdba74; border-radius:6px; font-size:11.5px; font-weight:600; background:#fff; color:#9a3412;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+          <div style="font-size:11.5px; color:#475569; border-top:1px dashed #fed7aa; padding-top:6px; margin-top:4px;" id="leaveModalCurrentStatus">-</div>
         </div>
 
         <!-- เลือกวันที่ลาในสัปดาห์ -->
