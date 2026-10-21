@@ -540,9 +540,11 @@
             </div>
 
             <!-- Card Footer -->
-            <div class="agent-card-footer">
-              <span style="color:var(--muted); font-size:11px;">เข้างานตรงเวลาตามกะที่กำหนด</span>
-              <button class="btn btn-outline btn-sm" onclick="highlightAndJumpToMaster('${ag}')" style="padding:2px 8px; font-size:11px;" title="ไฮไลท์ชื่อ ${ag} ในหน้าตารางรวม">
+            <div class="agent-card-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="openCalendarSyncModal('${ag}')" style="color:#0284c7; border-color:#93c5fd; background:#f0f9ff; font-weight:700; padding:3px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px;" title="ซิงค์ตารางเวรคุณ ${ag} เข้า iPhone, Outlook, หรือ MS Teams">
+                <span>📅</span> ซิงค์ปฏิทิน
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="highlightAndJumpToMaster('${ag}')" style="padding:3px 8px; font-size:11px;" title="ไฮไลท์ชื่อ ${ag} ในหน้าตารางรวม">
                 🔍 ไฮไลท์ในตารางรวม
               </button>
             </div>
@@ -559,6 +561,108 @@
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
       showToast(`🔍 ไฮไลท์คุณ${agentName} ในตารางรวมเรียบร้อยแล้ว`);
+    }
+
+    // =========================================================================
+    // CALENDAR SYNC MODAL CONTROLLER (Apple Calendar, Outlook, MS Teams)
+    // =========================================================================
+    let currentCalendarSyncAgent = "";
+
+    function openCalendarSyncModal(agentName) {
+      currentCalendarSyncAgent = agentName || (AGENTS && AGENTS[0]) || "";
+      const nameElem = document.getElementById("calendarModalAgentName");
+      if (nameElem) {
+        nameElem.textContent = currentCalendarSyncAgent;
+      }
+
+      const host = window.location.host;
+      const protocol = window.location.protocol;
+      const isHttps = protocol === "https:";
+
+      // Base URL for API
+      const baseUrl = `${protocol}//${host}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`;
+      // Webcal URL for iOS / macOS 1-tap subscription
+      const webcalUrl = isHttps 
+        ? `webcal://${host}/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}`
+        : baseUrl;
+
+      const iphoneBtn = document.getElementById("calendarIphoneBtn");
+      if (iphoneBtn) {
+        iphoneBtn.href = webcalUrl;
+      }
+
+      const feedInput = document.getElementById("calendarFeedUrlInput");
+      if (feedInput) {
+        feedInput.value = baseUrl;
+      }
+
+      const modal = document.getElementById("calendarSyncModal");
+      if (modal) {
+        modal.classList.add("show");
+      }
+    }
+
+    function openCalendarSyncFromCardFilter() {
+      const select = document.getElementById("cardFilterSelect");
+      const val = select ? select.value : "ALL";
+      if (val && val !== "ALL") {
+        openCalendarSyncModal(val);
+      } else {
+        const firstAgent = (AGENTS && AGENTS.length > 0) ? AGENTS[0] : "";
+        if (firstAgent) {
+          showToast("💡 คุณกำลังดูตารางรวม: กำลังเปิดหน้าต่างซิงค์ (สามารถเลือกชื่ออื่นจากการ์ดด้านล่างได้ครับ)");
+          openCalendarSyncModal(firstAgent);
+        } else {
+          showToast("⚠️ ไม่พบข้อมูลเจ้าหน้าที่");
+        }
+      }
+    }
+
+    function closeCalendarSyncModal() {
+      const modal = document.getElementById("calendarSyncModal");
+      if (modal) {
+        modal.classList.remove("show");
+      }
+    }
+
+    function copyCalendarSyncUrl() {
+      const input = document.getElementById("calendarFeedUrlInput");
+      if (!input || !input.value) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(() => {
+          showToast("📋 คัดลอกลิงก์สำหรับ Outlook / Teams เรียบร้อยแล้ว!");
+        }).catch(() => {
+          fallbackCopyText(input.value);
+        });
+      } else {
+        fallbackCopyText(input.value);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const input = document.getElementById("calendarFeedUrlInput");
+      if (input) {
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try {
+          document.execCommand("copy");
+          showToast("📋 คัดลอกลิงก์เรียบร้อยแล้ว!");
+        } catch (e) {
+          showToast("⚠️ กรุณากดคัดลอกข้อความในช่องด้วยตนเอง");
+        }
+      }
+    }
+
+    function downloadCurrentAgentICS() {
+      if (!currentCalendarSyncAgent) return;
+      const url = `/api/calendar?agent=${encodeURIComponent(currentCalendarSyncAgent)}&download=1`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ตารางเวร_${currentCalendarSyncAgent}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`📥 กำลังดาวน์โหลดไฟล์ตารางเวรคุณ ${currentCalendarSyncAgent}...`);
     }
 
 

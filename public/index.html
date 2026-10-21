@@ -258,11 +258,14 @@
             <span>👤 ตารางเวรแยกตามรายบุคคล (Individual Shift Cards)</span>
             <span class="badge badge-active-mode admin-only" id="cardScheduleTypeBadge">🟢 ข้อมูลอิงจากตารางปฏิบัติงานจริง</span>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <label style="font-size: 0.8rem; font-weight: 600;">กรองเฉพาะบุคคล:</label>
             <select id="cardFilterSelect" onchange="renderIndividualCards(this.value)" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--primary);">
               <option value="ALL">-- แสดงครบทุกคน (20 คน) --</option>
             </select>
+            <button type="button" class="btn btn-outline btn-sm" onclick="openCalendarSyncFromCardFilter()" style="color:#0284c7; border-color:#93c5fd; background:#f0f9ff; font-weight:700; font-size:12px; padding:3px 10px; display:inline-flex; align-items:center; gap:5px;" title="ซิงค์ตารางของคนที่เลือกเข้า iPhone, Outlook, หรือ MS Teams">
+              📅 ซิงค์ปฏิทิน (iPhone / Outlook / Teams)
+            </button>
           </div>
         </div>
         <div class="card-body">
@@ -939,6 +942,91 @@
     </div>
   </div>
 
+
+  <!-- Calendar Sync Modal -->
+  <div class="modal-backdrop" id="calendarSyncModal">
+    <div class="modal-box" style="max-width: 530px; border: 2px solid #0284c7;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>📅</span>
+          <span>ซิงค์ตารางเวรเข้าปฏิทินส่วนตัว</span>
+        </h3>
+        <button onclick="closeCalendarSyncModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body">
+        
+        <!-- Target Agent Info Box -->
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:14px; display:flex; align-items:center; gap:12px;">
+          <div style="font-size:28px;">👤</div>
+          <div>
+            <div style="font-size:11px; font-weight:700; color:#0284c7; text-transform:uppercase;">คุณกำลังจะซิงค์ตารางเวรของ:</div>
+            <div style="font-size:16px; font-weight:800; color:#0c4a6e; margin-top:2px;" id="calendarModalAgentName">-</div>
+            <div style="font-size:11.5px; color:#0369a1; margin-top:1px;">กะงานจะอัพเดตอัตโนมัติเมื่อมีการสลับเวรหรือลงลา</div>
+          </div>
+        </div>
+
+        <!-- Option 1: iPhone / iPad (Apple Calendar) -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <span>🍏</span> 1. สำหรับ iPhone / iPad (Apple Calendar)
+            </strong>
+            <span class="badge" style="background:#dcfce7; color:#15803d; font-size:10px;">แตะครั้งเดียว</span>
+          </div>
+          <p style="font-size:11.5px; color:#64748b; margin:0 0 8px 0; line-height:1.4;">
+            กดปุ่มด้านล่าง ระบบจะเปิดแอปปฏิทินของ iPhone ขึ้นมาถามยืนยันทันที เวรจะแจ้งเตือนและอัพเดตเองอัตโนมัติ
+          </p>
+          <a id="calendarIphoneBtn" href="#" class="btn btn-primary" style="background:#0284c7; border-color:#0369a1; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; padding:6px 14px;">
+            📲 แตะเพื่อเพิ่มลงปฏิทิน iPhone ทันที
+          </a>
+        </div>
+
+        <!-- Option 2: Microsoft Outlook & MS Teams -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <span>💼</span> 2. สำหรับ Microsoft Outlook & MS Teams
+            </strong>
+            <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10px;">ซิงค์สด Real-time</span>
+          </div>
+          <p style="font-size:11.5px; color:#64748b; margin:0 0 6px 0; line-height:1.4;">
+            คัดลอกลิงก์นี้ไปวางใน Outlook (ไปที่ <strong>Calendar</strong> &rarr; <strong>Add Calendar</strong> &rarr; <strong>Subscribe from web</strong>) ตารางใน <strong>MS Teams</strong> จะซิงค์ตามให้อัตโนมัติ:
+          </p>
+          <div style="display:flex; gap:6px; margin-bottom:6px;">
+            <input type="text" id="calendarFeedUrlInput" readonly style="flex:1; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; font-size:11.5px; background:#f8fafc; color:#334155;">
+            <button type="button" class="btn btn-outline" onclick="copyCalendarSyncUrl()" style="white-space:nowrap; font-size:12px; font-weight:700; color:#0284c7; border-color:#0284c7;">
+              📋 คัดลอกลิงก์
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 3: Direct Download (.ics) -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <span>📥</span> 3. ดาวน์โหลดไฟล์ .ics เก็บลงเครื่อง
+            </strong>
+          </div>
+          <p style="font-size:11.5px; color:#64748b; margin:0 0 8px 0; line-height:1.4;">
+            สำหรับเปิดกับโปรแกรมปฏิทินทั่วไป หรือนำเข้าแบบออฟไลน์
+          </p>
+          <button type="button" class="btn btn-outline btn-sm" onclick="downloadCurrentAgentICS()" style="font-size:12px; font-weight:600; padding:5px 12px;">
+            💾 ดาวน์โหลดไฟล์ .ics ทันที
+          </button>
+        </div>
+
+        <!-- Safety Advice Box -->
+        <div style="background:#fffbeb; border:1px solid #fef08a; border-radius:8px; padding:10px 12px; font-size:11px; color:#854d0e; line-height:1.45;">
+          <strong>🛡️ ปลอดภัย ไม่ปะปนกับนัดหมายส่วนตัว:</strong><br>
+          ระบบจะสร้างเป็นหมวดปฏิทินแยกต่างหาก เช่น <em>"ตารางเวร - คุณ..."</em> หากซิงค์ผิดคนหรือต้องการเอาออก สามารถคลิกขวาที่ชื่อปฏิทินใน Outlook/iPhone แล้วกด <strong>"Delete Calendar (ลบปฏิทิน)"</strong> เพื่อลบกะทั้งหมดออกได้ในคลิกเดียวทันทีครับ
+        </div>
+
+      </div>
+      <div class="modal-box-footer" style="justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeCalendarSyncModal()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modular JavaScript Application -->
   <script src="js/config.js"></script>
