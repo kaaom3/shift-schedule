@@ -599,6 +599,11 @@
         feedInput.value = baseUrl;
       }
 
+      const googleBtn = document.getElementById("calendarGoogleBtn");
+      if (googleBtn) {
+        googleBtn.href = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(baseUrl)}`;
+      }
+
       const modal = document.getElementById("calendarSyncModal");
       if (modal) {
         modal.classList.add("show");

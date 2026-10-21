@@ -621,7 +621,7 @@
         <h3>🔒 เข้าสู่โหมดหัวหน้างาน (Admin Login)</h3>
         <button onclick="closePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
           กรุณากรอกรหัส PIN เพื่อปลดล็อคแท็บตั้งค่าและเครื่องมือจัดการตารางสำหรับหัวหน้า (ค่าเริ่มต้น: <strong>1234</strong>)
         </p>
@@ -646,7 +646,7 @@
         <h3>🔑 ตั้งรหัส PIN ใหม่สำหรับหัวหน้า</h3>
         <button onclick="closeChangePinModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <p style="color:var(--secondary); font-size:13px; margin-bottom:12px;">
           กำหนดรหัส PIN ใหม่ (ตัวเลข 4-6 หลัก) สำหรับใช้ปลดล็อคโหมดหัวหน้าในครั้งถัดไป:
         </p>
@@ -671,7 +671,7 @@
         </h3>
         <button onclick="closeSafetyModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <div id="safetyModalAlertBox" style="margin-bottom: 16px;">
           <!-- Dynamic Alert Box -->
         </div>
@@ -710,7 +710,7 @@
         </h3>
         <button onclick="closeCloudConfigModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <div id="cloudStatusCard" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
           <div style="font-weight: 700; color: #166534; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
             <span id="cloudModalStatusDot" class="sync-dot connected"></span>
@@ -763,7 +763,7 @@
         </h3>
         <button onclick="closeLineBriefModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
           <div style="display:flex; align-items:center; gap:8px;">
             <label style="font-weight:700; font-size:13px; color:var(--secondary);">เลือกวันที่:</label>
@@ -813,7 +813,7 @@
         </h3>
         <button onclick="closeLeaveRecordModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:12px; margin-bottom:14px;">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">
             <div>
@@ -910,7 +910,7 @@
         </h3>
         <button onclick="closeWeekTimeModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
           💡 สามารถระบุเวลาเข้างานและเวลาพักเฉพาะสัปดาห์นี้ได้ โดยจะไม่ส่งผลกระทบต่อสัปดาห์อื่นๆ ในเดือนนี้
         </p>
@@ -945,7 +945,7 @@
 
   <!-- Calendar Sync Modal -->
   <div class="modal-backdrop" id="calendarSyncModal">
-    <div class="modal-box" style="max-width: 530px; border: 2px solid #0284c7;">
+    <div class="modal-box" style="max-width: 550px; border: 2px solid #0284c7; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
         <h3 style="display: flex; align-items: center; gap: 8px;">
           <span>📅</span>
@@ -953,7 +953,7 @@
         </h3>
         <button onclick="closeCalendarSyncModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
       </div>
-      <div class="modal-box-body">
+      <div class="modal-box-body" style="overflow-y: auto;">
         
         <!-- Target Agent Info Box -->
         <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px; margin-bottom:14px; display:flex; align-items:center; gap:12px;">
@@ -1000,11 +1000,30 @@
           </div>
         </div>
 
-        <!-- Option 3: Direct Download (.ics) -->
+        <!-- Option 3: Google Calendar & Gmail -->
         <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <strong style="font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
-              <span>📥</span> 3. ดาวน์โหลดไฟล์ .ics เก็บลงเครื่อง
+              <span>🌐</span> 3. สำหรับ Google Calendar & Gmail
+            </strong>
+            <span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:10px;">Google / Gmail</span>
+          </div>
+          <p style="font-size:11.5px; color:#64748b; margin:0 0 8px 0; line-height:1.4;">
+            กดปุ่มด้านล่างเพื่อเปิด Google Calendar และกดยืนยันเพิ่มปฏิทิน (ตารางจะขึ้นทั้งใน Google Calendar และแถบขวามือของ Gmail อัตโนมัติ):
+          </p>
+          <a id="calendarGoogleBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="border-color:#ea4335; color:#ea4335; background:#fff5f5; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; padding:6px 14px;">
+            ➕ เพิ่มลง Google Calendar ทันที
+          </a>
+          <div style="margin-top:6px; font-size:10.5px; color:#64748b; line-height:1.4;">
+            <em>หรือเปิด <a href="https://calendar.google.com" target="_blank" style="color:#0284c7; text-decoration:underline;">calendar.google.com</a> &rarr; กดเครื่องหมาย <strong>+</strong> ข้าง "Other calendars (ปฏิทินอื่นๆ)" &rarr; เลือก <strong>From URL</strong> &rarr; วางลิงก์จากข้อ 2</em>
+          </div>
+        </div>
+
+        <!-- Option 4: Direct Download (.ics) -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <strong style="font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+              <span>📥</span> 4. ดาวน์โหลดไฟล์ .ics เก็บลงเครื่อง
             </strong>
           </div>
           <p style="font-size:11.5px; color:#64748b; margin:0 0 8px 0; line-height:1.4;">
@@ -1018,7 +1037,7 @@
         <!-- Safety Advice Box -->
         <div style="background:#fffbeb; border:1px solid #fef08a; border-radius:8px; padding:10px 12px; font-size:11px; color:#854d0e; line-height:1.45;">
           <strong>🛡️ ปลอดภัย ไม่ปะปนกับนัดหมายส่วนตัว:</strong><br>
-          ระบบจะสร้างเป็นหมวดปฏิทินแยกต่างหาก เช่น <em>"ตารางเวร - คุณ..."</em> หากซิงค์ผิดคนหรือต้องการเอาออก สามารถคลิกขวาที่ชื่อปฏิทินใน Outlook/iPhone แล้วกด <strong>"Delete Calendar (ลบปฏิทิน)"</strong> เพื่อลบกะทั้งหมดออกได้ในคลิกเดียวทันทีครับ
+          ระบบจะสร้างเป็นหมวดปฏิทินแยกต่างหาก เช่น <em>"ตารางเวร - คุณ..."</em> หากซิงค์ผิดคนหรือต้องการเอาออก สามารถคลิกขวาหรือกดจุดสามจุดที่ชื่อปฏิทินใน Google/Outlook/iPhone แล้วกด <strong>"Delete / Unsubscribe (ยกเลิกรับข้อมูล)"</strong> เพื่อลบกะทั้งหมดออกได้ในคลิกเดียวทันทีครับ
         </div>
 
       </div>
