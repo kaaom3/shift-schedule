@@ -91,6 +91,7 @@
       const now = new Date();
       const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
       const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
       const recordId = "SWAP_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
 
       // Slot A details
@@ -133,14 +134,7 @@
         descB = `วันหยุด ${periodB} • ${roleB} [${timeB}]`;
       }
 
-      let performedBy = "ผู้ใช้งานในระบบ";
-      if (isAdminMode) {
-        performedBy = "หัวหน้างาน (Admin)";
-      } else if (highlightedAgent && highlightedAgent !== "ALL") {
-        performedBy = `${highlightedAgent} (ผู้ใช้งาน)`;
-      } else if (nameA) {
-        performedBy = `${nameA} (ผู้สลับคนแรก)`;
-      }
+
 
       const thNameA = AGENT_NAME_MAP[nameA] || nameA;
       const thNameB = AGENT_NAME_MAP[nameB] || nameB;
@@ -207,6 +201,7 @@
     // SWAP HISTORY TABLE & AUDIT LOG VIEWER
     // =========================================================================
     function renderSwapHistoryTable() {
+      if (typeof renderActiveSwapsHub === "function") renderActiveSwapsHub();
       const tbody = document.getElementById("swapHistoryTableBody");
       if (!tbody) return;
 
@@ -759,6 +754,7 @@
       }
 
       const reason = (document.getElementById("dailySwapReason").value || "").trim();
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
 
       const thA = AGENT_NAME_MAP[itemA.agent] || itemA.agent;
       const thB = AGENT_NAME_MAP[itemB.agent] || itemB.agent;
@@ -790,6 +786,7 @@
           role: itemB.role
         },
         reason,
+        performedBy,
         createdAt: new Date().toISOString()
       };
 
@@ -818,6 +815,7 @@
         descB: `กะเดิม: ${itemB.time} (${itemB.role})`,
         month: month,
         yearAD: yearAD,
+        performedBy: performedBy,
         note: `สลับเฉพาะ${dayText}${reason ? ' • ' + reason : ''}`
       };
 
@@ -866,6 +864,7 @@
         descB: `คืนค่ากะเดิม: ${removed.shiftB.time}`,
         month: month,
         yearAD: yearAD,
+        performedBy: performedBy,
         note: `ยกเลิกการสลับเวรของวันที่ ${removed.dateA}`
       };
 
@@ -920,6 +919,645 @@
       }).join("");
     }
 
+
+    // =========================================================================
+    // SHIFT SWAP HUB CONTROLLER (TAB 3 INTEGRATED WORKSPACE)
+    // =========================================================================
+    let currentSwapHubType = "DAILY"; // "DAILY" | "WEEKLY" | "HOLIDAY"
+    let swapHubWorkingAgents = [];
+
+    function initSwapHub() {
+      onSwapHubTypeChange(currentSwapHubType, false);
+      renderActiveSwapsHub();
+    }
+
+    function onSwapHubTypeChange(type, triggerChange = true) {
+      currentSwapHubType = type;
+
+      const btnDaily = document.getElementById("swapTypeBtnDaily");
+      const btnWeekly = document.getElementById("swapTypeBtnWeekly");
+      const btnHoliday = document.getElementById("swapTypeBtnHoliday");
+      if (btnDaily) btnDaily.classList.toggle("active", type === "DAILY");
+      if (btnWeekly) btnWeekly.classList.toggle("active", type === "WEEKLY");
+      if (btnHoliday) btnHoliday.classList.toggle("active", type === "HOLIDAY");
+
+      const dailyControls = document.getElementById("swapHubDailyControls");
+      const weeklyControls = document.getElementById("swapHubWeeklyControls");
+      const holidayControls = document.getElementById("swapHubHolidayControls");
+      if (dailyControls) dailyControls.style.display = type === "DAILY" ? "flex" : "none";
+      if (weeklyControls) weeklyControls.style.display = type === "WEEKLY" ? "flex" : "none";
+      if (holidayControls) holidayControls.style.display = type === "HOLIDAY" ? "flex" : "none";
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+
+      if (type === "DAILY") {
+        populateSwapHubDailyDates(yearAD, month, sched);
+      } else if (type === "WEEKLY") {
+        populateSwapHubWeeks(yearAD, month, sched);
+      } else if (type === "HOLIDAY") {
+        populateSwapHubHolidays(yearAD, month, sched);
+      }
+    }
+
+    function populateSwapHubDailyDates(yearAD, month, sched) {
+      const dateSelect = document.getElementById("swapHubDailyDateSelect");
+      const dateBSelect = document.getElementById("swapHubDailyDateBSelect");
+      if (!dateSelect) return;
+
+      dateSelect.innerHTML = "";
+      if (dateBSelect) dateBSelect.innerHTML = "";
+
+      const cal = (typeof buildCalendarWeeksAndHolidays === "function") 
+        ? buildCalendarWeeksAndHolidays(yearAD, month) 
+        : { weeks: [], holidayList: [] };
+
+      const workingDays = [];
+      cal.weeks.forEach((w, wIdx) => {
+        const days = (typeof getWeekWorkingDays === "function") 
+          ? getWeekWorkingDays(w, yearAD, month, sched) 
+          : [];
+        days.forEach(d => {
+          const dt = new Date(yearAD, month - 1, d);
+          workingDays.push({
+            day: d,
+            dayName: THAI_DAYS[dt.getDay()],
+            wIdx: wIdx,
+            weekLabel: w.label
+          });
+        });
+      });
+
+      const mShort = THAI_MONTHS_SHORT[month];
+      workingDays.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.day;
+        opt.textContent = `${item.dayName}ที่ ${item.day} ${mShort} (${item.weekLabel})`;
+        dateSelect.appendChild(opt);
+
+        if (dateBSelect) {
+          const optB = document.createElement("option");
+          optB.value = item.day;
+          optB.textContent = `${item.dayName}ที่ ${item.day} ${mShort} (${item.weekLabel})`;
+          dateBSelect.appendChild(optB);
+        }
+      });
+
+      onSwapHubDailyDateChange();
+    }
+
+    function toggleSwapHubDailyCrossDay() {
+      const check = document.getElementById("swapHubDailyCrossDayCheck");
+      const containerB = document.getElementById("swapHubDailyDateBContainer");
+      if (containerB) {
+        containerB.style.display = (check && check.checked) ? "flex" : "none";
+      }
+      onSwapHubDailyDateChange();
+    }
+
+    function onSwapHubDailyDateChange() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+
+      const dateSelect = document.getElementById("swapHubDailyDateSelect");
+      if (!dateSelect || !dateSelect.value) return;
+      const day = parseInt(dateSelect.value, 10);
+
+      const effAssignments = getEffectiveAssignmentsForDay(yearAD, month, day, sched);
+      const wIdx = (typeof findWeekIndexForDay === "function") ? findWeekIndexForDay(sched, day) : 0;
+      const week = (sched.weeks && sched.weeks[wIdx]) ? sched.weeks[wIdx] : null;
+
+      swapHubWorkingAgents = [];
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        const agentsInCol = effAssignments[cIdx] || [];
+        agentsInCol.forEach((ag, sIdx) => {
+          if (!ag || ag === "-") return;
+          const thName = AGENT_NAME_MAP[ag] || ag;
+          const time = col.time || "";
+          const role = col.role || "";
+          const breakTime = (typeof getWeekdaySlotBreakTime === "function") 
+            ? getWeekdaySlotBreakTime(cIdx, sIdx, col.breakTime) 
+            : (col.breakTime || "");
+          const jd = (week && week.colJDs && week.colJDs[cIdx]) ? week.colJDs[cIdx] : (col.jd || "");
+
+          swapHubWorkingAgents.push({
+            agent: ag,
+            thName: thName,
+            wIdx: wIdx,
+            cIdx: cIdx,
+            sIdx: sIdx,
+            time: time,
+            role: role,
+            breakTime: breakTime,
+            jd: jd
+          });
+        });
+      });
+
+      // Populate Agent A select
+      const selA = document.getElementById("swapHubAgentASelect");
+      if (!selA) return;
+      selA.innerHTML = "";
+
+      swapHubWorkingAgents.sort((a, b) => a.thName.localeCompare(b.thName, 'th'));
+
+      swapHubWorkingAgents.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.agent;
+        opt.textContent = `คุณ${item.thName} [${item.time}]`;
+        selA.appendChild(opt);
+      });
+
+      if (currentUser && currentUser.username) {
+        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        if (match) {
+          selA.value = currentUser.username;
+        }
+      }
+
+      onSwapHubAgentAChange();
+    }
+
+    function onSwapHubAgentAChange() {
+      const selA = document.getElementById("swapHubAgentASelect");
+      const selB = document.getElementById("swapHubAgentBSelect");
+      const boxA = document.getElementById("swapHubAgentAShiftBox");
+      if (!selA) return;
+
+      const agA = selA.value;
+      const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
+
+      if (itemA && boxA) {
+        boxA.innerHTML = `
+          <div style="font-size:13px; font-weight:700; color:#0369a1; margin-bottom:3px;">
+            🕒 เวลาทำงาน: ${itemA.time}
+          </div>
+          <div style="color:#334155; margin-bottom:2px;">
+            📌 บทบาท/กะ: <strong>${itemA.role}</strong>
+          </div>
+          <div style="color:#64748b; font-size:11.5px;">
+            ☕ เวลาพัก: ${itemA.breakTime || '-'}
+          </div>
+          ${itemA.jd ? `<div style="margin-top:4px;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10.5px;">JD: ${itemA.jd}</span></div>` : ''}
+        `;
+      } else if (boxA) {
+        boxA.innerHTML = `<div style="color:var(--muted);">ไม่พบข้อมูลกะ</div>`;
+      }
+
+      // Populate Agent B select with all agents EXCEPT Agent A
+      if (selB) {
+        selB.innerHTML = "";
+        const partners = swapHubWorkingAgents.filter(it => it.agent !== agA);
+        partners.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.agent;
+          opt.textContent = `คุณ${item.thName} [${item.time} - ${item.role}]`;
+          selB.appendChild(opt);
+        });
+      }
+
+      onSwapHubAgentBChange();
+    }
+
+    function onSwapHubAgentBChange() {
+      const selB = document.getElementById("swapHubAgentBSelect");
+      const boxB = document.getElementById("swapHubAgentBShiftBox");
+      if (!selB) return;
+
+      const agB = selB.value;
+      const itemB = swapHubWorkingAgents.find(it => it.agent === agB);
+
+      if (itemB && boxB) {
+        boxB.innerHTML = `
+          <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:3px;">
+            🕒 เวลาทำงาน: ${itemB.time}
+          </div>
+          <div style="color:#334155; margin-bottom:2px;">
+            📌 บทบาท/กะ: <strong>${itemB.role}</strong>
+          </div>
+          <div style="color:#64748b; font-size:11.5px;">
+            ☕ เวลาพัก: ${itemB.breakTime || '-'}
+          </div>
+          ${itemB.jd ? `<div style="margin-top:4px;"><span class="badge" style="background:#f1f5f9; color:#334155; font-size:10.5px;">JD: ${itemB.jd}</span></div>` : ''}
+        `;
+      } else if (boxB) {
+        boxB.innerHTML = `<div style="color:var(--muted);">ยังไม่ได้เลือกเพื่อนร่วมงาน</div>`;
+      }
+
+      updateSwapHubPreview();
+    }
+
+    function populateSwapHubWeeks(yearAD, month, sched) {
+      const weekSelect = document.getElementById("swapHubWeeklyWeekSelect");
+      if (!weekSelect) return;
+      weekSelect.innerHTML = "";
+
+      if (!sched || !Array.isArray(sched.weeks)) return;
+      sched.weeks.forEach((w, wIdx) => {
+        const opt = document.createElement("option");
+        opt.value = wIdx;
+        opt.textContent = `สัปดาห์ที่ ${wIdx + 1}: ${w.label}`;
+        weekSelect.appendChild(opt);
+      });
+
+      onSwapHubWeeklyWeekChange();
+    }
+
+    function onSwapHubWeeklyWeekChange() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+
+      const weekSelect = document.getElementById("swapHubWeeklyWeekSelect");
+      if (!weekSelect) return;
+      const wIdx = parseInt(weekSelect.value, 10);
+      const week = sched.weeks[wIdx];
+      if (!week || !Array.isArray(week.assignments)) return;
+
+      swapHubWorkingAgents = [];
+      WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+        const agents = week.assignments[cIdx] || [];
+        agents.forEach((ag, sIdx) => {
+          if (!ag || ag === "-") return;
+          const thName = AGENT_NAME_MAP[ag] || ag;
+          const time = col.time || "";
+          const role = col.role || "";
+          const breakTime = (typeof getWeekdaySlotBreakTime === "function") 
+            ? getWeekdaySlotBreakTime(cIdx, sIdx, col.breakTime) 
+            : (col.breakTime || "");
+          const jd = (week.colJDs && week.colJDs[cIdx]) ? week.colJDs[cIdx] : (col.jd || "");
+
+          swapHubWorkingAgents.push({
+            agent: ag,
+            thName: thName,
+            wIdx: wIdx,
+            cIdx: cIdx,
+            sIdx: sIdx,
+            time: time,
+            role: role,
+            breakTime: breakTime,
+            jd: jd
+          });
+        });
+      });
+
+      const selA = document.getElementById("swapHubAgentASelect");
+      if (!selA) return;
+      selA.innerHTML = "";
+      swapHubWorkingAgents.sort((a, b) => a.thName.localeCompare(b.thName, 'th'));
+
+      swapHubWorkingAgents.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.agent;
+        opt.textContent = `คุณ${item.thName} [${item.time} - ${item.role}]`;
+        selA.appendChild(opt);
+      });
+
+      if (currentUser && currentUser.username) {
+        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        if (match) selA.value = currentUser.username;
+      }
+
+      onSwapHubAgentAChange();
+    }
+
+    function populateSwapHubHolidays(yearAD, month, sched) {
+      const holSelect = document.getElementById("swapHubHolidaySelect");
+      if (!holSelect) return;
+      holSelect.innerHTML = "";
+
+      if (!sched || !Array.isArray(sched.holidays) || sched.holidays.length === 0) {
+        holSelect.innerHTML = `<option value="">-- เดือนนี้ไม่มีเวรวันหยุด --</option>`;
+        return;
+      }
+
+      const mShort = THAI_MONTHS_SHORT[month];
+      sched.holidays.forEach((h, hIdx) => {
+        const opt = document.createElement("option");
+        opt.value = hIdx;
+        opt.textContent = `${h.dayName}ที่ ${h.date} ${mShort} (${h.holidayName || 'วันหยุด'})`;
+        holSelect.appendChild(opt);
+      });
+
+      onSwapHubHolidayChange();
+    }
+
+    function onSwapHubHolidayChange() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+
+      const holSelect = document.getElementById("swapHubHolidaySelect");
+      if (!holSelect || holSelect.value === "") return;
+      const hIdx = parseInt(holSelect.value, 10);
+      const h = sched.holidays[hIdx];
+      if (!h || !Array.isArray(h.shifts)) return;
+
+      swapHubWorkingAgents = [];
+      h.shifts.forEach((ag, sIdx) => {
+        if (!ag || ag === "-") return;
+        const thName = AGENT_NAME_MAP[ag] || ag;
+        const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+        const time = meta.time || "09.00-18.00 น.";
+        const role = meta.role || `เวรวันหยุด กะที่ ${sIdx + 1}`;
+
+        swapHubWorkingAgents.push({
+          agent: ag,
+          thName: thName,
+          hIdx: hIdx,
+          sIdx: sIdx,
+          time: time,
+          role: role,
+          breakTime: meta.breakTime || "",
+          jd: meta.jd || ""
+        });
+      });
+
+      const selA = document.getElementById("swapHubAgentASelect");
+      if (!selA) return;
+      selA.innerHTML = "";
+      swapHubWorkingAgents.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.agent;
+        opt.textContent = `คุณ${item.thName} [${item.time} - ${item.role}]`;
+        selA.appendChild(opt);
+      });
+
+      if (currentUser && currentUser.username) {
+        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        if (match) selA.value = currentUser.username;
+      }
+
+      onSwapHubAgentAChange();
+    }
+
+    function updateSwapHubPreview() {
+      const selA = document.getElementById("swapHubAgentASelect");
+      const selB = document.getElementById("swapHubAgentBSelect");
+      const prevEl = document.getElementById("swapHubPreviewText");
+      if (!prevEl) return;
+
+      const agA = selA ? selA.value : "";
+      const agB = selB ? selB.value : "";
+
+      if (!agA || !agB || agA === agB) {
+        prevEl.innerHTML = `<span style="color:var(--muted);">กรุณาเลือกผู้ขอสลับ และ เพื่อนร่วมงานให้ครบถ้วน</span>`;
+        return;
+      }
+
+      const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
+      const itemB = swapHubWorkingAgents.find(it => it.agent === agB);
+      if (!itemA || !itemB) {
+        prevEl.innerHTML = `<span style="color:var(--muted);">ข้อมูลไม่ครบถ้วน</span>`;
+        return;
+      }
+
+      prevEl.innerHTML = `
+        <div style="margin-bottom: 6px;">
+          🟢 <strong>คุณ${itemA.thName}</strong> จะเปลี่ยนไปปฏิบัติงาน: 
+          <span style="font-weight:700; color:#0369a1;">${itemB.time}</span> (${itemB.role})
+        </div>
+        <div>
+          🔵 <strong>คุณ${itemB.thName}</strong> จะเปลี่ยนไปปฏิบัติงาน: 
+          <span style="font-weight:700; color:#1e40af;">${itemA.time}</span> (${itemA.role})
+        </div>
+      `;
+    }
+
+    function executeSwapHubSwap() {
+      if (!currentUser) {
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode) {
+        showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวร (หากจำเป็นต้องสลับ กรุณาแจ้งหัวหน้างาน)");
+        return;
+      }
+
+      const selA = document.getElementById("swapHubAgentASelect");
+      const selB = document.getElementById("swapHubAgentBSelect");
+      if (!selA || !selB) return;
+
+      const agA = selA.value;
+      const agB = selB.value;
+      if (!agA || !agB || agA === agB) {
+        showToast("⚠️ กรุณาเลือกผู้ขอสลับ และ เพื่อนร่วมงานที่ต้องการสลับด้วยให้ถูกต้อง");
+        return;
+      }
+
+      const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
+      const itemB = swapHubWorkingAgents.find(it => it.agent === agB);
+      if (!itemA || !itemB) {
+        showToast("⚠️ ข้อมูลกะการทำงานไม่ถูกต้อง");
+        return;
+      }
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const key = `${yearAD}-${month}`;
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      const reason = (document.getElementById("swapHubReasonInput").value || "").trim();
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      const mShort = THAI_MONTHS_SHORT[month];
+
+      if (currentSwapHubType === "DAILY") {
+        const dateSelect = document.getElementById("swapHubDailyDateSelect");
+        const dayA = parseInt(dateSelect.value, 10);
+        let isCrossDay = false;
+        let dayB = dayA;
+        const crossCheck = document.getElementById("swapHubDailyCrossDayCheck");
+        if (crossCheck && crossCheck.checked) {
+          isCrossDay = true;
+          const dateBSel = document.getElementById("swapHubDailyDateBSelect");
+          if (dateBSel) dayB = parseInt(dateBSel.value, 10) || dayA;
+        }
+
+        const dayText = isCrossDay ? `วันที่ ${dayA} และ ${dayB} ${mShort}` : `วันที่ ${dayA} ${mShort}`;
+        const swapRecord = {
+          id: "DSWAP_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+          yearAD,
+          month,
+          dateA: dayA,
+          dateB: dayB,
+          isCrossDay,
+          agentA: itemA.agent,
+          agentB: itemB.agent,
+          agentAName: itemA.thName,
+          agentBName: itemB.thName,
+          performedBy: performedBy,
+          shiftA: { wIdx: itemA.wIdx, cIdx: itemA.cIdx, sIdx: itemA.sIdx, time: itemA.time, role: itemA.role },
+          shiftB: { wIdx: itemB.wIdx, cIdx: itemB.cIdx, sIdx: itemB.sIdx, time: itemB.time, role: itemB.role },
+          reason,
+          createdAt: now.toISOString()
+        };
+
+        if (!mData.dailySwaps) mData.dailySwaps = [];
+        mData.dailySwaps.push(swapRecord);
+
+        const historyItem = {
+          id: swapRecord.id,
+          tag: "[สลับเวรรายวัน]",
+          date: dateStr,
+          time: timeStr,
+          personA: itemA.thName,
+          descA: `กะเดิม: ${itemA.time} (${itemA.role})`,
+          personB: itemB.thName,
+          descB: `กะเดิม: ${itemB.time} (${itemB.role})`,
+          month: month,
+          yearAD: yearAD,
+          performedBy: performedBy,
+          note: `สลับเฉพาะ${dayText}${reason ? ' • ' + reason : ''}`
+        };
+
+        if (!swapHistory) swapHistory = [];
+        swapHistory.unshift(historyItem);
+        mData.swapHistory = swapHistory;
+
+        triggerAutoSaveToCloud(`สลับเวรรายวัน: คุณ${itemA.thName} 🔁 คุณ${itemB.thName} (${dayText}) โดย ${performedBy}`);
+        showToast(`✅ บันทึกสลับเวรรายวัน (${dayText}) คุณ${itemA.thName} 🔁 คุณ${itemB.thName} เรียบร้อยแล้ว`);
+
+      } else if (currentSwapHubType === "WEEKLY") {
+        const week = mData.schedule.weeks[itemA.wIdx];
+        if (!week) return;
+
+        // Perform weekly swap
+        week.assignments[itemA.cIdx][itemA.sIdx] = itemB.agent;
+        week.assignments[itemB.cIdx][itemB.sIdx] = itemA.agent;
+
+        const recordId = "WSWAP_" + Date.now();
+        const historyItem = {
+          id: recordId,
+          tag: "[สลับเวรทั้งสัปดาห์]",
+          date: dateStr,
+          time: timeStr,
+          timestamp: now.toISOString(),
+          performedBy: performedBy,
+          yearAD: yearAD,
+          month: month,
+          personA: itemA.thName,
+          descA: `สัปดาห์ที่ ${itemA.wIdx + 1} • ${itemA.role} [${itemA.time}]`,
+          personB: itemB.thName,
+          descB: `สัปดาห์ที่ ${itemB.wIdx + 1} • ${itemB.role} [${itemB.time}]`,
+          note: reason || `สลับเวรทั้งสัปดาห์ ${week.label}`,
+          slotA: { wIdx: itemA.wIdx, cIdx: itemA.cIdx, sIdx: itemA.sIdx, agent: itemA.agent },
+          slotB: { wIdx: itemB.wIdx, cIdx: itemB.cIdx, sIdx: itemB.sIdx, agent: itemB.agent }
+        };
+
+        if (!swapHistory) swapHistory = [];
+        swapHistory.unshift(historyItem);
+        mData.swapHistory = swapHistory;
+
+        triggerAutoSaveToCloud(`สลับเวรทั้งสัปดาห์: คุณ${itemA.thName} 🔁 คุณ${itemB.thName} โดย ${performedBy}`);
+        showToast(`✅ บันทึกสลับเวรทั้งสัปดาห์ (${week.label}) คุณ${itemA.thName} 🔁 คุณ${itemB.thName} เรียบร้อยแล้ว`);
+
+      } else if (currentSwapHubType === "HOLIDAY") {
+        const h = mData.schedule.holidays[itemA.hIdx];
+        if (!h) return;
+
+        // Perform holiday swap
+        h.shifts[itemA.sIdx] = itemB.agent;
+        h.shifts[itemB.sIdx] = itemA.agent;
+
+        const recordId = "HSWAP_" + Date.now();
+        const historyItem = {
+          id: recordId,
+          tag: "[สลับเวรวันหยุด]",
+          date: dateStr,
+          time: timeStr,
+          timestamp: now.toISOString(),
+          performedBy: performedBy,
+          yearAD: yearAD,
+          month: month,
+          personA: itemA.thName,
+          descA: `วันหยุด ${h.dayName} ${h.date} • ${itemA.role} [${itemA.time}]`,
+          personB: itemB.thName,
+          descB: `วันหยุด ${h.dayName} ${h.date} • ${itemB.role} [${itemB.time}]`,
+          note: reason || `สลับเวรวันหยุด ${h.holidayName || ''}`,
+          holidaySlotA: { hIdx: itemA.hIdx, sIdx: itemA.sIdx, agent: itemA.agent },
+          holidaySlotB: { hIdx: itemB.hIdx, sIdx: itemB.sIdx, agent: itemB.agent }
+        };
+
+        if (!swapHistory) swapHistory = [];
+        swapHistory.unshift(historyItem);
+        mData.swapHistory = swapHistory;
+
+        triggerAutoSaveToCloud(`สลับเวรวันหยุด: คุณ${itemA.thName} 🔁 คุณ${itemB.thName} โดย ${performedBy}`);
+        showToast(`✅ บันทึกสลับเวรวันหยุด (${h.dayName} ${h.date}) คุณ${itemA.thName} 🔁 คุณ${itemB.thName} เรียบร้อยแล้ว`);
+      }
+
+      // Reset Reason
+      const reasonEl = document.getElementById("swapHubReasonInput");
+      if (reasonEl) reasonEl.value = "";
+
+      // Refresh Views
+      if (typeof renderMasterWeekdayTable === "function") renderMasterWeekdayTable();
+      if (typeof renderMasterHolidayTable === "function") renderMasterHolidayTable();
+      if (typeof renderIndividualCards === "function") renderIndividualCards();
+      if (typeof renderHourlyHeadcountTable === "function") renderHourlyHeadcountTable();
+      if (typeof renderSwapHistoryTable === "function") renderSwapHistoryTable();
+      renderActiveSwapsHub();
+
+      // Refresh Swap Hub Selectors
+      onSwapHubTypeChange(currentSwapHubType, false);
+    }
+
+    function renderActiveSwapsHub() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const container = document.getElementById("swapHubActiveListContainer");
+      const badge = document.getElementById("swapHubActiveCountBadge");
+      if (!container) return;
+
+      const dailySwaps = getDailySwapsForMonth(yearAD, month) || [];
+      const mShort = THAI_MONTHS_SHORT[month];
+
+      if (badge) badge.textContent = `${dailySwaps.length} รายการ`;
+
+      if (dailySwaps.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 18px; color: var(--muted); font-size: 12px; grid-column: 1 / -1; background: #f8fafc; border-radius: 8px;">✨ ยังไม่มีรายการสลับเวรในเดือนนี้</div>`;
+        return;
+      }
+
+      container.innerHTML = dailySwaps.map(sw => {
+        const dText = sw.isCrossDay ? `วันที่ ${sw.dateA} และ ${sw.dateB} ${mShort}` : `วันที่ ${sw.dateA} ${mShort}`;
+        const opText = sw.performedBy || "ผู้ใช้งานในระบบ";
+        return `
+          <div class="active-swap-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div>
+                <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10.5px; margin-bottom:4px; display:inline-block;">
+                  📅 ${dText}
+                </span>
+                <div style="font-weight:700; color:#0f172a; font-size:12.5px;">
+                  คุณ${sw.agentAName} 🔁 คุณ${sw.agentBName}
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="deleteDailySwap('${sw.id}')" style="color:#ef4444; border-color:#fca5a5; background:white; font-size:11px; padding:3px 8px; white-space:nowrap;" title="ยกเลิกการสลับนี้และคืนค่ากะเดิม">
+                ↩️ ยกเลิก / คืนค่าเดิม
+              </button>
+            </div>
+            <div style="font-size:11.5px; color:#475569; background:#f8fafc; padding:6px 8px; border-radius:6px; line-height:1.45;">
+              <div>• <strong>คุณ${sw.agentAName}:</strong> ${sw.shiftB.time} (${sw.shiftB.role})</div>
+              <div>• <strong>คุณ${sw.agentBName}:</strong> ${sw.shiftA.time} (${sw.shiftA.role})</div>
+              ${sw.reason ? `<div style="color:#0284c7; margin-top:3px; font-style:italic;">💬 เหตุผล: ${sw.reason}</div>` : ''}
+            </div>
+            <div style="font-size:10.5px; color:#94a3b8; display:flex; align-items:center; gap:4px;">
+              <span>👤</span> <span>ดำเนินการโดย: <strong>${opText}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
     // Explicit global window bindings for inline HTML onclick handlers
     if (typeof window !== "undefined") {
       window.openDailySwapModal = openDailySwapModal;
@@ -932,5 +1570,18 @@
       window.toggleDailySwapCrossDayUI = toggleDailySwapCrossDayUI;
       window.getDailySwapsForMonth = getDailySwapsForMonth;
       window.getEffectiveAssignmentsForDay = getEffectiveAssignmentsForDay;
+
+      // Swap Hub exports
+      window.initSwapHub = initSwapHub;
+      window.onSwapHubTypeChange = onSwapHubTypeChange;
+      window.onSwapHubDailyDateChange = onSwapHubDailyDateChange;
+      window.toggleSwapHubDailyCrossDay = toggleSwapHubDailyCrossDay;
+      window.onSwapHubAgentAChange = onSwapHubAgentAChange;
+      window.onSwapHubAgentBChange = onSwapHubAgentBChange;
+      window.onSwapHubWeeklyWeekChange = onSwapHubWeeklyWeekChange;
+      window.onSwapHubHolidayChange = onSwapHubHolidayChange;
+      window.updateSwapHubPreview = updateSwapHubPreview;
+      window.executeSwapHubSwap = executeSwapHubSwap;
+      window.renderActiveSwapsHub = renderActiveSwapsHub;
     }
 

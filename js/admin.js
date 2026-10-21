@@ -373,6 +373,7 @@
       const isAllWeek = selectedDays.length === weekDays.length;
       const datesText = formatLeaveDatesLabel(selectedDays, isAllWeek, month);
 
+      const opName = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
       setSlotLeave(yearAD, month, slotKey, {
         agent: agentName,
         leaveType: selectedType,
@@ -380,6 +381,7 @@
         dates: selectedDays,
         allWeek: isAllWeek,
         datesText: datesText,
+        recordedBy: opName,
         recordedAt: new Date().toISOString()
       });
 
@@ -388,7 +390,7 @@
       renderMasterHolidayTable();
       renderIndividualCards();
       showToast(`✅ บันทึกสถานะ ${selectedType} (${datesText}) ของคุณ${agentName} เรียบร้อยแล้ว`);
-      saveScheduleToCloud(`บันทึกการลา: ${agentName} (${selectedType} ${datesText})`);
+      saveScheduleToCloud(`บันทึกการลา: ${agentName} (${selectedType} ${datesText}) โดย ${opName}`);
     }
 
     function deleteCurrentSlotLeave() {

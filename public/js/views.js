@@ -538,14 +538,17 @@
 
         const avatarInitial = ag ? ag.substring(0, 2) : "ทีม";
 
+        const isMe = (typeof currentUser !== "undefined" && currentUser && currentUser.username === ag);
+        const cardMeBadge = isMe ? `<span class="badge" style="background:#0284c7; color:white; font-size:10px; margin-left:6px; padding:2px 7px; border-radius:10px;">👤 การ์ดของคุณ</span>` : "";
+
         return `
-          <div class="agent-card">
+          <div class="agent-card" style="${isMe ? 'border: 2px solid #0284c7; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.2); background: #f0fdfa;' : ''}">
             <!-- Card Header: Clean Name, NO number prefix, NO 'คุณ' -->
-            <div class="agent-card-header">
+            <div class="agent-card-header" style="${isMe ? 'background: linear-gradient(135deg, #0369a1, #0284c7); color: white;' : ''}">
               <div class="agent-card-profile">
-                <div class="agent-avatar-badge">${avatarInitial}</div>
+                <div class="agent-avatar-badge" style="${isMe ? 'background: white; color: #0284c7;' : ''}">${avatarInitial}</div>
                 <div>
-                  <h4 class="agent-card-name">${ag}</h4>
+                  <h4 class="agent-card-name" style="${isMe ? 'color: white;' : ''}">${ag} ${cardMeBadge}</h4>
                   <div class="agent-card-team-label">${AGENT_NAME_MAP[ag] ? AGENT_NAME_MAP[ag] + " • " : ""}First Tier Support</div>
                 </div>
               </div>

@@ -34,6 +34,11 @@
       renderHolidayJdEditor();
       renderAllViews();
 
+      // Check User Authentication / Login Gate
+      if (typeof checkLoginGate === "function") {
+        checkLoginGate();
+      }
+
       // Launch MongoDB Atlas Cloud Sync
       initMongoCloudSync();
     }

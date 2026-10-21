@@ -57,6 +57,16 @@
         </div>
 
 
+        
+        <!-- User Profile Pill -->
+        <div class="user-profile-pill" id="headerUserPill" onclick="openUserProfileModal()" title="คลิกเพื่อดูโปรไฟล์ / เปลี่ยน PIN / ออกจากระบบ">
+          <div class="user-avatar-circle" id="headerUserAvatar">👤</div>
+          <div style="display:flex; flex-direction:column; line-height:1.2;">
+            <span id="headerUserName" style="font-weight:700; font-size:12px;">เข้าสู่ระบบ</span>
+            <span id="headerUserRoleBadge" class="user-role-badge">ยังไม่ระบุตัวตน</span>
+          </div>
+        </div>
+
         <button class="btn btn-header-outline" id="adminToggleBtn" onclick="handleAdminToggle()" style="background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); font-weight: 700;">
           🔒 โหมดหัวหน้า (Admin)
         </button>
@@ -84,7 +94,7 @@
           👤 2. การ์ดสรุปรายบุคคล (Individual Cards)
         </button>
         <button class="tab-btn" id="tabBtnSwap" onclick="switchTab('swapTab', this); renderSwapHistoryTable();">
-          🔄 3. สรุปประวัติการสลับเวร (<span id="swapTabBadge">0</span>)
+          🔄 3. ศูนย์สลับเวร & ประวัติ (<span id="swapTabBadge">0</span>)
         </button>
         <button class="tab-btn" id="tabBtnHourly" onclick="switchTab('hourlyTab', this); renderHourlyHeadcountTable();">
           ⏱️ 4. เช็คจำนวนคนแต่ละช่วงเวลา (Hourly Headcount)
@@ -300,6 +310,152 @@
           <div class="swap-stat-info">
             <div class="swap-stat-label">สถานะระบบสลับเวร</div>
             <div class="swap-stat-value" id="statSwapStatusText" style="font-size: 0.95rem; font-weight: 700; color: #059669;">เปิดให้สมาชิกสลับเวรได้</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- SECTION 1: SHIFT SWAP WIZARD (ฟอร์มสลับเวรแบบครบวงจร) -->
+      <div class="swap-wizard-card">
+        <div class="card-header" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); color: white; padding: 14px 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">🔀</span>
+              <div>
+                <h3 style="font-size: 16px; font-weight: 700; margin: 0; color: white;">ศูนย์จัดการสลับเวร (Shift Swap Hub)</h3>
+                <p style="font-size: 12px; margin: 2px 0 0 0; opacity: 0.9; color: #e0f2fe;">เลือกรูปแบบการสลับ เปรียบเทียบกะของทั้งสองฝ่าย และกดยืนยันบันทึกลงระบบทันที</p>
+              </div>
+            </div>
+            <span class="badge" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); font-size: 11px;">✨ สะดวก รวดเร็ว ตรวจสอบได้</span>
+          </div>
+        </div>
+
+        <div style="padding: 16px 18px;">
+          <!-- 1.1 Swap Type Switcher -->
+          <label style="font-weight: 700; color: var(--secondary); font-size: 12.5px; display: block; margin-bottom: 6px;">1. เลือกรูปแบบการสลับเวร:</label>
+          <div class="swap-type-switcher">
+            <button type="button" class="swap-type-btn active" id="swapTypeBtnDaily" onclick="onSwapHubTypeChange('DAILY')">
+              📅 สลับกะรายวัน (เฉพาะวัน)
+            </button>
+            <button type="button" class="swap-type-btn" id="swapTypeBtnWeekly" onclick="onSwapHubTypeChange('WEEKLY')">
+              🏢 สลับกะทั้งสัปดาห์ (จันทร์-ศุกร์)
+            </button>
+            <button type="button" class="swap-type-btn" id="swapTypeBtnHoliday" onclick="onSwapHubTypeChange('HOLIDAY')">
+              🏖️ สลับเวรวันหยุด (เสาร์-อาทิตย์ / นักขัตฯ)
+            </button>
+          </div>
+
+          <!-- 1.2 Target Selectors (Dynamic by Type) -->
+          <!-- Daily Controls -->
+          <div id="swapHubDailyControls" class="swap-hub-selectors-bar">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 12px; color: var(--secondary); white-space: nowrap;">📅 วันที่ต้องการสลับ:</label>
+              <select id="swapHubDailyDateSelect" onchange="onSwapHubDailyDateChange()" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 12.5px; background: white;"></select>
+            </div>
+            <label style="display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; user-select: none; margin-left: 10px;">
+              <input type="checkbox" id="swapHubDailyCrossDayCheck" onchange="toggleSwapHubDailyCrossDay()">
+              <span>สลับข้ามวันต่างกัน (Cross-Day)</span>
+            </label>
+            <div id="swapHubDailyDateBContainer" style="display: none; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 12px; color: #0284c7; white-space: nowrap;">➔ วันที่ของเพื่อนร่วมงาน:</label>
+              <select id="swapHubDailyDateBSelect" onchange="onSwapHubDailyDateChange()" style="padding: 6px 10px; border: 1px solid #38bdf8; border-radius: 6px; font-weight: 600; font-size: 12.5px; background: white;"></select>
+            </div>
+          </div>
+
+          <!-- Weekly Controls -->
+          <div id="swapHubWeeklyControls" class="swap-hub-selectors-bar" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 12px; color: var(--secondary); white-space: nowrap;">🏢 เลือกสัปดาห์:</label>
+              <select id="swapHubWeeklyWeekSelect" onchange="onSwapHubWeeklyWeekChange()" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 12.5px; background: white;"></select>
+            </div>
+            <span style="font-size: 12px; color: var(--muted); margin-left: 8px;">(การสลับทั้งสัปดาห์จะแลกเปลี่ยนเวรการทำงานจันทร์-ศุกร์ทั้งหมดในสัปดาห์ที่เลือก)</span>
+          </div>
+
+          <!-- Holiday Controls -->
+          <div id="swapHubHolidayControls" class="swap-hub-selectors-bar" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 12px; color: var(--secondary); white-space: nowrap;">🏖️ เลือกวันหยุด:</label>
+              <select id="swapHubHolidaySelect" onchange="onSwapHubHolidayChange()" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 12.5px; background: white;"></select>
+            </div>
+          </div>
+
+          <!-- 1.3 Side-by-Side Comparison Grid -->
+          <label style="font-weight: 700; color: var(--secondary); font-size: 12.5px; display: block; margin-bottom: 8px;">2. เลือกผู้ขอสลับ และ เพื่อนร่วมงานที่จะสลับด้วย:</label>
+          <div class="swap-hub-grid">
+            <!-- Card A: Requester Side -->
+            <div class="swap-side-card active-side">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: #0284c7; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                  <span>👤</span> <span>ฝั่งผู้ขอสลับ (Person A)</span>
+                </span>
+                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 10.5px;">ต้นทาง</span>
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--muted); font-weight: 600;">เลือกชื่อ:</label>
+                <select id="swapHubAgentASelect" onchange="onSwapHubAgentAChange()" style="width: 100%; padding: 7px 10px; border: 1px solid #0284c7; border-radius: 6px; font-weight: 700; font-size: 13px; background: white; color: #0f172a;"></select>
+              </div>
+              <div class="swap-shift-info-box" id="swapHubAgentAShiftBox">
+                <div style="color: var(--muted); font-size: 12px;">กำลังดึงข้อมูลเวร...</div>
+              </div>
+            </div>
+
+            <!-- Middle Icon -->
+            <div class="swap-middle-icon">
+              <span>🔁</span>
+            </div>
+
+            <!-- Card B: Partner Side -->
+            <div class="swap-side-card partner-side">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 700; color: #334155; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                  <span>👥</span> <span>ฝั่งเพื่อนร่วมงาน (Person B)</span>
+                </span>
+                <span class="badge" style="background: #f1f5f9; color: #475569; font-size: 10.5px;">ปลายทาง</span>
+              </div>
+              <div>
+                <label style="font-size: 11px; color: var(--muted); font-weight: 600;">เลือกเพื่อนร่วมงานที่ต้องการสลับด้วย:</label>
+                <select id="swapHubAgentBSelect" onchange="onSwapHubAgentBChange()" style="width: 100%; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 13px; background: white; color: #0f172a;"></select>
+              </div>
+              <div class="swap-shift-info-box" id="swapHubAgentBShiftBox">
+                <div style="color: var(--muted); font-size: 12px;">กรุณาเลือกเพื่อนร่วมงาน...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1.4 Live Preview Box & Actions -->
+          <div class="swap-preview-card" id="swapHubPreviewBox">
+            <div style="font-weight: 700; color: #166534; font-size: 13px; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+              <span>📋</span> <span>ผลลัพธ์หลังการสลับเวร (Preview):</span>
+            </div>
+            <div id="swapHubPreviewText" style="font-size: 12.5px; color: #14532d; line-height: 1.55;">
+              กรุณาเลือกข้อมูลทั้งสองฝ่ายเพื่อดูผลการสลับ
+            </div>
+          </div>
+
+          <!-- Reason & Submit Bar -->
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 240px;">
+              <input type="text" id="swapHubReasonInput" placeholder="ระบุเหตุผลการสลับเวร (ไม่บังคับ เช่น ติดธุระช่วงเช้า, ขอย้ายเวร)..." style="width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 12.5px;">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="executeSwapHubSwap()" style="background: linear-gradient(135deg, #0284c7, #0369a1); border-color: #0284c7; padding: 9px 24px; font-weight: 700; font-size: 13.5px; display: flex; align-items: center; gap: 8px;">
+              <span>🔁</span> <span>ยืนยันบันทึกการสลับเวร</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: ACTIVE MONTHLY SWAPS (รายการสลับเวรในเดือนนี้) -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header" style="background: #f8fafc; border-bottom: 1px solid var(--border);">
+          <div class="card-title">
+            <span>📌 รายการที่มีการสลับเวรในเดือนนี้ (Active Monthly Swaps)</span>
+            <span class="badge badge-active-mode" id="swapHubActiveCountBadge">0 รายการ</span>
+          </div>
+          <span style="font-size: 12px; color: var(--muted);">สามารถกดยกเลิกเพื่อคืนค่ากะเดิมได้ทันที</span>
+        </div>
+        <div class="card-body" style="padding: 14px 18px;">
+          <div id="swapHubActiveListContainer" class="active-swaps-grid">
+            <div style="text-align: center; padding: 18px; color: var(--muted); font-size: 12px;">✨ ยังไม่มีรายการสลับเวรในเดือนนี้</div>
           </div>
         </div>
       </div>
@@ -1156,17 +1312,136 @@
     </div>
   </div>
 
+
+  <!-- Login Gate Modal (เข้าสู่ระบบก่อนใช้งาน) -->
+  <div class="modal-backdrop" id="loginGateModal" style="backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.75);">
+    <div class="modal-box" style="max-width: 480px; border: 2px solid #0284c7; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); text-align: center; display: block; padding: 20px 20px 16px 20px;">
+        <div style="font-size: 36px; margin-bottom: 4px;">🛡️</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: white; margin: 0;">เข้าสู่ระบบ First Tier Shift Roster</h3>
+        <p style="font-size: 12px; color: #bae6fd; margin: 4px 0 0 0;">กรุณาเลือกผู้ใช้งานเพื่อระบุตัวตนในการดำเนินการระบบ</p>
+      </div>
+
+      <div class="modal-box-body" style="padding: 20px;">
+        <!-- Tab Selector: Staff vs Admin -->
+        <div style="display: flex; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 8px; margin-bottom: 16px;">
+          <button type="button" id="loginTabBtnStaff" class="tab-btn active" onclick="switchLoginGateTab('STAFF')" style="flex: 1; border: none; padding: 8px; border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
+            👤 สมาชิกทีม (Team Staff)
+          </button>
+          <button type="button" id="loginTabBtnAdmin" class="tab-btn" onclick="switchLoginGateTab('ADMIN')" style="flex: 1; border: none; padding: 8px; border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer;">
+            🔑 หัวหน้างาน (Admin)
+          </button>
+        </div>
+
+        <!-- Error Message -->
+        <div id="loginGateError" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; padding: 8px 12px; font-size: 12px; font-weight: 600; margin-bottom: 12px;"></div>
+
+        <!-- Form 1: Staff Login -->
+        <div id="loginFormStaff">
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-weight: 700; font-size: 12.5px; color: var(--secondary); margin-bottom: 6px;">
+              เลือกชื่อของท่าน:
+            </label>
+            <select id="loginGateMemberSelect" style="width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: 600; background: white;">
+              <!-- Populated via JS from AGENTS -->
+            </select>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label style="font-weight: 700; font-size: 12.5px; color: var(--secondary);">รหัส PIN ประจำตัว (4 หลัก):</label>
+              <span style="font-size: 11px; color: var(--muted);">ค่าเริ่มต้น: <strong>1234</strong></span>
+            </div>
+            <input type="password" id="loginGateMemberPin" maxlength="8" placeholder="กรอกรหัส PIN (เช่น 1234)" style="width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; letter-spacing: 2px;" onkeydown="if(event.key==='Enter') submitStaffLogin()">
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; margin-bottom: 18px;">
+            <input type="checkbox" id="loginGateRemember" checked>
+            <span>จำการเข้าสู่ระบบในเครื่องนี้ (ไม่ต้องล็อกอินซ้ำ)</span>
+          </label>
+
+          <button type="button" class="btn btn-primary" onclick="submitStaffLogin()" style="width: 100%; padding: 11px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; border-radius: 8px; cursor: pointer;">
+            🚀 เข้าสู่ระบบ (Sign In)
+          </button>
+        </div>
+
+        <!-- Form 2: Admin Login -->
+        <div id="loginFormAdmin" style="display: none;">
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-weight: 700; font-size: 12.5px; color: var(--secondary); margin-bottom: 6px;">
+              รหัส PIN หัวหน้างาน (Admin PIN):
+            </label>
+            <input type="password" id="loginGateAdminPin" maxlength="8" placeholder="กรอกรหัส Admin PIN" style="width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 14px; letter-spacing: 2px;" onkeydown="if(event.key==='Enter') submitAdminLoginGate()">
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; margin-bottom: 18px;">
+            <input type="checkbox" id="loginGateAdminRemember" checked>
+            <span>จำการเข้าสู่ระบบในเครื่องนี้</span>
+          </label>
+
+          <button type="button" class="btn btn-primary" onclick="submitAdminLoginGate()" style="width: 100%; padding: 11px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #1e3a8a, #1e40af); border: none; border-radius: 8px; cursor: pointer;">
+            🔓 เข้าสู่ระบบในโหมดหัวหน้างาน
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Profile Modal -->
+  <div class="modal-backdrop" id="userProfileModal">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #1e3a8a, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px; margin: 0; color: white;">
+          <span>👤</span> <span>โปรไฟล์ผู้ใช้งาน (User Profile)</span>
+        </h3>
+        <button onclick="closeUserProfileModal()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+      </div>
+      <div class="modal-box-body" style="padding: 18px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;">
+          <div class="user-avatar-circle" id="profileModalAvatar" style="width: 50px; height: 50px; font-size: 22px;">👤</div>
+          <div>
+            <div style="font-size: 16px; font-weight: 700; color: var(--primary);" id="profileModalName">คุณ...</div>
+            <div style="font-size: 12px; color: var(--muted);">Username: <code id="profileModalUsername">-</code></div>
+            <div style="font-size: 11.5px; font-weight: 600; color: #0284c7; margin-top: 2px;" id="profileModalRole">สมาชิกทีม</div>
+          </div>
+        </div>
+
+        <!-- Change PIN Section -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-weight: 700; font-size: 12.5px; color: var(--secondary); margin-bottom: 8px;">🔑 เปลี่ยนรหัส PIN ส่วนตัว:</div>
+          <div id="profilePinMsg" style="display: none; font-size: 11.5px; font-weight: 600; margin-bottom: 6px;"></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <input type="password" id="profileOldPin" maxlength="8" placeholder="PIN เดิม (1234)" style="padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px;">
+            <input type="password" id="profileNewPin" maxlength="8" placeholder="PIN ใหม่ 4 หลัก" style="padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px;">
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="saveUserPinChange()" style="width: 100%; font-size: 11.5px; font-weight: 600;">
+            💾 บันทึกเปลี่ยนรหัส PIN
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline" onclick="closeUserProfileModal(); openLoginGateModal();" style="flex: 1; font-size: 12px;">
+            🔄 สลับบัญชีผู้ใช้
+          </button>
+          <button type="button" class="btn btn-outline" onclick="handleUserLogout()" style="color: var(--danger); border-color: #fca5a5; flex: 1; font-size: 12px;">
+            🚪 ออกจากระบบ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modular JavaScript Application -->
-  <script src="js/config.js?v=20261021_fix"></script>
-  <script src="js/data.js?v=20261021_fix"></script>
-  <script src="js/state.js?v=20261021_fix"></script>
-  <script src="js/api.js?v=20261021_fix"></script>
-  <script src="js/calendar.js?v=20261021_fix"></script>
-  <script src="js/tables.js?v=20261021_fix"></script>
-  <script src="js/swap.js?v=20261021_fix"></script>
-  <script src="js/views.js?v=20261021_fix"></script>
-  <script src="js/admin.js?v=20261021_fix"></script>
-  <script src="js/export.js?v=20261021_fix"></script>
-  <script src="js/app.js?v=20261021_fix"></script>
+  <script src="js/config.js?v=20261021_auth_swap"></script>
+  <script src="js/data.js?v=20261021_auth_swap"></script>
+  <script src="js/state.js?v=20261021_auth_swap"></script>
+  <script src="js/api.js?v=20261021_auth_swap"></script>
+  <script src="js/calendar.js?v=20261021_auth_swap"></script>
+  <script src="js/tables.js?v=20261021_auth_swap"></script>
+  <script src="js/swap.js?v=20261021_auth_swap"></script>
+  <script src="js/views.js?v=20261021_auth_swap"></script>
+  <script src="js/admin.js?v=20261021_auth_swap"></script>
+  <script src="js/export.js?v=20261021_auth_swap"></script>
+  <script src="js/app.js?v=20261021_auth_swap"></script>
 </body>
 </html>
