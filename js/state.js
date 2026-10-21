@@ -142,4 +142,72 @@
       }
     }
 
+    function getWeekWorkingDays(w, yearAD, month, sched) {
+      if (Array.isArray(w && w.days) && w.days.length > 0) {
+        return [...w.days];
+      }
+      const days = [];
+      if (!w || !w.label) return days;
+
+      const mRange = w.label.match(/(\d+)\s*-\s*(\d+)/);
+      if (mRange) {
+        const start = parseInt(mRange[1], 10);
+        const end = parseInt(mRange[2], 10);
+        const holidayDates = new Set();
+        if (sched && Array.isArray(sched.holidays)) {
+          sched.holidays.forEach(h => holidayDates.add(Number(h.date)));
+        }
+        for (let d = start; d <= end; d++) {
+          const dt = new Date(yearAD, month - 1, d);
+          const dayOfWeek = dt.getDay(); // 0: Sun, 6: Sat
+          if (dayOfWeek >= 1 && dayOfWeek <= 5 && !holidayDates.has(d)) {
+            days.push(d);
+          }
+        }
+      } else {
+        const mSingle = w.label.match(/(\d+)/);
+        if (mSingle) {
+          days.push(parseInt(mSingle[1], 10));
+        }
+      }
+      return days;
+    }
+
+    function formatLeaveDatesLabel(days, isAllWeek, month) {
+      if (!days || days.length === 0) return "";
+      if (isAllWeek) return "ทั้งสัปดาห์";
+      const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+      if (days.length === 1) return `${days[0]} ${mShort}`.trim();
+
+      let isSeq = true;
+      for (let i = 0; i < days.length - 1; i++) {
+        if (days[i+1] !== days[i] + 1) { isSeq = false; break; }
+      }
+      if (isSeq) {
+        return `${days[0]}-${days[days.length - 1]} ${mShort}`.trim();
+      }
+      return `${days.join(", ")} ${mShort}`.trim();
+    }
+
+    function isLeaveOnDay(leave, day) {
+      if (!leave) return false;
+      if (leave.allWeek) return true;
+      if (Array.isArray(leave.dates) && leave.dates.length > 0) {
+        return leave.dates.includes(Number(day));
+      }
+      // Fallback for legacy records without dates array
+      return true;
+    }
+
+    function getLeaveDatesBadgeText(leave, monthShort) {
+      if (!leave) return "";
+      if (leave.datesText) return leave.datesText;
+      if (leave.allWeek) return "ทั้งสัปดาห์";
+      if (Array.isArray(leave.dates) && leave.dates.length > 0) {
+        if (leave.dates.length === 1) return `${leave.dates[0]} ${monthShort || ''}`.trim();
+        return `${leave.dates.join(', ')} ${monthShort || ''}`.trim();
+      }
+      return "";
+    }
+
 

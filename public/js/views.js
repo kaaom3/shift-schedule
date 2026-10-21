@@ -251,9 +251,12 @@
             const leave = leaves[lKey];
             const roleTag = getLineBriefRoleTag(cIdx, col);
 
-            lines.push(`- ${thName} ${roleTag}`);
-            if (leave) {
-              weekdayLeaves.push(`${thName} (${leave.leaveType}${leave.note ? ': ' + leave.note : ''})`);
+            const isTodayLeave = isLeaveOnDay(leave, day);
+            if (isTodayLeave) {
+              const noteStr = leave.note ? `: ${leave.note}` : "";
+              weekdayLeaves.push(`${thName} (${leave.leaveType}${noteStr})`);
+            } else {
+              lines.push(`- ${thName} ${roleTag}`);
             }
           });
         });
@@ -403,7 +406,27 @@
           const leave = leaves[lKey];
           let leaveChipHtml = "";
           if (leave) {
-            leaveChipHtml = `<div class="leave-chip leave-${getLeaveClass(leave.leaveType)}" style="margin-top:5px; font-size:10px; padding:2px 6px;">${getLeaveIcon(leave.leaveType)} ${leave.leaveType}${leave.note ? ': ' + leave.note : ''}</div>`;
+            const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+            const dText = getLeaveDatesBadgeText(leave, mShort);
+            const dLabel = dText ? ` (${dText})` : "";
+            leaveChipHtml = `
+              <div style="margin-top:6px;">
+                <span class="leave-chip leave-${getLeaveClass(leave.leaveType)}" 
+                      onclick="openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${matchedCIdx}, ${matchedSIdx}, '${ag}', '${w.label}', 'ช่องที่ ${matchedCIdx + 1}')" 
+                      title="คลิกเพื่อแก้ไขหรือยกเลิกการลา">
+                  ${getLeaveIcon(leave.leaveType)} ${leave.leaveType}${dLabel}${leave.note ? ': ' + leave.note : ''} ✏️
+                </span>
+              </div>`;
+          } else {
+            leaveChipHtml = `
+              <div style="margin-top:6px;">
+                <button type="button" class="btn btn-outline btn-sm" 
+                        onclick="openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${matchedCIdx}, ${matchedSIdx}, '${ag}', '${w.label}', 'ช่องที่ ${matchedCIdx + 1}')" 
+                        style="font-size:10.5px; padding:2px 7px; color:#c2410c; border-color:#fed7aa; background:#fff7ed;" 
+                        title="คลิกเพื่อลงลาในสัปดาห์นี้">
+                  🏖️ ลงลา
+                </button>
+              </div>`;
           }
 
           const jdPreview = (matchedCol.jd && matchedCol.jd.length > 0)

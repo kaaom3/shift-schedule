@@ -92,13 +92,13 @@
 
 
     // =========================================================================
-    // LEAVE MANAGEMENT MODAL
+    // LEAVE MANAGEMENT MODAL (เปิดให้น้องลงลาเองได้ & เลือกวันได้ & ห้ามลาเวรวันหยุด)
     // =========================================================================
     let currentEditingLeaveSlot = null;
 
     function openLeaveRecordModal(yearAD, month, type, idx1, idx2, sIdx, agentName, label, shiftInfo) {
-      if (!isAdminMode) {
-        showToast("🔒 เฉพาะหัวหน้างาน (Admin) จึงจะสามารถบันทึกหรือแก้ไขการลาได้");
+      if (type === "HOLIDAY") {
+        showToast("⚠️ เวรวันหยุดไม่สามารถลงลาได้ (หากไม่สะดวกปฏิบัติงาน กรุณาใช้การสลับเวร)");
         return;
       }
       if (!agentName || agentName === "-") {
@@ -106,20 +106,59 @@
         return;
       }
 
-      const slotKey = type === "WEEKDAY" ? `W_${idx1}_${idx2}_${sIdx}` : `H_${idx1}_${sIdx}`;
-      currentEditingLeaveSlot = { yearAD, month, type, idx1, idx2, sIdx, agentName, slotKey };
+      const sched = isViewingOriginal ? originalSchedule : currentSchedule;
+      const week = sched.weeks && sched.weeks[idx1];
+      const weekDays = getWeekWorkingDays(week, yearAD, month, sched);
+
+      const slotKey = `W_${idx1}_${idx2}_${sIdx}`;
+      currentEditingLeaveSlot = { yearAD, month, type, idx1, idx2, sIdx, agentName, slotKey, weekDays, weekLabel: label };
 
       const thName = AGENT_NAME_MAP[agentName] ? ` (${AGENT_NAME_MAP[agentName]})` : "";
       document.getElementById("leaveModalAgentName").innerText = `${agentName}${thName}`;
-      document.getElementById("leaveModalSlotDesc").innerText = `${type === 'WEEKDAY' ? 'เวรวันทำการ: ' + label + ' • ช่อง ' + shiftInfo : 'เวรวันหยุด: ' + label + ' • ' + shiftInfo}`;
+      document.getElementById("leaveModalSlotDesc").innerText = `เวรวันทำการ: ${label} • ช่อง ${shiftInfo}`;
 
       const currentLeave = getSlotLeave(yearAD, month, slotKey);
       const statusEl = document.getElementById("leaveModalCurrentStatus");
       const noteInput = document.getElementById("leaveModalNoteInput");
       const delBtn = document.getElementById("leaveModalDeleteBtn");
 
+      // กำหนดวันที่ถูกเลือกเริ่มต้น
+      let checkedDays = [];
       if (currentLeave) {
-        statusEl.innerHTML = `สถานะปัจจุบัน: <strong style="color:#c2410c;">${getLeaveIcon(currentLeave.leaveType)} ${currentLeave.leaveType}</strong> ${currentLeave.note ? `(หมายเหตุ: ${currentLeave.note})` : ''}`;
+        if (Array.isArray(currentLeave.dates) && currentLeave.dates.length > 0) {
+          checkedDays = [...currentLeave.dates];
+        } else {
+          checkedDays = [...weekDays];
+        }
+      } else {
+        checkedDays = [...weekDays];
+      }
+
+      // แสดง Checkbox วันที่ของสัปดาห์นี้
+      const daysContainer = document.getElementById("leaveModalDaysContainer");
+      const THAI_DAY_NAMES_SHORT = ["อา.", "จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส."];
+      const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+
+      let daysHTML = "";
+      weekDays.forEach(d => {
+        const dt = new Date(yearAD, month - 1, d);
+        const dayName = THAI_DAY_NAMES_SHORT[dt.getDay()] || "";
+        const isChecked = checkedDays.includes(d);
+        daysHTML += `
+          <label class="leave-day-item ${isChecked ? 'active' : ''}" id="leave_day_label_${d}">
+            <input type="checkbox" name="leaveDayCheckbox" value="${d}" ${isChecked ? 'checked' : ''} onchange="onLeaveDayCheckboxChange(this, ${d})">
+            <span>${dayName} ${d} ${mShort}</span>
+          </label>
+        `;
+      });
+      if (daysContainer) {
+        daysContainer.innerHTML = daysHTML || `<div style="color:#94a3b8; font-size:12px;">ไม่มีวันที่ในสัปดาห์นี้</div>`;
+      }
+      updateLeaveDaysSummary();
+
+      if (currentLeave) {
+        const datesStr = currentLeave.datesText ? ` [${currentLeave.datesText}]` : "";
+        statusEl.innerHTML = `สถานะปัจจุบัน: <strong style="color:#c2410c;">${getLeaveIcon(currentLeave.leaveType)} ${currentLeave.leaveType}${datesStr}</strong> ${currentLeave.note ? `(หมายเหตุ: ${currentLeave.note})` : ''}`;
         noteInput.value = currentLeave.note || "";
         const radios = document.getElementsByName("leaveTypeRadio");
         for (let r of radios) {
@@ -135,6 +174,45 @@
       document.getElementById("leaveRecordModal").classList.add("show");
     }
 
+    function onLeaveDayCheckboxChange(el, day) {
+      const parent = document.getElementById(`leave_day_label_${day}`);
+      if (parent) {
+        if (el.checked) parent.classList.add("active");
+        else parent.classList.remove("active");
+      }
+      updateLeaveDaysSummary();
+    }
+
+    function selectAllLeaveDays(selectAll) {
+      const checkboxes = document.querySelectorAll('input[name="leaveDayCheckbox"]');
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll;
+        const parent = document.getElementById(`leave_day_label_${cb.value}`);
+        if (parent) {
+          if (selectAll) parent.classList.add("active");
+          else parent.classList.remove("active");
+        }
+      });
+      updateLeaveDaysSummary();
+    }
+
+    function updateLeaveDaysSummary() {
+      const summaryEl = document.getElementById("leaveModalDaysSummaryText");
+      if (!summaryEl || !currentEditingLeaveSlot) return;
+      const checkboxes = Array.from(document.querySelectorAll('input[name="leaveDayCheckbox"]:checked'));
+      const selectedDays = checkboxes.map(cb => parseInt(cb.value, 10)).sort((a, b) => a - b);
+      const totalDays = currentEditingLeaveSlot.weekDays.length;
+
+      if (selectedDays.length === 0) {
+        summaryEl.innerHTML = `<span style="color:#dc2626; font-weight:600;">⚠️ ยังไม่ได้เลือกวันที่จะลา</span>`;
+      } else if (selectedDays.length === totalDays) {
+        summaryEl.innerHTML = `<span style="color:#ea580c; font-weight:600;">📅 ลาทั้งสัปดาห์ (${selectedDays.length} วัน)</span>`;
+      } else {
+        const datesStr = formatLeaveDatesLabel(selectedDays, false, currentEditingLeaveSlot.month);
+        summaryEl.innerHTML = `<span style="color:#0284c7; font-weight:600;">📅 ลาเฉพาะวัน: <strong>${datesStr}</strong> (${selectedDays.length} วัน)</span>`;
+      }
+    }
+
     function closeLeaveRecordModal() {
       document.getElementById("leaveRecordModal").classList.remove("show");
       currentEditingLeaveSlot = null;
@@ -142,7 +220,14 @@
 
     function saveCurrentSlotLeave() {
       if (!currentEditingLeaveSlot) return;
-      const { yearAD, month, slotKey, agentName } = currentEditingLeaveSlot;
+      const { yearAD, month, slotKey, agentName, weekDays } = currentEditingLeaveSlot;
+
+      const checkboxes = Array.from(document.querySelectorAll('input[name="leaveDayCheckbox"]:checked'));
+      const selectedDays = checkboxes.map(cb => parseInt(cb.value, 10)).sort((a, b) => a - b);
+      if (selectedDays.length === 0) {
+        showToast("⚠️ กรุณาเลือกวันที่ต้องการลาอย่างน้อย 1 วัน (หรือกด 'ล้างสถานะการลา' หากต้องการยกเลิก)");
+        return;
+      }
 
       let selectedType = "ลาพักร้อน";
       const radios = document.getElementsByName("leaveTypeRadio");
@@ -151,10 +236,16 @@
       }
       const note = document.getElementById("leaveModalNoteInput").value.trim();
 
+      const isAllWeek = selectedDays.length === weekDays.length;
+      const datesText = formatLeaveDatesLabel(selectedDays, isAllWeek, month);
+
       setSlotLeave(yearAD, month, slotKey, {
         agent: agentName,
         leaveType: selectedType,
         note: note,
+        dates: selectedDays,
+        allWeek: isAllWeek,
+        datesText: datesText,
         recordedAt: new Date().toISOString()
       });
 
@@ -162,8 +253,8 @@
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
       renderIndividualCards();
-      showToast(`✅ บันทึกสถานะ ${selectedType} ของคุณ${agentName} เรียบร้อยแล้ว`);
-      saveScheduleToCloud(`บันทึกการลา: ${agentName} (${selectedType})`);
+      showToast(`✅ บันทึกสถานะ ${selectedType} (${datesText}) ของคุณ${agentName} เรียบร้อยแล้ว`);
+      saveScheduleToCloud(`บันทึกการลา: ${agentName} (${selectedType} ${datesText})`);
     }
 
     function deleteCurrentSlotLeave() {

@@ -187,7 +187,10 @@
                 let leaveText = '';
                 if (leave) {
                   hasLeaveInSlot = true;
-                  leaveText = ` [${leave.leaveType}${leave.note ? ': ' + leave.note : ''}]`;
+                  const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+                  const dText = getLeaveDatesBadgeText(leave, mShort);
+                  const dLabel = dText ? ` (${dText})` : '';
+                  leaveText = ` [${leave.leaveType}${dLabel}${leave.note ? ': ' + leave.note : ''}]`;
                 }
                 const customNote = customTimes[cIdx] ? ` [เวลา: ${customTimes[cIdx].time}]` : '';
                 return `${rawName}${th}${leaveText}${customNote}`;

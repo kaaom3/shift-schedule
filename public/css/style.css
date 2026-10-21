@@ -1263,11 +1263,18 @@
       gap: 3px;
       font-size: 9.5px;
       font-weight: 700;
-      padding: 1px 5px;
+      padding: 1px 6px;
       border-radius: 4px;
       margin-top: 3px;
       vertical-align: middle;
       white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .leave-chip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      filter: brightness(0.95);
     }
     .leave-chip.leave-vacation {
       background: #fed7aa;
@@ -1304,20 +1311,55 @@
       display: inline-block;
       cursor: pointer;
       font-size: 10px;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 4px;
       background: rgba(234, 88, 12, 0.12);
       color: #ea580c;
       margin-left: 3px;
       vertical-align: middle;
       transition: all 0.15s;
-      border: 1px dashed rgba(234, 88, 12, 0.4);
+      border: 1px dashed rgba(234, 88, 12, 0.5);
       line-height: 1.2;
+      font-weight: 700;
     }
     .btn-leave-add:hover {
       background: #ea580c;
       color: #fff;
+      border-color: #ea580c;
       transform: scale(1.1);
+      box-shadow: 0 1px 3px rgba(234, 88, 12, 0.3);
+    }
+
+    .leave-day-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .leave-day-item:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .leave-day-item.active {
+      background: #fff7ed;
+      border-color: #ea580c;
+      color: #c2410c;
+      box-shadow: 0 1px 3px rgba(234, 88, 12, 0.15);
+    }
+    .leave-day-item input[type='checkbox'] {
+      accent-color: #ea580c;
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
     }
 
     /* Week Custom Time Badge */

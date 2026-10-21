@@ -288,16 +288,18 @@ function renderMasterWeekdayTable() {
         if (leave) {
           const icon = getLeaveIcon(leave.leaveType);
           const lClass = getLeaveClass(leave.leaveType);
-          const leaveTitle = `${leave.leaveType}${leave.note ? ': ' + leave.note : ''}`;
-          const clickAction = isAdminMode 
-            ? `openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')`
-            : `showToast('🏖️ ${n}: ${leave.leaveType} ${leave.note || ''}')`;
-          leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
+          const mShort = (typeof THAI_MONTHS_SHORT !== "undefined" && THAI_MONTHS_SHORT[month]) ? THAI_MONTHS_SHORT[month] : "";
+          const dText = getLeaveDatesBadgeText(leave, mShort);
+          const dLabel = dText ? ` (${dText})` : "";
+          const leaveTitle = `${leave.leaveType}${dLabel}${leave.note ? ': ' + leave.note : ''} (คลิกเพื่อแก้ไข/ยกเลิกการลา)`;
+          const clickAction = `openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')`;
+          leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}${dLabel}</span>`;
         }
 
-        let adminLeaveAddBtn = "";
-        if (isAdminMode && !leave && n && n !== "-") {
-          adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')" title="บันทึกการลา">+🏖️</span>`;
+        // เปิดให้น้องลงลาเองได้เลย (+🏖️)
+        let leaveAddBtn = "";
+        if (!leave && n && n !== "-") {
+          leaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'WEEKDAY', ${wIdx}, ${cIdx}, ${sIdx}, '${n}', '${w.label}', 'ช่องที่ ${cIdx + 1}')" title="ลงลา (คลิกเพื่อบันทึกการลา)">+🏖️</span>`;
         }
         
         const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
@@ -309,7 +311,7 @@ function renderMasterWeekdayTable() {
         else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName}${slotBreakLabel} (คลิกเพื่อสลับต่อได้)`;
 
         const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</div>`;
+        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${leaveAddBtn} ${leaveChipHTML}</div>`;
       };
 
       let tagsHTML = "";
@@ -427,16 +429,11 @@ function renderMasterHolidayTable() {
         const icon = getLeaveIcon(leave.leaveType);
         const lClass = getLeaveClass(leave.leaveType);
         const leaveTitle = `${leave.leaveType}${leave.note ? ': ' + leave.note : ''}`;
-        const clickAction = isAdminMode
-          ? `openLeaveRecordModal(${yearAD}, ${month}, 'HOLIDAY', ${hIdx}, ${s}, 0, '${n}', '${h.dayName} ${h.date}', 'H${s+1}')`
-          : `showToast('🏖️ ${n}: ${leave.leaveType} ${leave.note || ''}')`;
-        leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); ${clickAction}" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
+        leaveChipHTML = `<span class="leave-chip leave-${lClass}" onclick="event.stopPropagation(); showToast('⚠️ เวรวันหยุดไม่สามารถลงลาได้')" title="${leaveTitle}">${icon} ${leave.leaveType}</span>`;
       }
 
+      // เวรวันหยุดไม่สามารถลาได้ -> ไม่มีปุ่มลงลา
       let adminLeaveAddBtn = "";
-      if (isAdminMode && !leave && n && n !== "-") {
-        adminLeaveAddBtn = `<span class="btn-leave-add" onclick="event.stopPropagation(); openLeaveRecordModal(${yearAD}, ${month}, 'HOLIDAY', ${hIdx}, ${s}, 0, '${n}', '${h.dayName} ${h.date}', 'H${s+1}')" title="บันทึกการลา">+🏖️</span>`;
-      }
 
       const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
       let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
