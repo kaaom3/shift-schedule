@@ -916,6 +916,39 @@
 
       const thCurrent = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[currentAgent]) ? AGENT_NAME_MAP[currentAgent] : currentAgent;
 
+      
+      // Check if this slot was swapped from originalSchedule
+      const origSched = mData.originalSchedule;
+      let origAgent = "";
+      if (slot.type === "WEEKDAY" && origSched && origSched.weeks && origSched.weeks[slot.wIdx]) {
+        origAgent = (origSched.weeks[slot.wIdx].assignments && origSched.weeks[slot.wIdx].assignments[slot.cIdx]) ? origSched.weeks[slot.wIdx].assignments[slot.cIdx][slot.sIdx] : "";
+      } else if (slot.type === "HOLIDAY" && origSched && origSched.holidays && origSched.holidays[slot.hIdx]) {
+        origAgent = (origSched.holidays[slot.hIdx].shifts) ? origSched.holidays[slot.hIdx].shifts[slot.sIdx] : "";
+      }
+
+      const isSlotSwapped = origAgent && origAgent !== currentAgent;
+      const thOrig = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[origAgent]) ? AGENT_NAME_MAP[origAgent] : origAgent;
+
+      const guardEl = document.getElementById("adminSlotSwapGuardBadge");
+      if (guardEl) {
+        if (isSlotSwapped) {
+          guardEl.innerHTML = `
+            <div style="background:#fefce8; border:1.5px solid #fef08a; border-radius:8px; padding:10px 12px; font-size:12px; color:#854d0e; line-height:1.45;">
+              ⚠️ <strong>กะนี้มีประวัติการสลับเวรของน้องๆ อยู่:</strong> เดิมคือคุณ${thOrig} ➔ สลับเป็นคุณ${thCurrent}
+              <div style="font-size:11.5px; color:#a16207; margin-top:4px;">
+                🛡️ <strong>ไม่ต้องกังวล:</strong> การปรับเปลี่ยนผู้เข้าเวรในกะนี้จะมีผลเฉพาะกะนี้เท่านั้น <strong>การสลับเวรของน้องๆ ในกะอื่นและวันอื่นทั้งหมดจะยังคงอยู่ครบ 100% ไม่สูญหาย และน้องๆ ไม่ต้องมาลงใหม่</strong>
+              </div>
+            </div>
+          `;
+        } else {
+          guardEl.innerHTML = `
+            <div style="background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:8px; padding:10px 12px; font-size:12px; color:#166534; line-height:1.45;">
+              🛡️ <strong>ความปลอดภัยสูงสุด:</strong> การปรับเปลี่ยนผู้เข้าเวรในกะนี้จะมีผลเฉพาะตำแหน่งนี้เท่านั้น <strong>ไม่กระทบการสลับเวรของน้องๆ ในส่วนอื่น 100%</strong> (น้องๆ ไม่ต้องมาลงสลับเวรใหม่)
+            </div>
+          `;
+        }
+      }
+
       const titleEl = document.getElementById("adminSlotInfoTitle");
       const detailEl = document.getElementById("adminSlotInfoDetail");
       if (titleEl) titleEl.textContent = titleStr;
