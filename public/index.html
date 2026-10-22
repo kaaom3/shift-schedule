@@ -248,10 +248,15 @@
             <span class="badge badge-hol">4 กะต่อวัน</span>
             <span class="badge badge-active-mode admin-only" id="holScheduleTypeBadge">🟢 ตารางปฏิบัติงานจริง (Active)</span>
           </div>
-          <div class="admin-only" style="display: flex; gap: 8px; align-items: center;">
-            <input type="number" id="quickHolDate" min="1" max="31" placeholder="วันที่" style="width: 60px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
-            <input type="text" id="quickHolName" placeholder="ชื่อวันหยุด" style="width: 140px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
-            <button class="btn btn-outline btn-sm" onclick="addCustomHolidayQuick()">+ เพิ่มวันหยุด</button>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-outline btn-sm" onclick="openHolidayTransferModal()" style="color:#0284c7; border-color:#bae6fd; background:#f0f9ff; font-weight:700;" title="แลกเวรออกให้เพื่อนร่วมงานที่ไม่มีเวรมาเข้าแทน">
+              🔄 แลกเวรวันหยุด (หาคนแทน)
+            </button>
+            <div class="admin-only" style="display: flex; gap: 8px; align-items: center;">
+              <input type="number" id="quickHolDate" min="1" max="31" placeholder="วันที่" style="width: 60px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+              <input type="text" id="quickHolName" placeholder="ชื่อวันหยุด" style="width: 140px; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+              <button class="btn btn-outline btn-sm" onclick="addCustomHolidayQuick()">+ เพิ่มวันหยุด</button>
+            </div>
           </div>
         </div>
         <div class="card-body">
@@ -357,7 +362,7 @@
               🏢 สลับกะทั้งสัปดาห์ (จันทร์-ศุกร์)
             </button>
             <button type="button" class="swap-type-btn" id="swapTypeBtnHoliday" onclick="onSwapHubTypeChange('HOLIDAY')">
-              🏖️ สลับเวรวันหยุด (เสาร์-อาทิตย์ / นักขัตฯ)
+              🏖️ แลกเวรวันหยุด (หาคนเข้าเวรแทน)
             </button>
           </div>
 
@@ -1328,6 +1333,73 @@
     </div>
   </div>
 
+
+  <!-- Modal: แลกเวรวันหยุด (หาคนเข้าเวรแทน) -->
+  <div class="modal-backdrop" id="holidayTransferModal">
+    <div class="modal-box" style="max-width: 560px; border: 2px solid #0284c7; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-box-header" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>🏖️</span>
+          <span>แลกเวรวันหยุด (หาคนเข้าเวรแทน)</span>
+        </h3>
+        <button onclick="closeHolidayTransferModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-box-body" style="overflow-y: auto;">
+        
+        <!-- Info Banner -->
+        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:12px; color:#0369a1; line-height:1.45;">
+          💡 <strong>การแลกเวรวันหยุด:</strong> เป็นการมอบหมายเวรให้เพื่อนร่วมงานที่ <strong>ไม่ได้โดนเวรในวันนั้น</strong> มาเข้าเวรแทนเรา โดยเพื่อนร่วมงานคนดังกล่าวจะได้รับกะเวลาการทำงานนั้นไปปฏิบัติหน้าที่แทนครับ
+        </div>
+
+        <!-- 1. เลือกวันหยุด -->
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">
+            📅 1. เลือกวันหยุด / วันพิเศษ:
+          </label>
+          <select id="holTransferDateSelect" onchange="onHolidayTransferDateChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-weight:600; color:#0c4a6e; background:#f8fafc;"></select>
+        </div>
+
+        <!-- 2. เลือกกะและคนที่มีเวร (ผู้ขอแลกออก) -->
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:6px;">
+            👤 2. กะและผู้เข้าเวรปัจจุบัน (ผู้ขอแลกออก):
+          </div>
+          <select id="holTransferShiftSelect" onchange="onHolidayTransferShiftChange()" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; font-weight:600; color:#0f172a; background:white;"></select>
+          <div id="holTransferShiftInfoBox" style="margin-top:6px; font-size:12px; color:#64748b; line-height:1.4;"></div>
+        </div>
+
+        <!-- 3. เลือกคนที่จะมาเข้าเวรแทน (16 คนที่ไม่มีเวรวันนี้) -->
+        <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#166534; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+            <span>🤝</span>
+            <span>3. เลือกคนที่จะมาเข้าเวรแทน (คนที่ไม่ได้โดนเวรวันนี้):</span>
+          </div>
+          <select id="holTransferSubstituteSelect" onchange="updateHolidayTransferPreview()" style="width:100%; padding:9px 10px; border:1.5px solid #22c55e; border-radius:6px; font-size:13px; font-weight:700; color:#14532d; background:#ffffff;"></select>
+          <div style="margin-top:5px; font-size:11.5px; color:#15803d;">
+            ✨ รายชื่อด้านบนคือเพื่อนร่วมงานที่ไม่มีเวรในวันหยุดนี้ (พร้อมมาปฏิบัติหน้าที่แทน)
+          </div>
+        </div>
+
+        <!-- 4. หมายเหตุ -->
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:12px; font-weight:600; color:var(--secondary); margin-bottom:4px;">
+            📝 4. หมายเหตุ / เหตุผล (ถ้ามี):
+          </label>
+          <input type="text" id="holTransferReasonInput" placeholder="เช่น ติดธุระส่วนตัว, ฝากเข้าเวรแทน..." style="width:100%; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px;">
+        </div>
+
+        <!-- Preview Box -->
+        <div id="holTransferPreviewBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.6;"></div>
+
+      </div>
+      <div class="modal-box-footer" style="padding: 10px 18px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-outline" onclick="closeHolidayTransferModal()">ยกเลิก</button>
+        <button class="btn btn-save" onclick="submitHolidayTransfer()" style="background: linear-gradient(135deg, #0284c7, #0369a1); font-weight:700;">
+          ✅ ยืนยันการแลกเวรออก
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Login Gate Modal (เข้าสู่ระบบก่อนใช้งาน) -->
   <div class="modal-backdrop" id="loginGateModal" style="backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.75);">

@@ -4,6 +4,39 @@
 
     // DIRECT CLICK TO SWAP LOGIC
     function handleTagClickDirect(slot) {
+      // Holiday Shift Handover (1-Way Substitution)
+      if (slot.type === "HOLIDAY") {
+        if (pendingSwapSlot) cancelPendingSwap();
+        if (!currentUser) {
+          showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการแลกเวรวันหยุด");
+          if (typeof openLoginGateModal === "function") openLoginGateModal();
+          return;
+        }
+        if (isViewingOriginal) {
+          showToast("ℹ️ กำลังดูตารางต้นฉบับ ไม่สามารถแลกเวรได้");
+          return;
+        }
+        if (!allowUserSwap && !isAdminMode && currentUser.role !== "ADMIN") {
+          showToast("🔒 ขณะนี้ระบบปิดรับการแลกเวรแล้ว (หากจำเป็นกรุณาติดต่อ Admin)");
+          return;
+        }
+
+        const agName = slot.agName || slot.agent;
+        if (!isAdminMode && currentUser.role !== "ADMIN") {
+          const isMine = (typeof isCurrentUserAgent === "function") 
+            ? (isCurrentUserAgent(agName) || isCurrentUserAgent(slot.agent)) 
+            : (agName === currentUser.username || slot.agent === currentUser.username);
+          if (!isMine) {
+            const myName = currentUser.nameTH || currentUser.username;
+            showToast(`⚠️ ท่านสามารถขอแลกเวรวันหยุดเฉพาะเวรของตนเอง (คุณ${myName}) ออกให้เพื่อนร่วมงานเท่านั้น`);
+            return;
+          }
+        }
+
+        openHolidayTransferModal(slot);
+        return;
+      }
+
       if (!currentUser) {
         showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับเวร");
         if (typeof openLoginGateModal === "function") openLoginGateModal();
@@ -268,7 +301,14 @@
       }
 
       // Person fields (Weekly / Daily / Holiday hub swaps)
-      if (!nameA && item.personA) {
+      if (item.type === "HOLIDAY_TRANSFER" || (item.tag && item.tag.includes("แลกเวรวันหยุด"))) {
+        nameA = item.personA || "";
+        thA = item.thA || (AGENT_NAME_MAP[nameA] || nameA);
+        descA = item.descA || "";
+        nameB = item.personB || "";
+        thB = item.thB || (AGENT_NAME_MAP[nameB] || nameB);
+        descB = item.descB || "";
+      } else if (!nameA && item.personA) {
         nameA = item.personA;
         thA = AGENT_NAME_MAP[nameA] || nameA;
         descA = item.descA || "";
@@ -1120,6 +1160,327 @@ function renderActiveDailySwapsList() {
     }
 
 
+    
+    // =========================================================================
+    // HOLIDAY SHIFT TRANSFER (1-WAY HANDOVER / SUBSTITUTION) CONTROLLER
+    // =========================================================================
+
+    function openHolidayTransferModal(preselectedSlot = null) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการแลกเวรวันหยุด");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
+      if (isViewingOriginal) {
+        showToast("ℹ️ กำลังดูตารางต้นฉบับ ไม่สามารถแลกเวรได้ กรุณาสลับไปดูตารางปัจจุบัน");
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode && currentUser.role !== "ADMIN") {
+        showToast("🔒 ขณะนี้ระบบปิดรับการแลกเวรแล้ว (หากจำเป็นต้องแลกกรุณาติดต่อ Admin)");
+        return;
+      }
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+
+      if (!sched || !Array.isArray(sched.holidays) || sched.holidays.length === 0) {
+        showToast("ℹ️ เดือนนี้ไม่มีตารางเวรวันหยุด");
+        return;
+      }
+
+      const dateSelect = document.getElementById("holTransferDateSelect");
+      if (!dateSelect) return;
+      dateSelect.innerHTML = "";
+
+      const mShort = THAI_MONTHS_SHORT[month];
+      sched.holidays.forEach((h, hIdx) => {
+        const opt = document.createElement("option");
+        opt.value = hIdx;
+        opt.textContent = `${h.dayName}ที่ ${h.date} ${mShort} (${h.holidayName || 'วันหยุด'})`;
+        dateSelect.appendChild(opt);
+      });
+
+      if (preselectedSlot && preselectedSlot.hIdx !== undefined) {
+        dateSelect.value = preselectedSlot.hIdx;
+      }
+
+      const reasonInput = document.getElementById("holTransferReasonInput");
+      if (reasonInput) reasonInput.value = "";
+
+      onHolidayTransferDateChange(preselectedSlot);
+
+      const modal = document.getElementById("holidayTransferModal");
+      if (modal) modal.classList.add("show");
+    }
+
+    function closeHolidayTransferModal() {
+      const modal = document.getElementById("holidayTransferModal");
+      if (modal) modal.classList.remove("show");
+    }
+
+    function onHolidayTransferDateChange(preselectedSlot = null) {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+      const dateSelect = document.getElementById("holTransferDateSelect");
+      const shiftSelect = document.getElementById("holTransferShiftSelect");
+      if (!dateSelect || !shiftSelect) return;
+
+      const hIdx = parseInt(dateSelect.value, 10);
+      const h = sched.holidays && sched.holidays[hIdx];
+      if (!h || !Array.isArray(h.shifts)) return;
+
+      shiftSelect.innerHTML = "";
+      let defaultShiftIdx = 0;
+      let foundMyShift = false;
+
+      h.shifts.forEach((ag, sIdx) => {
+        const thName = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[ag]) ? AGENT_NAME_MAP[ag] : (ag || "-");
+        const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+        const time = meta.time || "09.00-18.00 น.";
+        const role = meta.role || `กะที่ ${sIdx + 1}`;
+        const opt = document.createElement("option");
+        opt.value = sIdx;
+        opt.textContent = `กะที่ ${sIdx + 1} (${time}): คุณ${thName} [${role}]`;
+        shiftSelect.appendChild(opt);
+
+        if (currentUser && (typeof isCurrentUserAgent === "function" ? isCurrentUserAgent(ag) : ag === currentUser.username)) {
+          defaultShiftIdx = sIdx;
+          foundMyShift = true;
+        }
+      });
+
+      if (preselectedSlot && preselectedSlot.sIdx !== undefined && preselectedSlot.hIdx === hIdx) {
+        shiftSelect.value = preselectedSlot.sIdx;
+      } else if (foundMyShift) {
+        shiftSelect.value = defaultShiftIdx;
+      }
+
+      onHolidayTransferShiftChange();
+    }
+
+    function onHolidayTransferShiftChange() {
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+      const dateSelect = document.getElementById("holTransferDateSelect");
+      const shiftSelect = document.getElementById("holTransferShiftSelect");
+      const infoBox = document.getElementById("holTransferShiftInfoBox");
+      const subSelect = document.getElementById("holTransferSubstituteSelect");
+      if (!dateSelect || !shiftSelect || !subSelect) return;
+
+      const hIdx = parseInt(dateSelect.value, 10);
+      const sIdx = parseInt(shiftSelect.value, 10);
+      const h = sched.holidays && sched.holidays[hIdx];
+      if (!h) return;
+
+      const curAgent = h.shifts[sIdx];
+      const thCurr = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[curAgent]) ? AGENT_NAME_MAP[curAgent] : (curAgent || "-");
+      const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+
+      if (infoBox) {
+        infoBox.innerHTML = `
+          <div style="font-size:12px; color:#0369a1; font-weight:600;">
+            🕒 เวลาทำงาน: <strong>${meta.time || '09.00-18.00 น.'}</strong> | 📌 บทบาท: <strong>${meta.role || ''}</strong>
+          </div>
+          <div style="font-size:11.5px; color:#64748b; margin-top:2px;">
+            ☕ เวลาพัก: ${meta.breakTime || '-'} ${meta.jd ? `| <span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:10.5px;">JD: ${meta.jd}</span>` : ''}
+          </div>
+        `;
+      }
+
+      // Identify all agents currently on duty on this holiday
+      const workingSet = new Set((h.shifts || []).filter(x => x && x !== "-"));
+
+      // Available substitutes: agents NOT working today (typically 16 agents)
+      const freeAgents = (typeof AGENTS !== "undefined" ? AGENTS : []).filter(a => !workingSet.has(a));
+      freeAgents.sort((a, b) => {
+        const nameA = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[a]) ? AGENT_NAME_MAP[a] : a;
+        const nameB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[b]) ? AGENT_NAME_MAP[b] : b;
+        return nameA.localeCompare(nameB, 'th');
+      });
+
+      subSelect.innerHTML = "";
+      if (freeAgents.length === 0) {
+        subSelect.innerHTML = `<option value="">-- ไม่มีเพื่อนร่วมงานที่ว่างในวันนี้ --</option>`;
+      } else {
+        freeAgents.forEach(ag => {
+          const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[ag]) ? AGENT_NAME_MAP[ag] : ag;
+          const opt = document.createElement("option");
+          opt.value = ag;
+          opt.textContent = `คุณ${th} (${ag}) - [ไม่มีเวรวันนี้ พร้อมเข้าแทน]`;
+          subSelect.appendChild(opt);
+        });
+      }
+
+      updateHolidayTransferPreview();
+    }
+
+    function updateHolidayTransferPreview() {
+      const dateSelect = document.getElementById("holTransferDateSelect");
+      const shiftSelect = document.getElementById("holTransferShiftSelect");
+      const subSelect = document.getElementById("holTransferSubstituteSelect");
+      const prevBox = document.getElementById("holTransferPreviewBox");
+      if (!prevBox || !dateSelect || !shiftSelect || !subSelect) return;
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const curData = getOrInitMonthSchedule(yearAD, month);
+      const sched = curData.schedule;
+      const hIdx = parseInt(dateSelect.value, 10);
+      const sIdx = parseInt(shiftSelect.value, 10);
+      const subAgent = subSelect.value;
+      const h = sched.holidays && sched.holidays[hIdx];
+
+      if (!h || !subAgent) {
+        prevBox.innerHTML = `<div style="color:var(--muted);">กรุณาเลือกข้อมูลให้ครบถ้วน</div>`;
+        return;
+      }
+
+      const curAgent = h.shifts[sIdx];
+      const thCurr = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[curAgent]) ? AGENT_NAME_MAP[curAgent] : curAgent;
+      const thSub = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[subAgent]) ? AGENT_NAME_MAP[subAgent] : subAgent;
+      const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+
+      prevBox.innerHTML = `
+        <div style="font-weight:700; color:#0369a1; margin-bottom:4px; font-size:12.5px;">
+          📋 สรุปการแลกเวรออก:
+        </div>
+        <div style="color:#475569; margin-bottom:3px;">
+          • <strong>ผู้ขอแลกออก:</strong> คุณ${thCurr} (ถอนตัวออกจากเวรนี้)
+        </div>
+        <div style="color:#15803d; font-weight:700; margin-bottom:3px;">
+          • <strong>ผู้เข้าเวรแทน:</strong> คุณ${thSub} (เข้าปฏิบัติหน้าที่แทนในกะ ${meta.time || '09.00-18.00 น.'})
+        </div>
+        <div style="font-size:11.5px; color:#64748b; margin-top:4px;">
+          📅 วันที่: ${h.dayName}ที่ ${h.date} (${h.holidayName || 'วันหยุด'}) • บทบาท: ${meta.role || ''}
+        </div>
+      `;
+    }
+
+    function submitHolidayTransfer() {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการ");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
+      if (isViewingOriginal) {
+        showToast("ℹ️ กำลังดูตารางต้นฉบับ ไม่สามารถแลกเวรได้");
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode && currentUser.role !== "ADMIN") {
+        showToast("🔒 ขณะนี้ระบบปิดรับการแลกเวรแล้ว (หากจำเป็นกรุณาติดต่อ Admin)");
+        return;
+      }
+
+      const dateSelect = document.getElementById("holTransferDateSelect");
+      const shiftSelect = document.getElementById("holTransferShiftSelect");
+      const subSelect = document.getElementById("holTransferSubstituteSelect");
+      const reasonInput = document.getElementById("holTransferReasonInput");
+      if (!dateSelect || !shiftSelect || !subSelect) return;
+
+      const hIdx = parseInt(dateSelect.value, 10);
+      const sIdx = parseInt(shiftSelect.value, 10);
+      const subAgent = subSelect.value;
+      const reason = (reasonInput ? reasonInput.value : "").trim();
+
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      const sched = mData.schedule;
+      const h = sched.holidays && sched.holidays[hIdx];
+
+      if (!h || !subAgent) {
+        showToast("⚠️ ข้อมูลการแลกเวรไม่ครบถ้วน");
+        return;
+      }
+
+      const origAgent = h.shifts[sIdx];
+      if (!origAgent || origAgent === "-") {
+        showToast("⚠️ ไม่พบข้อมูลผู้เข้าเวรในกะนี้");
+        return;
+      }
+
+      // Member mode authorization: must be user's own shift
+      if (!isAdminMode && currentUser.role !== "ADMIN") {
+        const isMine = (typeof isCurrentUserAgent === "function")
+          ? (isCurrentUserAgent(origAgent) || isCurrentUserAgent(currentUser.username))
+          : (origAgent === currentUser.username);
+        if (!isMine) {
+          const myName = currentUser.nameTH || currentUser.username;
+          showToast(`⚠️ ท่านสามารถขอแลกเวรวันหยุดเฉพาะเวรของตนเอง (คุณ${myName}) ออกให้เพื่อนเท่านั้น`);
+          return;
+        }
+      }
+
+      // Validate subAgent is not already working
+      if (h.shifts.includes(subAgent)) {
+        showToast("⚠️ เพื่อนร่วมงานคนนี้มีเวรในวันดังกล่าวอยู่แล้ว");
+        return;
+      }
+
+      // Execute substitution
+      h.shifts[sIdx] = subAgent;
+
+      const thOrig = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[origAgent]) ? AGENT_NAME_MAP[origAgent] : origAgent;
+      const thSub = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[subAgent]) ? AGENT_NAME_MAP[subAgent] : subAgent;
+      const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "ผู้ใช้งานในระบบ";
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      const recordId = "HTRANS_" + Date.now();
+      const historyItem = {
+        id: recordId,
+        type: "HOLIDAY_TRANSFER",
+        tag: "[แลกเวรวันหยุด]",
+        date: dateStr,
+        time: timeStr,
+        timestamp: now.toISOString(),
+        performedBy: performedBy,
+        yearAD: yearAD,
+        month: month,
+        personA: origAgent,
+        thA: thOrig,
+        descA: `${h.dayName} ${h.date} • กะที่ ${sIdx + 1} [${meta.time || '09.00-18.00 น.'}]`,
+        personB: subAgent,
+        thB: thSub,
+        descB: `เข้าเวรแทน (${meta.role || ''})`,
+        note: reason || `ส่งมอบเวรให้คุณ${thSub} เข้าเวรแทน (${h.holidayName || ''})`,
+        holidaySlot: {
+          yearAD: yearAD,
+          month: month,
+          hIdx: hIdx,
+          sIdx: sIdx,
+          origAgent: origAgent,
+          subAgent: subAgent
+        }
+      };
+
+      if (!swapHistory) swapHistory = [];
+      swapHistory.unshift(historyItem);
+      mData.swapHistory = swapHistory;
+
+      currentSchedule = sched;
+
+      triggerAutoSaveToCloud(`แลกเวรวันหยุด: คุณ${thOrig} ส่งมอบเวรให้คุณ${thSub} (${h.dayName} ${h.date}) โดย ${performedBy}`);
+      closeHolidayTransferModal();
+
+      if (typeof renderMasterHolidayTable === "function") renderMasterHolidayTable();
+      if (typeof renderIndividualCards === "function") renderIndividualCards();
+      if (typeof renderHourlyHeadcountTable === "function") renderHourlyHeadcountTable();
+      if (typeof renderSwapHistoryTable === "function") renderSwapHistoryTable();
+      if (typeof renderActiveSwapsHub === "function") renderActiveSwapsHub();
+
+      showToast(`✅ แลกเวรสำเร็จ: คุณ${thOrig} ส่งมอบเวรให้คุณ${thSub} เรียบร้อยแล้ว`);
+    }
+
+
     // =========================================================================
     // SHIFT SWAP HUB CONTROLLER (TAB 3 INTEGRATED WORKSPACE)
     // =========================================================================
@@ -1317,13 +1678,31 @@ function renderActiveDailySwapsList() {
       // Populate Agent B select with all agents EXCEPT Agent A
       if (selB) {
         selB.innerHTML = "";
-        const partners = swapHubWorkingAgents.filter(it => it.agent !== agA);
-        partners.forEach(item => {
-          const opt = document.createElement("option");
-          opt.value = item.agent;
-          opt.textContent = `คุณ${item.thName} [${item.time} - ${item.role}]`;
-          selB.appendChild(opt);
-        });
+        if (currentSwapHubType === "HOLIDAY") {
+          // Off-duty colleagues available to substitute
+          const workingSet = new Set(swapHubWorkingAgents.map(it => it.agent));
+          const freeAgents = (typeof AGENTS !== "undefined" ? AGENTS : []).filter(a => !workingSet.has(a));
+          freeAgents.sort((a, b) => {
+            const nameA = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[a]) ? AGENT_NAME_MAP[a] : a;
+            const nameB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[b]) ? AGENT_NAME_MAP[b] : b;
+            return nameA.localeCompare(nameB, 'th');
+          });
+          freeAgents.forEach(ag => {
+            const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[ag]) ? AGENT_NAME_MAP[ag] : ag;
+            const opt = document.createElement("option");
+            opt.value = ag;
+            opt.textContent = `คุณ${th} (${ag}) - [ไม่มีเวรวันนี้ พร้อมเข้าแทน]`;
+            selB.appendChild(opt);
+          });
+        } else {
+          const partners = swapHubWorkingAgents.filter(it => it.agent !== agA);
+          partners.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item.agent;
+            opt.textContent = `คุณ${item.thName} [${item.time} - ${item.role}]`;
+            selB.appendChild(opt);
+          });
+        }
       }
 
       onSwapHubAgentBChange();
@@ -1337,7 +1716,23 @@ function renderActiveDailySwapsList() {
       const agB = selB.value;
       const itemB = swapHubWorkingAgents.find(it => it.agent === agB);
 
-      if (itemB && boxB) {
+      if (currentSwapHubType === "HOLIDAY" && boxB) {
+        const thB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[agB]) ? AGENT_NAME_MAP[agB] : agB;
+        const selA = document.getElementById("swapHubAgentASelect");
+        const agA = selA ? selA.value : "";
+        const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
+        boxB.innerHTML = `
+          <div style="font-size:13px; font-weight:700; color:#15803d; margin-bottom:3px;">
+            🤝 ผู้มารับหน้าที่แทน: คุณ${thB}
+          </div>
+          <div style="color:#334155; margin-bottom:2px;">
+            📌 สถานะวันนี้: <strong>ไม่มีเวร (พร้อมปฏิบัติหน้าที่แทน)</strong>
+          </div>
+          <div style="color:#64748b; font-size:11.5px;">
+            ✨ จะได้รับมอบหมายกะ: ${itemA ? itemA.time : ''} (${itemA ? itemA.role : ''})
+          </div>
+        `;
+      } else if (itemB && boxB) {
         boxB.innerHTML = `
           <div style="font-size:13px; font-weight:700; color:#1e40af; margin-bottom:3px;">
             🕒 เวลาทำงาน: ${itemB.time}
@@ -1518,6 +1913,23 @@ function renderActiveDailySwapsList() {
       }
 
       const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
+      if (currentSwapHubType === "HOLIDAY") {
+        if (!itemA || !agB) {
+          prevEl.innerHTML = `<span style="color:var(--muted);">ข้อมูลไม่ครบถ้วน</span>`;
+          return;
+        }
+        const thA = itemA.thName;
+        const thB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[agB]) ? AGENT_NAME_MAP[agB] : agB;
+        prevEl.innerHTML = `
+          <div style="margin-bottom: 6px; color:#0369a1;">
+            👤 <strong>คุณ${thA}</strong>: ขอแลกเวรออก (ถอนตัวออกจากเวรนี้)
+          </div>
+          <div style="color:#15803d; font-weight:700;">
+            🤝 <strong>คุณ${thB}</strong>: จะมารับหน้าที่เข้าเวรแทน ➔ <span>${itemA.time}</span> (${itemA.role})
+          </div>
+        `;
+        return;
+      }
       const itemB = swapHubWorkingAgents.find(it => it.agent === agB);
       if (!itemA || !itemB) {
         prevEl.innerHTML = `<span style="color:var(--muted);">ข้อมูลไม่ครบถ้วน</span>`;
@@ -1681,35 +2093,51 @@ function renderActiveDailySwapsList() {
         const h = mData.schedule.holidays[itemA.hIdx];
         if (!h) return;
 
-        // Perform holiday swap
-        h.shifts[itemA.sIdx] = itemB.agent;
-        h.shifts[itemB.sIdx] = itemA.agent;
+        // Check if agB already has duty that day
+        if (h.shifts.includes(agB)) {
+          showToast("⚠️ เพื่อนร่วมงานคนนี้มีเวรในวันดังกล่าวอยู่แล้ว");
+          return;
+        }
 
-        const recordId = "HSWAP_" + Date.now();
+        // 1-way handover: agB replaces itemA
+        h.shifts[itemA.sIdx] = agB;
+
+        const thA = itemA.thName;
+        const thB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[agB]) ? AGENT_NAME_MAP[agB] : agB;
+        const recordId = "HTRANS_" + Date.now();
         const historyItem = {
           id: recordId,
-          tag: "[สลับเวรวันหยุด]",
+          type: "HOLIDAY_TRANSFER",
+          tag: "[แลกเวรวันหยุด]",
           date: dateStr,
           time: timeStr,
           timestamp: now.toISOString(),
           performedBy: performedBy,
           yearAD: yearAD,
           month: month,
-          personA: itemA.thName,
-          descA: `วันหยุด ${h.dayName} ${h.date} • ${itemA.role} [${itemA.time}]`,
-          personB: itemB.thName,
-          descB: `วันหยุด ${h.dayName} ${h.date} • ${itemB.role} [${itemB.time}]`,
-          note: reason || `สลับเวรวันหยุด ${h.holidayName || ''}`,
-          holidaySlotA: { hIdx: itemA.hIdx, sIdx: itemA.sIdx, agent: itemA.agent },
-          holidaySlotB: { hIdx: itemB.hIdx, sIdx: itemB.sIdx, agent: itemB.agent }
+          personA: itemA.agent,
+          thA: thA,
+          descA: `${h.dayName} ${h.date} • ${itemA.role} [${itemA.time}]`,
+          personB: agB,
+          thB: thB,
+          descB: `เข้าเวรแทน (${itemA.role})`,
+          note: reason || `ส่งมอบเวรให้คุณ${thB} เข้าเวรแทน (${h.holidayName || ''})`,
+          holidaySlot: {
+            yearAD: yearAD,
+            month: month,
+            hIdx: itemA.hIdx,
+            sIdx: itemA.sIdx,
+            origAgent: itemA.agent,
+            subAgent: agB
+          }
         };
 
         if (!swapHistory) swapHistory = [];
         swapHistory.unshift(historyItem);
         mData.swapHistory = swapHistory;
 
-        triggerAutoSaveToCloud(`สลับเวรวันหยุด: คุณ${itemA.thName} 🔁 คุณ${itemB.thName} โดย ${performedBy}`);
-        showToast(`✅ บันทึกสลับเวรวันหยุด (${h.dayName} ${h.date}) คุณ${itemA.thName} 🔁 คุณ${itemB.thName} เรียบร้อยแล้ว`);
+        triggerAutoSaveToCloud(`แลกเวรวันหยุด: คุณ${thA} ส่งมอบเวรให้คุณ${thB} โดย ${performedBy}`);
+        showToast(`✅ บันทึกแลกเวรวันหยุด (${h.dayName} ${h.date}) คุณ${thA} ➔ คุณ${thB} เข้าแทน เรียบร้อยแล้ว`);
       }
 
       // Reset Reason
@@ -1792,6 +2220,13 @@ function renderActiveDailySwapsList() {
                     mB.schedule.holidays[item.slotB.hIdx].shifts[item.slotB.sIdx] = origAgentB;
                   }
                 }
+              }
+            } else if (item.holidaySlot) {
+              const hs = item.holidaySlot;
+              const mKey = (hs.yearAD && hs.month) ? (hs.yearAD + "-" + hs.month) : k;
+              const targetSched = (monthSchedules[mKey] && monthSchedules[mKey].schedule) ? monthSchedules[mKey].schedule : (sched || currentSchedule);
+              if (targetSched && targetSched.holidays && targetSched.holidays[hs.hIdx] && targetSched.holidays[hs.hIdx].shifts) {
+                targetSched.holidays[hs.hIdx].shifts[hs.sIdx] = hs.origAgent;
               }
             } else if (item.holidaySlotA && item.holidaySlotB) {
               const h = monthSchedules[k].schedule.holidays[item.holidaySlotA.hIdx];
@@ -1999,6 +2434,12 @@ function revertWeeklySwap(historyId) {
 
 // Explicit global window bindings for inline HTML onclick handlers
     if (typeof window !== "undefined") {
+      window.openHolidayTransferModal = openHolidayTransferModal;
+      window.closeHolidayTransferModal = closeHolidayTransferModal;
+      window.onHolidayTransferDateChange = onHolidayTransferDateChange;
+      window.onHolidayTransferShiftChange = onHolidayTransferShiftChange;
+      window.updateHolidayTransferPreview = updateHolidayTransferPreview;
+      window.submitHolidayTransfer = submitHolidayTransfer;
       window.openDailySwapModal = openDailySwapModal;
       window.closeDailySwapModal = closeDailySwapModal;
       window.executeDailySwap = executeDailySwap;

@@ -446,8 +446,8 @@ function renderMasterHolidayTable() {
       const thName = AGENT_NAME_MAP[n] ? ` (${AGENT_NAME_MAP[n]})` : "";
       let tagTitle = `คลิกเพื่อสลับเวร${thName}`;
       if (isViewingOriginal) tagTitle = `ตารางต้นฉบับ (โหมดดู)`;
-      else if (isLockedForUser) tagTitle = `🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)`;
-      else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
+      else if (isLockedForUser) tagTitle = `🔒 ปิดรับการแลกเวรแล้ว (ดูได้อย่างเดียว)`;
+      else if (isSwapped) tagTitle = `ส่งมอบ/แทนมาจากคุณ${origName} (คลิกเพื่อแลกเวรต่อได้)`;
 
       const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agent: n, agName: n, label: `${h.dayName} ${h.date}`, code: `H${s+1}` }).replace(/"/g, '&quot;');
       html += `<td onmouseenter="showHolidayJdTooltip(event, ${hIdx}, ${s})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()">
