@@ -29,7 +29,28 @@
       } catch (e) {}
     }
 
+    // Global System Users Collection (Synchronized with Database)
+    let systemUsers = [];
+
+    function getSystemUsers() {
+      if (systemUsers && systemUsers.length > 0) return systemUsers;
+      if (typeof AGENTS !== "undefined" && Array.isArray(AGENTS)) {
+        systemUsers = AGENTS.map(ag => ({
+          username: ag,
+          nameTH: (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[ag]) ? AGENT_NAME_MAP[ag] : ag,
+          role: "MEMBER",
+          pin: "1234",
+          active: true
+        }));
+      }
+      return systemUsers;
+    }
+
     function getUserStoredPin(username) {
+      if (!username) return "1234";
+      const uList = getSystemUsers();
+      const found = uList.find(u => (typeof isSameAgent === "function" ? isSameAgent(u.username, username) : u.username === username));
+      if (found && found.pin) return String(found.pin).trim();
       try {
         const pins = JSON.parse(localStorage.getItem("ft_user_pins") || "{}");
         return pins[username] || "1234";
@@ -39,13 +60,49 @@
     }
 
     function setUserStoredPin(username, newPin) {
+      const pinStr = String(newPin).trim();
+      const uList = getSystemUsers();
+      const found = uList.find(u => (typeof isSameAgent === "function" ? isSameAgent(u.username, username) : u.username === username));
+      if (found) {
+        found.pin = pinStr;
+      } else {
+        uList.push({
+          username: username,
+          nameTH: (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[username]) ? AGENT_NAME_MAP[username] : username,
+          role: "MEMBER",
+          pin: pinStr,
+          active: true
+        });
+      }
+
       try {
         const pins = JSON.parse(localStorage.getItem("ft_user_pins") || "{}");
-        pins[username] = String(newPin).trim();
+        pins[username] = pinStr;
         localStorage.setItem("ft_user_pins", JSON.stringify(pins));
-        return true;
+      } catch (e) {}
+
+      // Immediately sync PIN to MongoDB Atlas
+      syncUserPinToCloud(username, pinStr);
+      return true;
+    }
+
+    async function syncUserPinToCloud(username, newPin, oldPin = "") {
+      try {
+        const apiBase = (typeof defaultApiEndpoint !== "undefined" && defaultApiEndpoint.includes("github.io"))
+          ? "https://shift-schedule-f6di.vercel.app"
+          : "";
+        await fetch(`${apiBase}/api/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "change_pin",
+            username: username,
+            oldPin: oldPin,
+            newPin: newPin
+          })
+        });
       } catch (e) {
-        return false;
+        console.warn("Could not sync PIN to cloud API:", e);
       }
     }
 
@@ -592,6 +649,8 @@
     // Window bindings for inline handlers
     if (typeof window !== "undefined") {
       window.currentUser = currentUser;
+      window.getSystemUsers = getSystemUsers;
+      window.syncUserPinToCloud = syncUserPinToCloud;
       window.isSameAgent = isSameAgent;
       window.isCurrentUserAgent = isCurrentUserAgent;
       window.getCurrentOperatorName = getCurrentOperatorName;

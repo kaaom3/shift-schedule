@@ -46,6 +46,7 @@
         monthSchedules: monthSchedules,
         agents: AGENTS,
         agentNameMap: AGENT_NAME_MAP,
+        users: (typeof getSystemUsers === "function") ? getSystemUsers() : [],
         adminPin: currentAdminPin,
         allowUserSwap: allowUserSwap,
         weekdayColumns: WEEKDAY_COLUMNS,
@@ -70,6 +71,15 @@
             }
             if (Array.isArray(cloudData.agents) && cloudData.agents.length > 0) {
               AGENTS = cloudData.agents;
+            }
+            if (Array.isArray(cloudData.users) && cloudData.users.length > 0) {
+              systemUsers = cloudData.users;
+              systemUsers.forEach(u => {
+                if (u.nameTH) AGENT_NAME_MAP[u.username] = u.nameTH;
+              });
+              AGENTS = systemUsers.map(u => u.username);
+            } else if (typeof getSystemUsers === "function") {
+              getSystemUsers();
             }
             if (cloudData.monthSchedules && typeof cloudData.monthSchedules === 'object') {
               monthSchedules = cloudData.monthSchedules;

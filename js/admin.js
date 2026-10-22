@@ -536,16 +536,23 @@
 
 
     function renderAgentsEditor() {
-      const grid = document.getElementById("agentsGrid");
+      const grid = document.getElementById("agentsEditorGrid");
       if (!grid) return;
       grid.innerHTML = "";
-      AGENTS.forEach((ag, idx) => {
-        const thName = AGENT_NAME_MAP[ag] || "";
+      const uList = (typeof getSystemUsers === "function") ? getSystemUsers() : AGENTS.map(ag => ({ username: ag, nameTH: AGENT_NAME_MAP[ag] || ag, pin: "1234" }));
+
+      uList.forEach((u, idx) => {
+        const ag = u.username;
+        const thName = u.nameTH || AGENT_NAME_MAP[ag] || "";
+        const pin = u.pin || (typeof getUserStoredPin === "function" ? getUserStoredPin(ag) : "1234");
         grid.innerHTML += `
           <div style="background:#ffffff; border:1px solid var(--border); border-radius:8px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:6px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <span style="font-weight:700; color:var(--primary); font-size:12px;">👤 เจ้าหน้าที่คนที่ ${idx+1}</span>
-              <span style="font-size:10px; color:var(--muted); background:#f1f5f9; padding:1px 6px; border-radius:4px;">ลำดับหมุนเวร #${idx+1}</span>
+              <div style="display:flex; gap:4px; align-items:center;">
+                <span style="font-size:10px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">🔑 PIN: ${pin}</span>
+                <span style="font-size:10px; color:var(--muted); background:#f1f5f9; padding:2px 6px; border-radius:4px;">#${idx+1}</span>
+              </div>
             </div>
             <div>
               <label style="font-size:10.5px; font-weight:600; color:var(--muted); display:block; margin-bottom:2px;">Username (ภาษาอังกฤษ):</label>
@@ -555,9 +562,24 @@
               <label style="font-size:10.5px; font-weight:600; color:var(--muted); display:block; margin-bottom:2px;">ชื่อ-นามสกุล / ชื่อเล่น (ไทย):</label>
               <input type="text" class="agent-thname-input" data-idx="${idx}" value="${thName}" placeholder="เช่น ${thName || 'ชื่อภาษาไทย'}" style="width:100%; border:1px solid var(--border); padding:5px 8px; border-radius:6px; font-size:12px; font-family:inherit;">
             </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:2px;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="adminResetUserPin('${ag}')" style="font-size:10px; padding:2px 8px; color:#475569;" title="รีเซ็ตรหัส PIN ของผู้ใช้นี้กลับเป็น 1234">🔄 รีเซ็ต PIN เป็น 1234</button>
+            </div>
           </div>
         `;
       });
+    }
+
+    function adminResetUserPin(username) {
+      if (!confirm(`ยืนยันการรีเซ็ตรหัส PIN ของคุณ "${username}" กลับเป็น 1234 ในฐานข้อมูลหรือไม่?`)) return;
+      if (typeof setUserStoredPin === "function") {
+        setUserStoredPin(username, "1234");
+      }
+      renderAgentsEditor();
+      showToast(`🔑 รีเซ็ตรหัส PIN ของคุณ ${username} เป็น 1234 ใน Database เรียบร้อยแล้ว`);
+      if (typeof triggerAutoSaveToCloud === "function") {
+        triggerAutoSaveToCloud(`หัวหน้างานรีเซ็ต PIN ของคุณ ${username}`);
+      }
     }
 
     
@@ -1175,7 +1197,15 @@
         return;
       }
 
-      // 1. Update AGENTS and AGENT_NAME_MAP
+      // 1. Update AGENTS, AGENT_NAME_MAP and systemUsers
+      const uList = (typeof getSystemUsers === "function") ? getSystemUsers() : [];
+      renamePairs.forEach(pair => {
+        const { oldUsername, newUsername, newThaiName, idx } = pair;
+        if (uList[idx]) {
+          uList[idx].username = newUsername;
+          if (newThaiName) uList[idx].nameTH = newThaiName;
+        }
+      });
       renamePairs.forEach(pair => {
         const { oldUsername, newUsername, newThaiName, idx } = pair;
         AGENTS[idx] = newUsername;
@@ -1310,3 +1340,5 @@
     }
 
 
+
+if (typeof window !== "undefined") { window.adminResetUserPin = adminResetUserPin; }

@@ -57,6 +57,24 @@ module.exports = async (req, res) => {
           message: 'No schedule state found in MongoDB Atlas yet.',
         });
       }
+
+      // Populate or merge with users collection
+      try {
+        const usersCol = db.collection('users');
+        const dbUsers = await usersCol.find({}).toArray();
+        if (dbUsers && dbUsers.length > 0) {
+          doc.payload.users = dbUsers.map(u => ({
+            username: u.username,
+            nameTH: u.nameTH,
+            role: u.role || 'MEMBER',
+            pin: u.pin || '1234',
+            active: u.active !== false
+          }));
+        }
+      } catch (uErr) {
+        console.warn('Could not load users collection:', uErr);
+      }
+
       return res.status(200).json({
         success: true,
         data: doc.payload,
@@ -112,6 +130,40 @@ module.exports = async (req, res) => {
         },
         { upsert: true }
       );
+
+      // Sync users collection if users array is provided
+      if (Array.isArray(body.users) && body.users.length > 0) {
+        try {
+          const usersCol = db.collection('users');
+          const userOps = body.users.map(u => {
+            const uname = (u.username || '').trim();
+            if (!uname) return null;
+            return {
+              updateOne: {
+                filter: { _id: uname },
+                update: {
+                  $set: {
+                    _id: uname,
+                    username: uname,
+                    nameTH: (u.nameTH || '').trim(),
+                    role: u.role || 'MEMBER',
+                    pin: u.pin ? String(u.pin).trim() : '1234',
+                    active: u.active !== false,
+                    updatedAt: now
+                  }
+                },
+                upsert: true
+              }
+            };
+          }).filter(Boolean);
+
+          if (userOps.length > 0) {
+            await usersCol.bulkWrite(userOps);
+          }
+        } catch (uSyncErr) {
+          console.warn('Could not sync users collection:', uSyncErr);
+        }
+      }
 
       // Audit log if action details are provided
       if (body.lastAction) {
