@@ -3,9 +3,14 @@
 // =========================================================
 
     function handleAdminToggle() {
-      if (isAdminMode) {
+      if (isAdminMode || (currentUser && currentUser.role === "ADMIN")) {
         exitAdminMode();
       } else {
+        if (currentUser && currentUser.role === "MEMBER") {
+          showToast(`ℹ️ ขณะนี้คุณกำลังเข้าสู่ระบบในชื่อ คุณ${currentUser.nameTH || currentUser.username} (หากต้องการเข้าโหมดหัวหน้า กรุณาสลับบัญชีผู้ใช้)`);
+          if (typeof openUserProfileModal === "function") openUserProfileModal();
+          return;
+        }
         openPinModal();
       }
     }
@@ -25,8 +30,17 @@
       const enteredPin = document.getElementById("pinInput").value.trim();
       if (enteredPin === currentAdminPin) {
         isAdminMode = true;
+        currentUser = {
+          username: "admin",
+          nameTH: "หัวหน้างาน",
+          role: "ADMIN",
+          loginTime: new Date().toISOString()
+        };
+        saveCurrentUserToStorage(currentUser);
         closePinModal();
         updateAdminModeUI();
+        if (typeof updateUserProfileHeaderUI === "function") updateUserProfileHeaderUI();
+        if (typeof renderAllViews === "function") renderAllViews();
         showToast("🔓 เข้าสู่โหมดหัวหน้างานเรียบร้อยแล้ว");
       } else {
         document.getElementById("pinErrorMsg").style.display = "block";
@@ -35,30 +49,46 @@
 
     function exitAdminMode() {
       isAdminMode = false;
+      if (currentUser && currentUser.role === "ADMIN") {
+        currentUser = null;
+        saveCurrentUserToStorage(null);
+      }
       if (isViewingOriginal) setScheduleViewMode(false);
       updateAdminModeUI();
-      // If currently on admin-only tab, switch to masterTab
-      if (document.getElementById("tabBtnMatrix").classList.contains("active") || 
-          document.getElementById("tabBtnAgents").classList.contains("active")) {
+      if (typeof updateUserProfileHeaderUI === "function") updateUserProfileHeaderUI();
+      if (document.getElementById("tabBtnMatrix")?.classList.contains("active") || 
+          document.getElementById("tabBtnAgents")?.classList.contains("active")) {
         switchTab("masterTab", document.getElementById("tabBtnMaster"));
       }
-      showToast("🔒 ออกจากโหมดหัวหน้าแล้ว (สลับสู่โหมดน้อง)");
+      showToast("🔒 ออกจากโหมดหัวหน้าแล้ว");
+      if (typeof checkLoginGate === "function") checkLoginGate();
     }
 
     function updateAdminModeUI() {
       const body = document.body;
       const toggleBtn = document.getElementById("adminToggleBtn");
 
-      if (isAdminMode) {
+      if (isAdminMode || (currentUser && currentUser.role === "ADMIN")) {
         body.classList.add("is-admin");
-        toggleBtn.innerHTML = "🔓 โหมดหัวหน้า (ออกจากระบบ)";
-        toggleBtn.style.background = "linear-gradient(135deg, #b45309, #d97706)";
-        toggleBtn.style.borderColor = "#f59e0b";
+        if (toggleBtn) {
+          toggleBtn.style.display = "inline-flex";
+          toggleBtn.innerHTML = "🔓 ออกจากโหมดหัวหน้า";
+          toggleBtn.style.background = "linear-gradient(135deg, #b45309, #d97706)";
+          toggleBtn.style.borderColor = "#f59e0b";
+        }
       } else {
         body.classList.remove("is-admin");
-        toggleBtn.innerHTML = "🔒 โหมดหัวหน้า (Admin)";
-        toggleBtn.style.background = "rgba(255,255,255,0.14)";
-        toggleBtn.style.borderColor = "rgba(255,255,255,0.3)";
+        if (toggleBtn) {
+          // If logged in as normal staff (MEMBER), hide admin button completely
+          if (currentUser && currentUser.role === "MEMBER") {
+            toggleBtn.style.display = "none";
+          } else {
+            toggleBtn.style.display = "inline-flex";
+            toggleBtn.innerHTML = "🔒 โหมดหัวหน้า (Admin)";
+            toggleBtn.style.background = "rgba(255,255,255,0.14)";
+            toggleBtn.style.borderColor = "rgba(255,255,255,0.3)";
+          }
+        }
       }
       updateSwapPermissionUI();
       renderMasterWeekdayTable();

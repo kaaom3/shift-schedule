@@ -191,6 +191,7 @@
         }
         if (guestBanner) guestBanner.style.display = "block";
       }
+      if (typeof updateAdminModeUI === "function") updateAdminModeUI();
     }
 
     function checkLoginGate() {
