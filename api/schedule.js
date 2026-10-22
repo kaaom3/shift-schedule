@@ -80,12 +80,33 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date();
+      let finalPayload = body;
+
+      // Smart JD & Shift Config Preservation:
+      // Prevent normal user operations (like shift swaps, leaves, etc.) from accidentally overwriting customized JDs
+      const isJdSaveAction = body.lastAction && (body.lastAction.includes("JD") || body.lastAction.includes("การตั้งค่ากะ"));
+      if (!isJdSaveAction) {
+        try {
+          const existingDoc = await stateCol.findOne({ _id: 'current_state' });
+          if (existingDoc && existingDoc.payload) {
+            if (Array.isArray(existingDoc.payload.weekdayColumns) && existingDoc.payload.weekdayColumns.length > 0) {
+              finalPayload.weekdayColumns = existingDoc.payload.weekdayColumns;
+            }
+            if (Array.isArray(existingDoc.payload.holidayShiftMeta) && existingDoc.payload.holidayShiftMeta.length > 0) {
+              finalPayload.holidayShiftMeta = existingDoc.payload.holidayShiftMeta;
+            }
+          }
+        } catch (mergeErr) {
+          console.warn('Could not merge existing JD config:', mergeErr);
+        }
+      }
+
       await stateCol.updateOne(
         { _id: 'current_state' },
         {
           $set: {
             _id: 'current_state',
-            payload: body,
+            payload: finalPayload,
             updatedAt: now,
           },
         },

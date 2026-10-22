@@ -80,11 +80,13 @@
                 }
               });
             }
-            if (Array.isArray(cloudData.weekdayColumns)) {
+            if (Array.isArray(cloudData.weekdayColumns) && cloudData.weekdayColumns.length > 0) {
               WEEKDAY_COLUMNS = cloudData.weekdayColumns;
+              try { localStorage.setItem("ft_weekday_columns", JSON.stringify(WEEKDAY_COLUMNS)); } catch(e) {}
             }
-            if (Array.isArray(cloudData.holidayShiftMeta)) {
+            if (Array.isArray(cloudData.holidayShiftMeta) && cloudData.holidayShiftMeta.length > 0) {
               HOLIDAY_SHIFT_META = cloudData.holidayShiftMeta;
+              try { localStorage.setItem("ft_holiday_shift_meta", JSON.stringify(HOLIDAY_SHIFT_META)); } catch(e) {}
             }
             if (cloudData.adminPin) {
               currentAdminPin = cloudData.adminPin;

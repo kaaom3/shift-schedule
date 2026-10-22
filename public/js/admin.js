@@ -1086,6 +1086,10 @@
         col.jd = newJd;
       });
 
+      try {
+        localStorage.setItem("ft_weekday_columns", JSON.stringify(WEEKDAY_COLUMNS));
+      } catch (e) {}
+
       renderAllViews();
       showToast("💾 บันทึกเวลาเข้างาน, เวลาพัก และ JD วันทำการเรียบร้อยแล้ว");
       triggerAutoSaveToCloud("บันทึกการตั้งค่ากะและ JD วันทำการ");
@@ -1116,6 +1120,10 @@
         const newJd = Array.from(jdInputs).map(inp => inp.value.trim()).filter(Boolean);
         meta.jd = newJd;
       });
+
+      try {
+        localStorage.setItem("ft_holiday_shift_meta", JSON.stringify(HOLIDAY_SHIFT_META));
+      } catch (e) {}
 
       renderAllViews();
       showToast("💾 บันทึกเวลาเข้างาน, เวลาพัก และ JD วันหยุดเรียบร้อยแล้ว");
