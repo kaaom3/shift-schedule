@@ -13,6 +13,36 @@
     let mongoSyncStatus = "disconnected"; // connected, syncing, error, disconnected
     let lastMongoSyncTime = null;
     let mongoAutoSyncTimer = null;
+    let lastKnownServerUpdatedAt = null;
+    let isFetchingCloudSync = false;
+    let liveSyncIntervalTimer = null;
+    let syncBroadcastChannel = null;
+
+    try {
+      if (typeof BroadcastChannel !== "undefined") {
+        syncBroadcastChannel = new BroadcastChannel("shift_roster_live_channel");
+        syncBroadcastChannel.onmessage = (event) => {
+          if (event.data && event.data.type === "SCHEDULE_CHANGED") {
+            initMongoCloudSync(true);
+          }
+        };
+      }
+    } catch (e) {}
+
+    function showLiveSyncNotice(message) {
+      let pill = document.getElementById("liveSyncNoticePill");
+      if (!pill) {
+        pill = document.createElement("div");
+        pill.id = "liveSyncNoticePill";
+        pill.className = "live-sync-pill";
+        document.body.appendChild(pill);
+      }
+      pill.innerHTML = `<span>⚡</span> <span>${message}</span>`;
+      pill.classList.add("show");
+      setTimeout(() => {
+        if (pill) pill.classList.remove("show");
+      }, 3500);
+    }
 
     function updateMongoSyncBadge(status, text, detail = "") {
       mongoSyncStatus = status;
@@ -56,14 +86,37 @@
       };
     }
 
-    async function initMongoCloudSync() {
-      updateMongoSyncBadge("syncing", "กำลังเชื่อมต่อ MongoDB...");
+    async function initMongoCloudSync(isBackground = false) {
+      if (isFetchingCloudSync) return;
+      isFetchingCloudSync = true;
+      if (!isBackground) {
+        updateMongoSyncBadge("syncing", "กำลังเชื่อมต่อ MongoDB...");
+      }
       try {
         const res = await fetch(mongoApiEndpoint, { method: "GET" });
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const result = await res.json();
 
         if (result && result.success) {
+          const serverUpdatedAt = result.updatedAt;
+
+          // In background polling mode, skip re-rendering if data has not changed
+          if (isBackground && lastKnownServerUpdatedAt && serverUpdatedAt === lastKnownServerUpdatedAt) {
+            isFetchingCloudSync = false;
+            return;
+          }
+
+          // If user is currently in the middle of picking a swap slot or has an active modal open, defer re-render
+          const isUserBusy = (typeof pendingSwapSlot !== "undefined" && pendingSwapSlot !== null) ||
+                             Boolean(document.querySelector(".modal-backdrop.show"));
+          if (isBackground && isUserBusy) {
+            isFetchingCloudSync = false;
+            return;
+          }
+
+          const hadPreviousState = !!lastKnownServerUpdatedAt;
+          lastKnownServerUpdatedAt = serverUpdatedAt;
+
           if (result.data) {
             const cloudData = result.data;
             if (cloudData.agentNameMap && typeof cloudData.agentNameMap === 'object') {
@@ -123,19 +176,28 @@
             renderHolidayJdEditor();
             populateFilterDropdowns();
             renderAllViews();
+
+            // Display live sync notice if updated in background
+            if (isBackground && hadPreviousState) {
+              showLiveSyncNotice("🔄 มีการสลับเวร/แก้ไขข้อมูลล่าสุด ตารางอัปเดตเรียบร้อยแล้ว");
+            }
           } else {
             await saveScheduleToCloud("Initial Schedule Baseline Seed");
           }
 
           lastMongoSyncTime = new Date();
           const timeStr = lastMongoSyncTime.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-          updateMongoSyncBadge("connected", `MongoDB พร้อมใช้งาน (${timeStr})`, `เชื่อมต่อกับ MongoDB Atlas แล้ว • ซิงค์ล่าสุด: ${timeStr}`);
+          updateMongoSyncBadge("connected", `MongoDB เรียลไทม์ (${timeStr})`, `เชื่อมต่อกับ MongoDB Atlas แล้ว • ซิงค์อัตโนมัติ: ${timeStr}`);
         } else {
           throw new Error(result.error || "Unknown server response");
         }
       } catch (err) {
-        console.warn("MongoDB Atlas Sync Notice:", err);
-        updateMongoSyncBadge("error", "MongoDB ออฟไลน์ (ข้อมูลเครื่อง)", `ไม่สามารถเชื่อมต่อ MongoDB API (${err.message}) • กำลังใช้ข้อมูลในเครื่อง`);
+        if (!isBackground) {
+          console.warn("MongoDB Atlas Sync Notice:", err);
+          updateMongoSyncBadge("error", "MongoDB ออฟไลน์ (ข้อมูลเครื่อง)", `ไม่สามารถเชื่อมต่อ MongoDB API (${err.message}) • กำลังใช้ข้อมูลในเครื่อง`);
+        }
+      } finally {
+        isFetchingCloudSync = false;
       }
     }
 
@@ -150,9 +212,17 @@
         });
         const result = await res.json();
         if (result && result.success) {
+          lastKnownServerUpdatedAt = result.updatedAt || new Date().toISOString();
           lastMongoSyncTime = new Date();
           const timeStr = lastMongoSyncTime.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
           updateMongoSyncBadge("connected", `บันทึก MongoDB แล้ว (${timeStr})`, `บันทึกสำเร็จเมื่อ ${timeStr}`);
+
+          // Broadcast to other tabs on same device/browser
+          if (syncBroadcastChannel) {
+            try {
+              syncBroadcastChannel.postMessage({ type: "SCHEDULE_CHANGED", updatedAt: lastKnownServerUpdatedAt });
+            } catch(e) {}
+          }
         } else {
           throw new Error(result.error || "Save failed");
         }
@@ -167,6 +237,27 @@
       mongoAutoSyncTimer = setTimeout(() => {
         saveScheduleToCloud(actionDetail);
       }, 400);
+    }
+
+    function startLiveSyncPolling() {
+      if (liveSyncIntervalTimer) clearInterval(liveSyncIntervalTimer);
+      
+      // Auto-poll every 5 seconds for instant real-time sync across devices
+      liveSyncIntervalTimer = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          initMongoCloudSync(true);
+        }
+      }, 5000);
+
+      // Immediately sync when mobile screen turns on or user switches back to browser tab
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          initMongoCloudSync(true);
+        }
+      });
+      window.addEventListener("focus", () => {
+        initMongoCloudSync(true);
+      });
     }
 
     function openCloudConfigModal() {

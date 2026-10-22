@@ -39,8 +39,11 @@
         checkLoginGate();
       }
 
-      // Launch MongoDB Atlas Cloud Sync
+      // Launch MongoDB Atlas Cloud Sync & Live Real-time Polling
       initMongoCloudSync();
+      if (typeof startLiveSyncPolling === "function") {
+        startLiveSyncPolling();
+      }
     }
 
 
