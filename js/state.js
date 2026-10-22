@@ -66,6 +66,7 @@
       const avatarEl = document.getElementById("headerUserAvatar");
       if (!nameEl) return;
 
+      const guestBanner = document.getElementById("swapHubGuestBanner");
       if (currentUser) {
         const thName = currentUser.nameTH || (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[currentUser.username]) || currentUser.username;
         nameEl.innerText = `คุณ${thName}`;
@@ -81,13 +82,15 @@
             roleEl.className = "user-role-badge user-role-member";
           }
         }
+        if (guestBanner) guestBanner.style.display = "none";
       } else {
         nameEl.innerText = "เข้าสู่ระบบ";
         if (avatarEl) avatarEl.innerText = "👤";
         if (roleEl) {
-          roleEl.innerText = "ยังไม่ระบุตัวตน";
-          roleEl.className = "user-role-badge";
+          roleEl.innerText = "ยังไม่เข้าสู่ระบบ (โหมดดูอย่างเดียว)";
+          roleEl.className = "user-role-badge user-role-guest";
         }
+        if (guestBanner) guestBanner.style.display = "block";
       }
     }
 

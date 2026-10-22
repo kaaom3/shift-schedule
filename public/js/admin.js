@@ -109,12 +109,22 @@
     }
 
     function openLeaveRecordModal(yearAD, month, type, idx1, idx2, sIdx, agentName, label, shiftInfo) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการบันทึกการลา");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       if (type === "HOLIDAY") {
         showToast("⚠️ เวรวันหยุดไม่สามารถลงลาได้ (หากไม่สะดวกปฏิบัติงาน กรุณาใช้การสลับเวร)");
         return;
       }
       if (!agentName || agentName === "-") {
         showToast("⚠️ ไม่มีพนักงานในช่องนี้");
+        return;
+      }
+      if (!isAdminMode && currentUser.role !== "ADMIN" && agentName !== currentUser.username) {
+        const myName = currentUser.nameTH || currentUser.username;
+        showToast(`⚠️ ท่านสามารถลงบันทึกการลาเฉพาะของตนเอง (คุณ${myName}) เท่านั้น (หากลาแทนผู้อื่น กรุณาติดต่อหัวหน้างาน)`);
         return;
       }
 
@@ -353,6 +363,11 @@
     }
 
     function saveCurrentSlotLeave() {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนบันทึกการลา");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       if (!currentEditingLeaveSlot) return;
       const { yearAD, month, slotKey, agentName, weekDays } = currentEditingLeaveSlot;
 
@@ -394,6 +409,11 @@
     }
 
     function deleteCurrentSlotLeave() {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนล้างสถานะการลา");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       if (!currentEditingLeaveSlot) return;
       const { yearAD, month, slotKey, agentName } = currentEditingLeaveSlot;
 
@@ -414,8 +434,9 @@
     let currentEditingWeekIdx = null;
 
     function openWeekTimeModal(wIdx) {
-      if (!isAdminMode) {
+      if (!currentUser || (!isAdminMode && currentUser.role !== "ADMIN")) {
         showToast("🔒 เฉพาะหัวหน้างาน (Admin) จึงจะสามารถปรับเวลาเฉพาะสัปดาห์ได้");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
         return;
       }
       const sched = isViewingOriginal ? originalSchedule : currentSchedule;

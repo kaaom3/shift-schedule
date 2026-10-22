@@ -315,6 +315,22 @@
       </div>
 
 
+      <!-- GUEST / NOT LOGGED IN WARNING BANNER -->
+      <div id="swapHubGuestBanner" style="display: none; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 26px;">🔒</span>
+            <div>
+              <div style="font-weight: 700; color: #92400e; font-size: 13.5px;">ท่านกำลังดูตารางเวรในโหมดทั่วไป (ยังไม่เข้าสู่ระบบ)</div>
+              <div style="font-size: 12px; color: #b45309; margin-top: 2px;">ระบบไม่อนุญาตให้แก้ไขหรือสลับเวรจนกว่าจะเข้าสู่ระบบ เพื่อความปลอดภัยและการบันทึกประวัติที่ถูกต้อง</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openLoginGateModal()" style="font-weight: 700; padding: 8px 18px; font-size: 13px; background: linear-gradient(135deg, #d97706, #b45309); border: none; cursor: pointer;">
+            🚀 เข้าสู่ระบบเพื่อสลับเวร
+          </button>
+        </div>
+      </div>
+
       <!-- SECTION 1: SHIFT SWAP WIZARD (ฟอร์มสลับเวรแบบครบวงจร) -->
       <div class="swap-wizard-card">
         <div class="card-header" style="background: linear-gradient(135deg, #1e3a8a, #0284c7); color: white; padding: 14px 18px;">
@@ -1365,7 +1381,7 @@
             🚀 เข้าสู่ระบบ (Sign In)
           </button>
           <button type="button" class="btn btn-outline" onclick="closeLoginGateModal()" style="width: 100%; margin-top: 10px; font-size: 12px; color: var(--muted); border-color: #cbd5e1;">
-            👁️ เข้าดูตารางเวรในโหมดทั่วไป (ยังไม่ล็อกอิน)
+            👁️ เข้าดูตารางเวรในโหมดดูได้อย่างเดียว (Read-only • ยังไม่สลับเวร)
           </button>
         </div>
 
@@ -1436,16 +1452,16 @@
   </div>
 
   <!-- Modular JavaScript Application -->
-  <script src="js/config.js?v=20261021_rev3"></script>
-  <script src="js/data.js?v=20261021_rev3"></script>
-  <script src="js/state.js?v=20261021_rev3"></script>
-  <script src="js/api.js?v=20261021_rev3"></script>
-  <script src="js/calendar.js?v=20261021_rev3"></script>
-  <script src="js/tables.js?v=20261021_rev3"></script>
-  <script src="js/swap.js?v=20261021_rev3"></script>
-  <script src="js/views.js?v=20261021_rev3"></script>
-  <script src="js/admin.js?v=20261021_rev3"></script>
-  <script src="js/export.js?v=20261021_rev3"></script>
-  <script src="js/app.js?v=20261021_rev3"></script>
+  <script src="js/config.js?v=20261022_rev1"></script>
+  <script src="js/data.js?v=20261022_rev1"></script>
+  <script src="js/state.js?v=20261022_rev1"></script>
+  <script src="js/api.js?v=20261022_rev1"></script>
+  <script src="js/calendar.js?v=20261022_rev1"></script>
+  <script src="js/tables.js?v=20261022_rev1"></script>
+  <script src="js/swap.js?v=20261022_rev1"></script>
+  <script src="js/views.js?v=20261022_rev1"></script>
+  <script src="js/admin.js?v=20261022_rev1"></script>
+  <script src="js/export.js?v=20261022_rev1"></script>
+  <script src="js/app.js?v=20261022_rev1"></script>
 </body>
 </html>

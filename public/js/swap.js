@@ -4,6 +4,11 @@
 
     // DIRECT CLICK TO SWAP LOGIC
     function handleTagClickDirect(slot) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับเวร");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       if (isViewingOriginal) {
         showToast("ℹ️ กำลังดูตารางต้นฉบับ (ไม่สามารถสลับในหน้านี้ได้) กรุณาสลับกลับไปดูตารางปัจจุบัน");
         return;
@@ -11,6 +16,14 @@
       if (!allowUserSwap && !isAdminMode) {
         showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวรแล้ว (โหมดดูได้อย่างเดียว) หากจำเป็นต้องสลับกรุณาแจ้งหัวหน้างาน");
         return;
+      }
+      // Member mode: First selected slot must be the user's own shift
+      if (!isAdminMode && currentUser.role !== "ADMIN" && !pendingSwapSlot) {
+        if (slot.agent !== currentUser.username) {
+          const myName = currentUser.nameTH || currentUser.username;
+          showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) เท่านั้น`);
+          return;
+        }
       }
       if (!pendingSwapSlot) {
         // Step 1: Select person A
@@ -44,6 +57,18 @@
     }
 
     function executeSwapDirect(slotA, slotB) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับเวร");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
+      if (!isAdminMode && currentUser.role !== "ADMIN") {
+        if (slotA.agent !== currentUser.username && slotB.agent !== currentUser.username) {
+          const myName = currentUser.nameTH || currentUser.username;
+          showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
+          return;
+        }
+      }
       const mDataA = getOrInitMonthSchedule(slotA.yearAD, slotA.month);
       const mDataB = getOrInitMonthSchedule(slotB.yearAD, slotB.month);
 
@@ -502,8 +527,9 @@ function renderSwapHistoryTable() {
     }
 
 function clearSwapHistoryPrompt() {
-      if (!isAdminMode) {
+      if (!currentUser || (!isAdminMode && currentUser.role !== "ADMIN")) {
         showToast("🔒 เฉพาะหัวหน้างาน (Admin) เท่านั้นที่สามารถล้างประวัติการสลับเวรได้");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
         return;
       }
       const curYearAD = parseInt(document.getElementById("yearSelect").value, 10);
@@ -604,6 +630,11 @@ function clearSwapHistoryPrompt() {
      * Open Daily Swap Modal
      */
     function openDailySwapModal(preselectAgent = "", preselectDate = null) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับกะรายวัน");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       if (isViewingOriginal) {
         showToast("ℹ️ กำลังดูตารางต้นฉบับ ไม่สามารถสลับเวรได้ กรุณาสลับไปดูตารางปัจจุบัน");
         return;
@@ -611,6 +642,9 @@ function clearSwapHistoryPrompt() {
       if (!allowUserSwap && !isAdminMode) {
         showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวรแล้ว หากจำเป็นต้องสลับกรุณาแจ้งหัวหน้างาน");
         return;
+      }
+      if (!preselectAgent && currentUser && currentUser.role !== "ADMIN") {
+        preselectAgent = currentUser.username;
       }
 
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
@@ -809,6 +843,16 @@ function clearSwapHistoryPrompt() {
     }
 
     function executeDailySwap() {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับกะรายวัน");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
+      if (!allowUserSwap && !isAdminMode) {
+        showToast("🔒 ขณะนี้ระบบปิดรับการสลับเวรแล้ว");
+        return;
+      }
+
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const dayA = parseInt(document.getElementById("dailySwapDateSelect").value, 10);
@@ -833,6 +877,15 @@ function clearSwapHistoryPrompt() {
       if (itemA.agent === itemB.agent) {
         showToast("⚠️ ไม่สามารถสลับกะกับตนเองได้");
         return;
+      }
+
+      // Member mode: must involve current user
+      if (!isAdminMode && currentUser.role !== "ADMIN") {
+        if (itemA.agent !== currentUser.username && itemB.agent !== currentUser.username) {
+          const myName = currentUser.nameTH || currentUser.username;
+          showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
+          return;
+        }
       }
 
       let isCrossDay = false;
@@ -931,6 +984,11 @@ function clearSwapHistoryPrompt() {
 
     
         function deleteDailySwap(swapId) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการยกเลิกการสลับเวร");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       let targetMonthKey = null;
       let removed = null;
 
@@ -961,6 +1019,20 @@ function clearSwapHistoryPrompt() {
       if (!removed) {
         showToast("⚠️ ไม่พบรายการสลับกะรายวัน หรือรายการนี้ถูกยกเลิกไปแล้ว");
         return;
+      }
+
+      // Member mode: Can only delete swap involving self
+      if (!isAdminMode && currentUser.role !== "ADMIN") {
+        const myUser = currentUser.username;
+        const myName = currentUser.nameTH;
+        const involved = (removed.agentAName === myUser || removed.agentBName === myUser || removed.agentAName === myName || removed.agentBName === myName);
+        if (!involved) {
+          showToast(`⚠️ ท่านสามารถยกเลิกได้เฉพาะรายการสลับเวรที่ตนเอง (คุณ${myName || myUser}) มีส่วนเกี่ยวข้องเท่านั้น`);
+          // Restore back
+          const mData = monthSchedules[targetMonthKey];
+          if (mData && Array.isArray(mData.dailySwaps)) mData.dailySwaps.push(removed);
+          return;
+        }
       }
 
       const now = new Date();
@@ -1453,6 +1525,7 @@ function renderActiveDailySwapsList() {
 
     function executeSwapHubSwap() {
       if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการสลับเวร");
         if (typeof openLoginGateModal === "function") openLoginGateModal();
         return;
       }
@@ -1470,6 +1543,15 @@ function renderActiveDailySwapsList() {
       if (!agA || !agB || agA === agB) {
         showToast("⚠️ กรุณาเลือกผู้ขอสลับ และ เพื่อนร่วมงานที่ต้องการสลับด้วยให้ถูกต้อง");
         return;
+      }
+
+      // Member mode: Must involve the logged-in user
+      if (!isAdminMode && currentUser.role !== "ADMIN") {
+        if (agA !== currentUser.username && agB !== currentUser.username) {
+          const myName = currentUser.nameTH || currentUser.username;
+          showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
+          return;
+        }
       }
 
       const itemA = swapHubWorkingAgents.find(it => it.agent === agA);
@@ -1635,6 +1717,11 @@ function renderActiveDailySwapsList() {
     
         function revertSwapRecord(swapId) {
       if (!swapId) return;
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการยกเลิกการสลับเวร");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
 
       // 1. Check if it's in dailySwaps across any month
       for (const k of Object.keys(monthSchedules)) {
@@ -1740,6 +1827,11 @@ function renderActiveDailySwapsList() {
     }
 
 function revertWeeklySwap(historyId) {
+      if (!currentUser) {
+        showToast("🔒 กรุณาเข้าสู่ระบบ (Login) ก่อนดำเนินการยกเลิกการสลับเวร");
+        if (typeof openLoginGateModal === "function") openLoginGateModal();
+        return;
+      }
       const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
       const month = parseInt(document.getElementById("monthSelect").value, 10);
       const key = `${yearAD}-${month}`;
