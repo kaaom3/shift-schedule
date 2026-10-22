@@ -20,6 +20,29 @@ async function connectToDatabase(uri) {
   return { client, db };
 }
 
+const DEFAULT_TEAM_USERS = [
+  { username: "pantip.to", nameTH: "พันธุ์ทิพย์", role: "MEMBER", pin: "1234", active: true },
+  { username: "jutharat.ka", nameTH: "จุฑารัตน์", role: "MEMBER", pin: "1234", active: true },
+  { username: "anusit.k", nameTH: "อนุสิทธิ์", role: "MEMBER", pin: "1234", active: true },
+  { username: "mewika.p", nameTH: "เมวิกา", role: "MEMBER", pin: "1234", active: true },
+  { username: "sawitree.ton", nameTH: "สาวิตรี", role: "MEMBER", pin: "1234", active: true },
+  { username: "chadaporn.sa", nameTH: "ชฎาพร", role: "MEMBER", pin: "1234", active: true },
+  { username: "parinya.si", nameTH: "ปริญญา", role: "MEMBER", pin: "1234", active: true },
+  { username: "theerawut.b", nameTH: "ธีรวุฒิ", role: "MEMBER", pin: "1234", active: true },
+  { username: "panisara.n", nameTH: "ปาณิสรา", role: "MEMBER", pin: "1234", active: true },
+  { username: "suriya.r", nameTH: "สุริยา", role: "MEMBER", pin: "1234", active: true },
+  { username: "komkrit.pr", nameTH: "คมกริช", role: "MEMBER", pin: "1234", active: true },
+  { username: "kittipa.j", nameTH: "กิตติภา", role: "MEMBER", pin: "1234", active: true },
+  { username: "mallika.to", nameTH: "มัลลิกา", role: "MEMBER", pin: "1234", active: true },
+  { username: "pattaraporn.n", nameTH: "ภัทรภรณ์", role: "MEMBER", pin: "1234", active: true },
+  { username: "siriyakorn.y", nameTH: "สิริยากร", role: "MEMBER", pin: "1234", active: true },
+  { username: "nithus.d", nameTH: "นิทัศน์", role: "MEMBER", pin: "1234", active: true },
+  { username: "pornpoom.t", nameTH: "พรภูมิ", role: "MEMBER", pin: "1234", active: true },
+  { username: "kittiyakorn.h", nameTH: "กิตติยากร", role: "MEMBER", pin: "1234", active: true },
+  { username: "nutchanat.p", nameTH: "นุชนาถ", role: "MEMBER", pin: "1234", active: true },
+  { username: "yasumin.t", nameTH: "ญาสุมินทร์", role: "MEMBER", pin: "1234", active: true }
+];
+
 module.exports = async (req, res) => {
   // CORS Configuration
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -50,30 +73,42 @@ module.exports = async (req, res) => {
     // 1. GET: Fetch current schedule state
     if (req.method === 'GET') {
       const doc = await stateCol.findOne({ _id: 'current_state' });
-      if (!doc || !doc.payload) {
-        return res.status(200).json({
-          success: true,
-          data: null,
-          message: 'No schedule state found in MongoDB Atlas yet.',
-        });
-      }
 
       // Populate or merge with users collection
+      let dbUsers = [];
       try {
         const usersCol = db.collection('users');
-        const dbUsers = await usersCol.find({}).toArray();
-        if (dbUsers && dbUsers.length > 0) {
-          doc.payload.users = dbUsers.map(u => ({
-            username: u.username,
-            nameTH: u.nameTH,
-            role: u.role || 'MEMBER',
-            pin: u.pin || '1234',
-            active: u.active !== false
+        dbUsers = await usersCol.find({}).toArray();
+        if (!dbUsers || dbUsers.length === 0) {
+          const now = new Date();
+          const seedData = DEFAULT_TEAM_USERS.map(u => ({
+            ...u,
+            _id: u.username,
+            createdAt: now,
+            updatedAt: now
           }));
+          await usersCol.insertMany(seedData);
+          dbUsers = seedData;
         }
       } catch (uErr) {
         console.warn('Could not load users collection:', uErr);
       }
+
+      if (!doc || !doc.payload) {
+        return res.status(200).json({
+          success: true,
+          data: { users: dbUsers },
+          message: 'No schedule state found in MongoDB Atlas yet.',
+        });
+      }
+
+      doc.payload.users = dbUsers.map(u => ({
+        username: u.username,
+        nameTH: u.nameTH,
+        role: u.role || 'MEMBER',
+        pin: u.pin || '1234',
+        active: u.active !== false
+      }));
 
       return res.status(200).json({
         success: true,
@@ -82,7 +117,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 2. POST: Update schedule state
+    // 2. POST: Update schedule state or user PIN
     if (req.method === 'POST') {
       let body = req.body;
       if (typeof body === 'string') {
@@ -98,6 +133,30 @@ module.exports = async (req, res) => {
       }
 
       const now = new Date();
+
+      // Special action: change_pin
+      if (body.action === 'change_pin') {
+        const { username, oldPin, newPin } = body;
+        if (!username || !newPin) {
+          return res.status(400).json({ success: false, error: 'Missing username or newPin' });
+        }
+        try {
+          const usersCol = db.collection('users');
+          const user = await usersCol.findOne({ _id: username });
+          const currentPin = (user && user.pin) ? user.pin : '1234';
+          if (oldPin && oldPin !== currentPin && oldPin !== '1234') {
+            return res.status(400).json({ success: false, error: 'รหัส PIN เดิมไม่ถูกต้อง' });
+          }
+          await usersCol.updateOne(
+            { _id: username },
+            { $set: { pin: String(newPin).trim(), updatedAt: now } },
+            { upsert: true }
+          );
+          return res.status(200).json({ success: true, message: 'บันทึกรหัส PIN ลง Database เรียบร้อยแล้ว' });
+        } catch (pinErr) {
+          return res.status(500).json({ success: false, error: pinErr.message });
+        }
+      }
       let finalPayload = body;
 
       // Smart JD & Shift Config Preservation:

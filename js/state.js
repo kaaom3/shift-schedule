@@ -91,7 +91,7 @@
         const apiBase = (typeof defaultApiEndpoint !== "undefined" && defaultApiEndpoint.includes("github.io"))
           ? "https://shift-schedule-f6di.vercel.app"
           : "";
-        await fetch(`${apiBase}/api/users`, {
+        await fetch(`${apiBase}/api/schedule`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
