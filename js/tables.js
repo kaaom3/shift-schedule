@@ -270,7 +270,7 @@ function renderMasterWeekdayTable() {
 
       const renderSingleSlotTag = (n, sIdx) => {
         if (!n) return "-";
-        const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
+        const isHighlight = highlightedAgent !== "ALL" && (n === highlightedAgent || (typeof isSameAgent === "function" && isSameAgent(n, highlightedAgent))) ? "highlight-user" : "";
         const isSelected = pendingSwapSlot && pendingSwapSlot.yearAD === yearAD && pendingSwapSlot.month === month && pendingSwapSlot.type === "WEEKDAY" && pendingSwapSlot.wIdx === wIdx && pendingSwapSlot.cIdx === cIdx && pendingSwapSlot.sIdx === sIdx ? "selected-for-swap" : "";
         
         // Check if swapped from original
@@ -318,7 +318,7 @@ function renderMasterWeekdayTable() {
           dailySwapBadgeHTML = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:8.5px; padding:1px 3px; margin-top:1px; display:inline-block; cursor:pointer;" onclick="event.stopPropagation(); openDailySwapModal('${n}')" title="มีสลับกะรายวันในสัปดาห์นี้ (คลิกเพื่อดูรายละเอียด)">🔀 สลับวัน</span>`;
         }
 
-        const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
+        const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agent: n, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
         return `<div style="margin-bottom:2px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
       };
 
@@ -420,7 +420,7 @@ function renderMasterHolidayTable() {
 
     for (let s = 0; s < 4; s++) {
       const n = h.shifts[s] || "-";
-      const isHighlight = highlightedAgent !== "ALL" && n === highlightedAgent ? "highlight-user" : "";
+      const isHighlight = highlightedAgent !== "ALL" && (n === highlightedAgent || (typeof isSameAgent === "function" && isSameAgent(n, highlightedAgent))) ? "highlight-user" : "";
       const isSelected = pendingSwapSlot && pendingSwapSlot.yearAD === yearAD && pendingSwapSlot.month === month && pendingSwapSlot.type === "HOLIDAY" && pendingSwapSlot.hIdx === hIdx && pendingSwapSlot.sIdx === s ? "selected-for-swap" : "";
       
       const origName = originalSchedule.holidays?.[hIdx]?.shifts?.[s];
@@ -449,7 +449,7 @@ function renderMasterHolidayTable() {
       else if (isLockedForUser) tagTitle = `🔒 ปิดรับการสลับเวรแล้ว (ดูได้อย่างเดียว)`;
       else if (isSwapped) tagTitle = `สลับมาจากคุณ${origName} (คลิกเพื่อสลับต่อได้)`;
 
-      const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agName: n, label: `${h.dayName} ${h.date}`, code: `H${s+1}` }).replace(/"/g, '&quot;');
+      const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agent: n, agName: n, label: `${h.dayName} ${h.date}`, code: `H${s+1}` }).replace(/"/g, '&quot;');
       html += `<td onmouseenter="showHolidayJdTooltip(event, ${hIdx}, ${s})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()">
         <div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</div>
       </td>`;

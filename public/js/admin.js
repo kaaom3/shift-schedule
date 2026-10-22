@@ -122,7 +122,8 @@
         showToast("⚠️ ไม่มีพนักงานในช่องนี้");
         return;
       }
-      if (!isAdminMode && currentUser.role !== "ADMIN" && agentName !== currentUser.username) {
+      const isSelf = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(agentName) : (agentName === currentUser.username);
+      if (!isAdminMode && currentUser.role !== "ADMIN" && !isSelf) {
         const myName = currentUser.nameTH || currentUser.username;
         showToast(`⚠️ ท่านสามารถลงบันทึกการลาเฉพาะของตนเอง (คุณ${myName}) เท่านั้น (หากลาแทนผู้อื่น กรุณาติดต่อหัวหน้างาน)`);
         return;

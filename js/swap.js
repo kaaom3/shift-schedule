@@ -19,7 +19,8 @@
       }
       // Member mode: First selected slot must be the user's own shift
       if (!isAdminMode && currentUser.role !== "ADMIN" && !pendingSwapSlot) {
-        if (slot.agent !== currentUser.username) {
+        const slotAgent = slot.agName || slot.agent;
+        if (typeof isCurrentUserAgent === "function" ? !isCurrentUserAgent(slotAgent) : (slotAgent !== currentUser.username)) {
           const myName = currentUser.nameTH || currentUser.username;
           showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) เท่านั้น`);
           return;
@@ -29,7 +30,9 @@
         // Step 1: Select person A
         pendingSwapSlot = slot;
         const monthShort = THAI_MONTHS_SHORT[slot.month];
-        document.getElementById("swapSelectedName").innerHTML = `คุณ${slot.agName} <span style="font-weight:normal; color:#fde047;">(${monthShort} ${slot.label || ''})</span>`;
+        const displayAgName = slot.agName || slot.agent;
+        const thDisplay = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[displayAgName]) ? AGENT_NAME_MAP[displayAgName] : displayAgName;
+        document.getElementById("swapSelectedName").innerHTML = `คุณ${thDisplay} <span style="font-weight:normal; color:#fde047;">(${monthShort} ${slot.label || ''})</span>`;
         document.getElementById("floating-swap-bar").classList.add("show");
         renderMasterWeekdayTable();
         renderMasterHolidayTable();
@@ -63,7 +66,13 @@
         return;
       }
       if (!isAdminMode && currentUser.role !== "ADMIN") {
-        if (slotA.agent !== currentUser.username && slotB.agent !== currentUser.username) {
+        const isUserA = (typeof isCurrentUserAgent === "function")
+          ? (isCurrentUserAgent(nameA) || isCurrentUserAgent(slotA.agName) || isCurrentUserAgent(slotA.agent))
+          : (slotA.agent === currentUser.username || nameA === currentUser.username);
+        const isUserB = (typeof isCurrentUserAgent === "function")
+          ? (isCurrentUserAgent(nameB) || isCurrentUserAgent(slotB.agName) || isCurrentUserAgent(slotB.agent))
+          : (slotB.agent === currentUser.username || nameB === currentUser.username);
+        if (!isUserA && !isUserB) {
           const myName = currentUser.nameTH || currentUser.username;
           showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
           return;
@@ -783,7 +792,7 @@ function clearSwapHistoryPrompt() {
         for (let i = 0; i < selectA.options.length; i++) {
           try {
             const data = JSON.parse(selectA.options[i].value);
-            if (data.agent === desiredAgentA) {
+            if ((typeof isSameAgent === "function" && isSameAgent(data.agent, desiredAgentA)) || data.agent === desiredAgentA) {
               selectA.selectedIndex = i;
               break;
             }
@@ -881,7 +890,9 @@ function clearSwapHistoryPrompt() {
 
       // Member mode: must involve current user
       if (!isAdminMode && currentUser.role !== "ADMIN") {
-        if (itemA.agent !== currentUser.username && itemB.agent !== currentUser.username) {
+        const isUserA = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(itemA.agent) : (itemA.agent === currentUser.username);
+        const isUserB = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(itemB.agent) : (itemB.agent === currentUser.username);
+        if (!isUserA && !isUserB) {
           const myName = currentUser.nameTH || currentUser.username;
           showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
           return;
@@ -1025,7 +1036,7 @@ function clearSwapHistoryPrompt() {
       if (!isAdminMode && currentUser.role !== "ADMIN") {
         const myUser = currentUser.username;
         const myName = currentUser.nameTH;
-        const involved = (removed.agentAName === myUser || removed.agentBName === myUser || removed.agentAName === myName || removed.agentBName === myName);
+        const involved = (typeof isCurrentUserAgent === "function") ? (isCurrentUserAgent(removed.agentAName) || isCurrentUserAgent(removed.agentBName) || isCurrentUserAgent(removed.agentA) || isCurrentUserAgent(removed.agentB)) : (removed.agentAName === myUser || removed.agentBName === myUser || removed.agentAName === myName || removed.agentBName === myName);
         if (!involved) {
           showToast(`⚠️ ท่านสามารถยกเลิกได้เฉพาะรายการสลับเวรที่ตนเอง (คุณ${myName || myUser}) มีส่วนเกี่ยวข้องเท่านั้น`);
           // Restore back
@@ -1266,7 +1277,7 @@ function renderActiveDailySwapsList() {
       });
 
       if (currentUser && currentUser.username) {
-        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        const match = swapHubWorkingAgents.find(it => (typeof isCurrentUserAgent === "function" ? isCurrentUserAgent(it.agent) : it.agent === currentUser.username));
         if (match) {
           selA.value = currentUser.username;
         }
@@ -1412,7 +1423,7 @@ function renderActiveDailySwapsList() {
       });
 
       if (currentUser && currentUser.username) {
-        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        const match = swapHubWorkingAgents.find(it => (typeof isCurrentUserAgent === "function" ? isCurrentUserAgent(it.agent) : it.agent === currentUser.username));
         if (match) selA.value = currentUser.username;
       }
 
@@ -1483,7 +1494,7 @@ function renderActiveDailySwapsList() {
       });
 
       if (currentUser && currentUser.username) {
-        const match = swapHubWorkingAgents.find(it => it.agent === currentUser.username);
+        const match = swapHubWorkingAgents.find(it => (typeof isCurrentUserAgent === "function" ? isCurrentUserAgent(it.agent) : it.agent === currentUser.username));
         if (match) selA.value = currentUser.username;
       }
 
@@ -1547,7 +1558,9 @@ function renderActiveDailySwapsList() {
 
       // Member mode: Must involve the logged-in user
       if (!isAdminMode && currentUser.role !== "ADMIN") {
-        if (agA !== currentUser.username && agB !== currentUser.username) {
+        const isUserA = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(agA) : (agA === currentUser.username);
+        const isUserB = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(agB) : (agB === currentUser.username);
+        if (!isUserA && !isUserB) {
           const myName = currentUser.nameTH || currentUser.username;
           showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
           return;

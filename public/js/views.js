@@ -538,7 +538,7 @@
 
         const avatarInitial = ag ? ag.substring(0, 2) : "ทีม";
 
-        const isMe = (typeof currentUser !== "undefined" && currentUser && currentUser.username === ag);
+        const isMe = (typeof isCurrentUserAgent === "function") ? isCurrentUserAgent(ag) : (typeof currentUser !== "undefined" && currentUser && currentUser.username === ag);
         const cardMeBadge = isMe ? `<span class="badge" style="background:#0284c7; color:white; font-size:10px; margin-left:6px; padding:2px 7px; border-radius:10px;">👤 การ์ดของคุณ</span>` : "";
 
         return `

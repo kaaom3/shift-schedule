@@ -60,6 +60,48 @@
       return "ผู้ใช้งานในระบบ";
     }
 
+    function isSameAgent(nameA, nameB) {
+      if (!nameA || !nameB) return false;
+      const a = String(nameA).trim();
+      const b = String(nameB).trim();
+      if (a === b) return true;
+      if (a.toLowerCase() === b.toLowerCase()) return true;
+
+      if (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP) {
+        if (AGENT_NAME_MAP[a] && AGENT_NAME_MAP[a].trim() === b) return true;
+        if (AGENT_NAME_MAP[a.toLowerCase()] && AGENT_NAME_MAP[a.toLowerCase()].trim() === b) return true;
+
+        if (AGENT_NAME_MAP[b] && AGENT_NAME_MAP[b].trim() === a) return true;
+        if (AGENT_NAME_MAP[b.toLowerCase()] && AGENT_NAME_MAP[b.toLowerCase()].trim() === a) return true;
+
+        const thA = AGENT_NAME_MAP[a] || AGENT_NAME_MAP[a.toLowerCase()];
+        const thB = AGENT_NAME_MAP[b] || AGENT_NAME_MAP[b.toLowerCase()];
+        if (thA && thB && thA.trim() === thB.trim()) return true;
+
+        for (const [enKey, thVal] of Object.entries(AGENT_NAME_MAP)) {
+          if (!enKey || !thVal) continue;
+          const en = enKey.trim().toLowerCase();
+          const th = String(thVal).trim();
+          const isAMatch = (a.toLowerCase() === en || a === th);
+          const isBMatch = (b.toLowerCase() === en || b === th);
+          if (isAMatch && isBMatch) return true;
+        }
+      }
+
+      return false;
+    }
+
+    function isCurrentUserAgent(agentName) {
+      if (!currentUser) return false;
+      if (isAdminMode || currentUser.role === "ADMIN") return true;
+      if (!agentName) return false;
+
+      if (currentUser.username && isSameAgent(agentName, currentUser.username)) return true;
+      if (currentUser.nameTH && isSameAgent(agentName, currentUser.nameTH)) return true;
+
+      return false;
+    }
+
     function updateUserProfileHeaderUI() {
       const nameEl = document.getElementById("headerUserName");
       const roleEl = document.getElementById("headerUserRoleBadge");
@@ -550,6 +592,8 @@
     // Window bindings for inline handlers
     if (typeof window !== "undefined") {
       window.currentUser = currentUser;
+      window.isSameAgent = isSameAgent;
+      window.isCurrentUserAgent = isCurrentUserAgent;
       window.getCurrentOperatorName = getCurrentOperatorName;
       window.checkLoginGate = checkLoginGate;
       window.openLoginGateModal = openLoginGateModal;
