@@ -336,14 +336,14 @@
     table.roster-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 11.5px;
+      font-size: 11px;
       text-align: center;
     }
 
     table.roster-table th, 
     table.roster-table td {
       border: 1px solid var(--border);
-      padding: 5px 6px;
+      padding: 4px 3px;
       vertical-align: middle;
     }
 
@@ -351,24 +351,24 @@
       background: #0f172a;
       color: #ffffff;
       font-weight: 600;
-      font-size: 11.5px;
-      padding: 8px 6px;
+      font-size: 11px;
+      padding: 6px 3px;
     }
 
     table.roster-table thead tr:nth-child(2) th {
       background: #1e293b;
       color: #fde047;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 500;
-      padding: 6px 4px;
+      padding: 4px 2px;
     }
 
     table.roster-table thead tr:nth-child(3) th {
       background: #f1f5f9;
       color: #1e293b;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 6px 4px;
+      padding: 4px 2px;
     }
 
     table.roster-table tbody tr:hover {
@@ -379,76 +379,91 @@
       background: #f1f5f9;
       color: var(--primary);
       font-weight: 700;
-      font-size: 12px;
-      padding: 8px;
-      white-space: nowrap;
+      font-size: 10.5px;
+      padding: 4px 2px;
+      white-space: normal;
+      line-height: 1.25;
     }
 
     #masterWeekdayTable {
-      min-width: 1750px;
+      width: 100%;
+      table-layout: auto;
     }
     #masterWeekdayTable th,
     #masterWeekdayTable td {
-      min-width: 95px;
+      min-width: 62px;
+      padding: 3px 2px;
+      font-size: 10.5px;
     }
-    #masterWeekdayTable th:first-child,
-    #masterWeekdayTable td:first-child {
-      min-width: 110px;
+    #masterWeekdayTable thead tr:first-child th:first-child,
+    #masterWeekdayTable td.week-col-badge {
+      min-width: 76px;
+      width: 76px;
+      max-width: 85px;
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: #f8fafc;
+      box-shadow: 2px 0 4px rgba(0, 0, 0, 0.06);
+    }
+    #masterWeekdayTable thead tr:first-child th:first-child {
+      z-index: 15;
+      background: #0f172a;
+      color: #ffffff;
     }
 
     .jd-row td {
-      font-size: 12px;
+      font-size: 9.5px;
       color: #0f172a;
       text-align: left;
       background: #f1f5f9 !important;
-      line-height: 1.5;
-      padding: 6px 6px !important;
+      line-height: 1.35;
+      padding: 3px 3px !important;
       vertical-align: top;
       border-top: 1px dashed #93c5fd !important;
       border-bottom: 2px solid #cbd5e1 !important;
-      min-width: 105px;
-      word-break: keep-all;
+      min-width: 62px;
+      word-break: break-word;
       overflow-wrap: break-word;
-      line-break: loose;
       white-space: normal;
     }
 
     .jd-card-inner {
       background: #ffffff;
       border: 1px solid #bfdbfe;
-      border-left: 3.5px solid #2563eb;
-      border-radius: 6px;
-      padding: 7px 9px;
-      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+      border-left: 3px solid #2563eb;
+      border-radius: 4px;
+      padding: 4px 5px;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
       min-height: 100%;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     .jd-card-inner:hover {
       border-color: #60a5fa;
       border-left-color: #1d4ed8;
-      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
     }
 
     .jd-card-header {
-      font-size: 9.5px;
+      font-size: 8.5px;
       font-weight: 700;
       color: #2563eb;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 4px;
-      padding-bottom: 3px;
+      letter-spacing: 0.2px;
+      margin-bottom: 3px;
+      padding-bottom: 2px;
       border-bottom: 1px dashed #dbeafe;
     }
 
     .jd-line-item {
       position: relative;
-      padding-left: 14px;
-      margin-bottom: 4px;
-      line-height: 1.5;
+      padding-left: 10px;
+      margin-bottom: 2px;
+      line-height: 1.35;
       color: #0f172a;
-      font-size: 12px;
+      font-size: 9.5px;
       font-weight: 600;
-      word-break: keep-all;
+      word-break: break-word;
       overflow-wrap: break-word;
       white-space: normal;
     }
@@ -461,21 +476,21 @@
       left: 0;
       top: -1px;
       color: #2563eb;
-      font-size: 15px;
+      font-size: 11px;
       font-weight: 800;
       line-height: 1.3;
     }
 
     .break-subgroup-pill {
       display: inline-block;
-      font-size: 9.5px;
+      font-size: 8.5px;
       font-weight: 700;
       color: #9a3412;
       background: #fef3c7;
       border: 1px solid #fde68a;
-      border-radius: 4px;
-      padding: 1px 5px;
-      line-height: 1.35;
+      border-radius: 3px;
+      padding: 0px 4px;
+      line-height: 1.3;
       white-space: nowrap;
     }
 
@@ -486,18 +501,20 @@
     /* Clean Interactive Name Tags (Direct Click to Swap) */
     .name-tag {
       display: inline-block;
-      padding: 3px 8px;
-      margin: 2px 0;
+      padding: 2px 5px;
+      margin: 1px 0;
       background: #ffffff;
       color: #1e3a8a;
       border: 1px solid #bfdbfe;
-      border-radius: 6px;
+      border-radius: 4px;
       font-weight: 600;
-      font-size: 12px;
+      font-size: 10.5px;
       cursor: pointer;
       transition: all 0.15s ease;
       user-select: none;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      white-space: nowrap;
+      letter-spacing: -0.2px;
     }
 
     .name-tag:hover {
@@ -1260,16 +1277,17 @@
     .leave-chip {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      font-size: 9.5px;
+      gap: 2px;
+      font-size: 8.5px;
       font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 4px;
-      margin-top: 3px;
+      padding: 0px 4px;
+      border-radius: 3px;
+      margin-top: 1px;
       vertical-align: middle;
       white-space: nowrap;
       cursor: pointer;
       transition: all 0.15s ease;
+      line-height: 1.3;
     }
     .leave-chip:hover {
       transform: translateY(-1px);

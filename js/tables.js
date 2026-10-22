@@ -194,16 +194,16 @@ function renderMasterWeekdayTable() {
   let html = `
     <thead>
       <tr>
-        <th rowspan="4" style="width: 110px;">สัปดาห์</th>
-        ${WEEKDAY_COLUMNS.map((c, idx) => `<th>ช่องที่ ${idx + 1}</th>`).join("")}
+        <th rowspan="4" style="width: 76px; min-width: 76px; max-width: 85px; font-size: 10.5px; padding: 4px 2px;">สัปดาห์</th>
+        ${WEEKDAY_COLUMNS.map((c, idx) => `<th style="font-size: 10.5px; padding: 4px 2px; white-space: nowrap;">ช่อง ${idx + 1}</th>`).join("")}
       </tr>
       <tr>
         ${WEEKDAY_COLUMNS.map(c => {
           const times = getShiftTimes(c);
           if (times.length > 1) {
-            return `<th style="line-height:1.2; font-size:10.5px; padding:3px 2px;">${times.map(t => `<div style="white-space:nowrap; margin:1px 0;">⏱️ ${t}</div>`).join("")}</th>`;
+            return `<th style="line-height:1.15; font-size:9.5px; padding:2px 1px;">${times.map(t => `<div style="white-space:nowrap; margin:1px 0;">⏱️ ${t}</div>`).join("")}</th>`;
           }
-          return `<th>${c.time || (times[0] || '')}</th>`;
+          return `<th style="font-size:9.5px; padding:2px 1px; white-space:nowrap; line-height:1.15;">${c.time || (times[0] || '')}</th>`;
         }).join("")}
       </tr>
       <tr>
@@ -211,26 +211,26 @@ function renderMasterWeekdayTable() {
           const breaks = getShiftBreakTimes(c);
           if (breaks.length > 1) {
             const totalSlots = c.slots || 1;
-            return `<th style="line-height:1.25; font-size:10.5px; padding: 4px 2px;">${breaks.map((b, bIdx) => {
+            return `<th style="line-height:1.15; font-size:9px; padding: 2px 1px;">${breaks.map((b, bIdx) => {
               let countNote = "";
               if (totalSlots > 1) {
                 const slotsPerBreak = Math.ceil(totalSlots / breaks.length);
                 const count = Math.min(slotsPerBreak, totalSlots - bIdx * slotsPerBreak);
-                if (count > 0 && totalSlots > breaks.length) countNote = ` (${count} คน)`;
+                if (count > 0 && totalSlots > breaks.length) countNote = ` (${count}คน)`;
               }
-              return `<div style="color:${bIdx === 0 ? '#b45309' : '#d97706'}; font-weight:600; margin:1px 0;">☕ ${b}${countNote}</div>`;
+              return `<div style="color:${bIdx === 0 ? '#b45309' : '#d97706'}; font-weight:600; margin:1px 0; white-space:nowrap;">☕ ${b}${countNote}</div>`;
             }).join("")}</th>`;
           }
-          return `<th>${c.breakTime || (breaks[0] || '')}</th>`;
+          return `<th style="font-size:9px; padding:2px 1px; white-space:nowrap; line-height:1.15;">${c.breakTime || (breaks[0] || '')}</th>`;
         }).join("")}
       </tr>
       <tr>
         ${WEEKDAY_COLUMNS.map(c => {
           const roles = getShiftRoles(c);
           if (roles.length > 1) {
-            return `<th style="line-height:1.25; padding:3px 2px;">${roles.map(r => `<span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10.5px; padding:1px 5px; margin:1px; display:inline-block; border-radius:4px;">${r}</span>`).join("")}</th>`;
+            return `<th style="line-height:1.15; padding:2px 1px;">${roles.map(r => `<span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:9px; padding:1px 3px; margin:1px 0; display:inline-block; border-radius:3px;">${r}</span>`).join("")}</th>`;
           }
-          return `<th>${c.role || (roles[0] || '')}</th>`;
+          return `<th style="font-size:9.5px; padding:2px 1px; line-height:1.15;">${c.role || (roles[0] || '')}</th>`;
         }).join("")}
       </tr>
     </thead>
@@ -247,10 +247,10 @@ function renderMasterWeekdayTable() {
 
     let weekLabelHTML = formatWeekLabel(w.label);
     if (hasCustomTimes) {
-      weekLabelHTML += `<br><span class="week-custom-badge" title="มีการปรับเปลี่ยนเวลาทำงานเฉพาะสัปดาห์นี้">⚡ ปรับเวลาพิเศษ</span>`;
+      weekLabelHTML += `<br><span class="week-custom-badge" style="font-size:9px; padding:1px 3px;" title="มีการปรับเปลี่ยนเวลาทำงานเฉพาะสัปดาห์นี้">⚡ ปรับเวลา</span>`;
     }
     if (isAdminMode) {
-      weekLabelHTML += `<br><button class="btn btn-outline btn-sm" onclick="openWeekTimeModal(${wIdx})" style="font-size:10.5px; padding:2px 6px; margin-top:4px;" title="ปรับเวลาทำงานเฉพาะสัปดาห์นี้">⏱️ ปรับเวลา</button>`;
+      weekLabelHTML += `<br><button class="btn btn-outline btn-sm" onclick="openWeekTimeModal(${wIdx})" style="font-size:9px; padding:1px 4px; margin-top:3px;" title="ปรับเวลาทำงานเฉพาะสัปดาห์นี้">⏱️ ปรับเวลา</button>`;
     }
 
     html += `<tr>`;
@@ -315,11 +315,11 @@ function renderMasterWeekdayTable() {
           return isAg && ((weekDays.length > 0 && (weekDays.includes(sw.dateA) || weekDays.includes(sw.dateB))) || (wA === wIdx || wB === wIdx));
         });
         if (hasDailySwap) {
-          dailySwapBadgeHTML = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:9.5px; padding:1px 5px; margin-left:3px; cursor:pointer;" onclick="event.stopPropagation(); openDailySwapModal('${n}')" title="มีสลับกะรายวันในสัปดาห์นี้ (คลิกเพื่อดูรายละเอียด)">🔀 สลับรายวัน</span>`;
+          dailySwapBadgeHTML = `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:8.5px; padding:1px 3px; margin-top:1px; display:inline-block; cursor:pointer;" onclick="event.stopPropagation(); openDailySwapModal('${n}')" title="มีสลับกะรายวันในสัปดาห์นี้ (คลิกเพื่อดูรายละเอียด)">🔀 สลับวัน</span>`;
         }
 
         const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-        return `<div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
+        return `<div style="margin-bottom:2px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
       };
 
       let tagsHTML = "";
