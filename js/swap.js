@@ -65,6 +65,26 @@
         if (typeof openLoginGateModal === "function") openLoginGateModal();
         return;
       }
+
+      const mDataA = getOrInitMonthSchedule(slotA.yearAD, slotA.month);
+      const mDataB = getOrInitMonthSchedule(slotB.yearAD, slotB.month);
+
+      // 1. Retrieve Person A name
+      let nameA = "";
+      if (slotA.type === "WEEKDAY") {
+        nameA = mDataA.schedule.weeks[slotA.wIdx]?.assignments?.[slotA.cIdx]?.[slotA.sIdx] || slotA.agent || slotA.agName || "";
+      } else {
+        nameA = mDataA.schedule.holidays[slotA.hIdx]?.shifts?.[slotA.sIdx] || slotA.agent || slotA.agName || "";
+      }
+
+      // 2. Retrieve Person B name
+      let nameB = "";
+      if (slotB.type === "WEEKDAY") {
+        nameB = mDataB.schedule.weeks[slotB.wIdx]?.assignments?.[slotB.cIdx]?.[slotB.sIdx] || slotB.agent || slotB.agName || "";
+      } else {
+        nameB = mDataB.schedule.holidays[slotB.hIdx]?.shifts?.[slotB.sIdx] || slotB.agent || slotB.agName || "";
+      }
+
       if (!isAdminMode && currentUser.role !== "ADMIN") {
         const isUserA = (typeof isCurrentUserAgent === "function")
           ? (isCurrentUserAgent(nameA) || isCurrentUserAgent(slotA.agName) || isCurrentUserAgent(slotA.agent))
@@ -77,24 +97,6 @@
           showToast(`⚠️ ท่านสามารถเลือกสลับเฉพาะกะของตนเอง (คุณ${myName}) กับเพื่อนร่วมงานเท่านั้น`);
           return;
         }
-      }
-      const mDataA = getOrInitMonthSchedule(slotA.yearAD, slotA.month);
-      const mDataB = getOrInitMonthSchedule(slotB.yearAD, slotB.month);
-
-      // 1. Retrieve Person A name
-      let nameA = "";
-      if (slotA.type === "WEEKDAY") {
-        nameA = mDataA.schedule.weeks[slotA.wIdx].assignments[slotA.cIdx][slotA.sIdx];
-      } else {
-        nameA = mDataA.schedule.holidays[slotA.hIdx].shifts[slotA.sIdx];
-      }
-
-      // 2. Retrieve Person B name
-      let nameB = "";
-      if (slotB.type === "WEEKDAY") {
-        nameB = mDataB.schedule.weeks[slotB.wIdx].assignments[slotB.cIdx][slotB.sIdx];
-      } else {
-        nameB = mDataB.schedule.holidays[slotB.hIdx].shifts[slotB.sIdx];
       }
 
       // 3. Execute swap across slots
