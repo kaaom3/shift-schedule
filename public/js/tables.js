@@ -319,7 +319,8 @@ function renderMasterWeekdayTable() {
         }
 
         const slotJson = JSON.stringify({ yearAD, month, type: "WEEKDAY", wIdx, cIdx, sIdx, agent: n, agName: n, label: w.label, code: col.code }).replace(/"/g, '&quot;');
-        return `<div style="margin-bottom:2px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span> ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
+        const adminEditBtn = isAdminMode ? `<button type="button" class="admin-slot-edit-btn admin-only" onclick="event.stopPropagation(); openAdminSlotEditModal(${slotJson})" title="Admin: แก้ไขเปลี่ยนคนเข้ากะนี้ (ไม่แสดงสีสลับ)">✏️</button>` : "";
+        return `<div style="margin-bottom:2px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminEditBtn} ${leaveChipHTML} ${dailySwapBadgeHTML}</div>`;
       };
 
       let tagsHTML = "";
@@ -450,8 +451,9 @@ function renderMasterHolidayTable() {
       else if (isSwapped) tagTitle = `ส่งมอบ/แทนมาจากคุณ${origName} (คลิกเพื่อแลกเวรต่อได้)`;
 
       const slotJson = JSON.stringify({ yearAD, month, type: "HOLIDAY", hIdx, sIdx: s, agent: n, agName: n, label: `${h.dayName} ${h.date}`, code: `H${s+1}` }).replace(/"/g, '&quot;');
+      const adminEditBtn = isAdminMode ? `<button type="button" class="admin-slot-edit-btn admin-only" onclick="event.stopPropagation(); openAdminSlotEditModal(${slotJson})" title="Admin: แก้ไขเปลี่ยนคนเข้ากะนี้ (ไม่แสดงสีสลับ)">✏️</button>` : "";
       html += `<td onmouseenter="showHolidayJdTooltip(event, ${hIdx}, ${s})" onmousemove="moveJdTooltip(event)" onmouseleave="hideJdTooltip()">
-        <div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminLeaveAddBtn} ${leaveChipHTML}</div>
+        <div style="margin-bottom:3px;"><span class="name-tag ${isHighlight} ${isSelected} ${swapClass} ${lockedClass} ${hasLeaveClass}" onclick="handleTagClickDirect(${slotJson})" title="${tagTitle}">${n}</span>${adminEditBtn}${adminLeaveAddBtn} ${leaveChipHTML}</div>
       </td>`;
     }
 

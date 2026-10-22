@@ -4,6 +4,28 @@
 
     // DIRECT CLICK TO SWAP LOGIC
     function handleTagClickDirect(slot) {
+      // In Admin Mode: clicking any slot tag opens Admin Manual Adjust directly!
+      if (isAdminMode || (currentUser && currentUser.role === "ADMIN")) {
+        if (pendingSwapSlot) {
+          // In 2-step swap mode: execute swap if clicked on slot B
+          if (pendingSwapSlot.yearAD === slot.yearAD &&
+              pendingSwapSlot.month === slot.month &&
+              pendingSwapSlot.type === slot.type &&
+              pendingSwapSlot.wIdx === slot.wIdx &&
+              pendingSwapSlot.cIdx === slot.cIdx &&
+              pendingSwapSlot.sIdx === slot.sIdx &&
+              pendingSwapSlot.hIdx === slot.hIdx) {
+            cancelPendingSwap();
+            return;
+          }
+          executeSwapDirect(pendingSwapSlot, slot);
+          return;
+        }
+
+        openAdminSlotEditModal(slot);
+        return;
+      }
+
       // Holiday Shift Handover (1-Way Substitution)
       if (slot.type === "HOLIDAY") {
         if (pendingSwapSlot) cancelPendingSwap();

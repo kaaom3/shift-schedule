@@ -2399,3 +2399,27 @@
     gap: 8px;
   }
 }
+
+/* Admin Direct Slot Edit Button */
+.admin-slot-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 4px;
+  margin-left: 3px;
+  cursor: pointer;
+  color: #0369a1;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+  line-height: 1.2;
+}
+.admin-slot-edit-btn:hover {
+  background: #e0f2fe;
+  border-color: #38bdf8;
+  color: #0284c7;
+  transform: scale(1.15);
+}

@@ -877,6 +877,425 @@
     }
 
 
+    
+    // =========================================================================
+    // ADMIN MANUAL SHIFT ADJUSTMENT (DIRECT REASSIGN / SWAP AS BASELINE)
+    // =========================================================================
+
+    let currentEditingSlot = null;
+
+    function openAdminSlotEditModal(slot) {
+      if (!slot) return;
+      currentEditingSlot = slot;
+
+      const yearAD = slot.yearAD;
+      const month = slot.month;
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      const sched = mData.schedule;
+
+      let currentAgent = slot.agName || slot.agent;
+      let timeStr = "";
+      let roleStr = "";
+      let titleStr = "";
+
+      if (slot.type === "WEEKDAY") {
+        const w = sched.weeks && sched.weeks[slot.wIdx];
+        const col = WEEKDAY_COLUMNS[slot.cIdx];
+        currentAgent = (w && w.assignments && w.assignments[slot.cIdx] && w.assignments[slot.cIdx][slot.sIdx]) || currentAgent;
+        timeStr = col ? col.time : "";
+        roleStr = col ? col.role : "";
+        titleStr = `สัปดาห์ที่ ${slot.wIdx + 1} (${w ? w.label : ''}) • ช่องที่ ${slot.cIdx + 1} (${col ? col.role : ''})`;
+      } else if (slot.type === "HOLIDAY") {
+        const h = sched.holidays && sched.holidays[slot.hIdx];
+        const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[slot.sIdx]) ? HOLIDAY_SHIFT_META[slot.sIdx] : {};
+        currentAgent = (h && h.shifts && h.shifts[slot.sIdx]) || currentAgent;
+        timeStr = meta.time || "09.00-18.00 น.";
+        roleStr = meta.role || `กะที่ ${slot.sIdx + 1}`;
+        titleStr = `${h ? h.dayName : ''}ที่ ${h ? h.date : ''} (${h ? h.holidayName : 'วันหยุด'}) • กะที่ ${slot.sIdx + 1}`;
+      }
+
+      const thCurrent = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[currentAgent]) ? AGENT_NAME_MAP[currentAgent] : currentAgent;
+
+      const titleEl = document.getElementById("adminSlotInfoTitle");
+      const detailEl = document.getElementById("adminSlotInfoDetail");
+      if (titleEl) titleEl.textContent = titleStr;
+      if (detailEl) {
+        detailEl.innerHTML = `
+          🕒 เวลาทำงาน: <strong>${timeStr}</strong> | 📌 หน้าที่: <strong>${roleStr}</strong><br>
+          👤 ผู้เข้าเวรปัจจุบัน: <strong style="color:#0369a1;">คุณ${thCurrent} (${currentAgent})</strong>
+        `;
+      }
+
+      // Reset Mode to DIRECT
+      const radios = document.getElementsByName("adminSlotMode");
+      radios.forEach(r => { if (r.value === "DIRECT") r.checked = true; });
+      onAdminSlotModeChange();
+
+      // Populate New Agent Select with all agents
+      const newAgentSelect = document.getElementById("adminSlotNewAgentSelect");
+      if (newAgentSelect) {
+        newAgentSelect.innerHTML = "";
+        const allAgents = [...(typeof AGENTS !== "undefined" ? AGENTS : [])];
+        allAgents.sort((a, b) => {
+          const na = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[a]) ? AGENT_NAME_MAP[a] : a;
+          const nb = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[b]) ? AGENT_NAME_MAP[b] : b;
+          return na.localeCompare(nb, 'th');
+        });
+
+        allAgents.forEach(ag => {
+          const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[ag]) ? AGENT_NAME_MAP[ag] : ag;
+          const opt = document.createElement("option");
+          opt.value = ag;
+          opt.textContent = `คุณ${th} (${ag})${ag === currentAgent ? ' [คนปัจจุบัน]' : ''}`;
+          newAgentSelect.appendChild(opt);
+        });
+        newAgentSelect.value = currentAgent;
+      }
+
+      // Populate Swap Target Select (other slots in same week or holiday)
+      const swapTargetSelect = document.getElementById("adminSlotSwapTargetSelect");
+      if (swapTargetSelect) {
+        swapTargetSelect.innerHTML = "";
+        if (slot.type === "WEEKDAY") {
+          const w = sched.weeks && sched.weeks[slot.wIdx];
+          if (w && w.assignments) {
+            WEEKDAY_COLUMNS.forEach((col, cIdx) => {
+              const names = w.assignments[cIdx] || [];
+              names.forEach((n, sIdx) => {
+                if (cIdx === slot.cIdx && sIdx === slot.sIdx) return; // skip self
+                const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[n]) ? AGENT_NAME_MAP[n] : n;
+                const opt = document.createElement("option");
+                opt.value = JSON.stringify({ cIdx, sIdx, agent: n });
+                opt.textContent = `คุณ${th} - ${col.role} [${col.time}] (ช่องที่ ${cIdx + 1})`;
+                swapTargetSelect.appendChild(opt);
+              });
+            });
+          }
+        } else if (slot.type === "HOLIDAY") {
+          const h = sched.holidays && sched.holidays[slot.hIdx];
+          if (h && h.shifts) {
+            h.shifts.forEach((n, sIdx) => {
+              if (sIdx === slot.sIdx) return; // skip self
+              const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[sIdx]) ? HOLIDAY_SHIFT_META[sIdx] : {};
+              const th = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[n]) ? AGENT_NAME_MAP[n] : n;
+              const opt = document.createElement("option");
+              opt.value = JSON.stringify({ sIdx, agent: n });
+              opt.textContent = `คุณ${th} - กะที่ ${sIdx + 1} (${meta.time || '09.00-18.00 น.'}) [${meta.role || ''}]`;
+              swapTargetSelect.appendChild(opt);
+            });
+          }
+        }
+      }
+
+      // Default checkbox state: true (as master baseline)
+      const asMasterCheck = document.getElementById("adminSlotAsMasterCheck");
+      if (asMasterCheck) asMasterCheck.checked = true;
+
+      // Clear reason
+      const reasonInput = document.getElementById("adminSlotEditReason");
+      if (reasonInput) reasonInput.value = "";
+
+      const modal = document.getElementById("adminSlotEditModal");
+      if (modal) modal.classList.add("show");
+    }
+
+    function closeAdminSlotEditModal() {
+      const modal = document.getElementById("adminSlotEditModal");
+      if (modal) modal.classList.remove("show");
+      currentEditingSlot = null;
+    }
+
+    function onAdminSlotModeChange() {
+      const radios = document.getElementsByName("adminSlotMode");
+      let selectedMode = "DIRECT";
+      radios.forEach(r => { if (r.checked) selectedMode = r.value; });
+
+      const directContainer = document.getElementById("adminSlotDirectContainer");
+      const swapContainer = document.getElementById("adminSlotSwapContainer");
+      const directLabel = document.getElementById("adminSlotModeDirectLabel");
+      const swapLabel = document.getElementById("adminSlotModeSwapLabel");
+
+      if (selectedMode === "DIRECT") {
+        if (directContainer) directContainer.style.display = "block";
+        if (swapContainer) swapContainer.style.display = "none";
+        if (directLabel) {
+          directLabel.style.border = "1.5px solid #0284c7";
+          directLabel.style.color = "#0369a1";
+          directLabel.style.background = "#ffffff";
+        }
+        if (swapLabel) {
+          swapLabel.style.border = "1px solid #cbd5e1";
+          swapLabel.style.color = "#475569";
+          swapLabel.style.background = "#f8fafc";
+        }
+      } else {
+        if (directContainer) directContainer.style.display = "none";
+        if (swapContainer) swapContainer.style.display = "block";
+        if (directLabel) {
+          directLabel.style.border = "1px solid #cbd5e1";
+          directLabel.style.color = "#475569";
+          directLabel.style.background = "#f8fafc";
+        }
+        if (swapLabel) {
+          swapLabel.style.border = "1.5px solid #7c3aed";
+          swapLabel.style.color = "#6d28d9";
+          swapLabel.style.background = "#ffffff";
+        }
+      }
+    }
+
+    function submitAdminSlotEdit() {
+      if (!currentEditingSlot) return;
+      const slot = currentEditingSlot;
+      const yearAD = slot.yearAD;
+      const month = slot.month;
+      const mData = getOrInitMonthSchedule(yearAD, month);
+      const sched = mData.schedule;
+      const origSched = mData.originalSchedule || (mData.originalSchedule = JSON.parse(JSON.stringify(sched)));
+
+      const radios = document.getElementsByName("adminSlotMode");
+      let selectedMode = "DIRECT";
+      radios.forEach(r => { if (r.checked) selectedMode = r.value; });
+
+      const asMasterCheck = document.getElementById("adminSlotAsMasterCheck");
+      const asMaster = asMasterCheck ? asMasterCheck.checked : true;
+      const reasonInput = document.getElementById("adminSlotEditReason");
+      const reason = (reasonInput ? reasonInput.value : "").trim();
+      const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "หัวหน้างาน (Admin)";
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" });
+      const timeStr = now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      if (selectedMode === "DIRECT") {
+        const newAgent = document.getElementById("adminSlotNewAgentSelect")?.value;
+        if (!newAgent) {
+          showToast("⚠️ กรุณาเลือกผู้เข้าเวรใหม่");
+          return;
+        }
+
+        let oldAgent = slot.agName || slot.agent;
+        let slotDesc = "";
+
+        if (slot.type === "WEEKDAY") {
+          const w = sched.weeks[slot.wIdx];
+          const col = WEEKDAY_COLUMNS[slot.cIdx];
+          oldAgent = w.assignments[slot.cIdx][slot.sIdx];
+          w.assignments[slot.cIdx][slot.sIdx] = newAgent;
+          slotDesc = `สัปดาห์ที่ ${slot.wIdx + 1} (${w.label}) ช่อง ${slot.cIdx + 1} (${col.role} [${col.time}])`;
+
+          if (asMaster) {
+            // Also update originalSchedule baseline so origName === newAgent (NO SWAP COLOR!)
+            if (origSched && origSched.weeks && origSched.weeks[slot.wIdx] && origSched.weeks[slot.wIdx].assignments && origSched.weeks[slot.wIdx].assignments[slot.cIdx]) {
+              origSched.weeks[slot.wIdx].assignments[slot.cIdx][slot.sIdx] = newAgent;
+            }
+          }
+        } else if (slot.type === "HOLIDAY") {
+          const h = sched.holidays[slot.hIdx];
+          const meta = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[slot.sIdx]) ? HOLIDAY_SHIFT_META[slot.sIdx] : {};
+          oldAgent = h.shifts[slot.sIdx];
+          h.shifts[slot.sIdx] = newAgent;
+          slotDesc = `วันหยุด ${h.dayName} ${h.date} (${h.holidayName || ''}) กะที่ ${slot.sIdx + 1} [${meta.time || '09.00-18.00 น.'}]`;
+
+          if (asMaster) {
+            // Also update originalSchedule baseline so origName === newAgent (NO SWAP COLOR!)
+            if (origSched && origSched.holidays && origSched.holidays[slot.hIdx] && origSched.holidays[slot.hIdx].shifts) {
+              origSched.holidays[slot.hIdx].shifts[slot.sIdx] = newAgent;
+            }
+          }
+        }
+
+        const thOld = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[oldAgent]) ? AGENT_NAME_MAP[oldAgent] : oldAgent;
+        const thNew = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[newAgent]) ? AGENT_NAME_MAP[newAgent] : newAgent;
+
+        if (!asMaster) {
+          // Record as normal swap in swapHistory if not marked as master baseline
+          const historyItem = {
+            id: "ADMIN_DIR_" + Date.now(),
+            tag: "[ปรับกะโดยหัวหน้า]",
+            date: dateStr,
+            time: timeStr,
+            timestamp: now.toISOString(),
+            performedBy: performedBy,
+            yearAD: yearAD,
+            month: month,
+            personA: oldAgent,
+            thA: thOld,
+            descA: slotDesc,
+            personB: newAgent,
+            thB: thNew,
+            descB: "เปลี่ยนเข้ากะนี้แทน",
+            note: reason || "Admin ปรับเปลี่ยนผู้เข้ากะโดยตรง"
+          };
+          if (!swapHistory) swapHistory = [];
+          swapHistory.unshift(historyItem);
+          mData.swapHistory = swapHistory;
+        }
+
+        currentSchedule = sched;
+        originalSchedule = origSched;
+
+        triggerAutoSaveToCloud(`Admin ปรับเปลี่ยนผู้เข้ากะ: คุณ${thOld} ➔ คุณ${thNew} (${slotDesc}) โดย ${performedBy}`);
+        closeAdminSlotEditModal();
+        if (typeof renderAllViews === "function") renderAllViews();
+        showToast(`✅ ปรับเปลี่ยนผู้เข้ากะเป็น คุณ${thNew} เรียบร้อยแล้ว${asMaster ? ' (ปรับตารางหลัก - ไม่แสดงสีสลับ)' : ''}`);
+
+      } else if (selectedMode === "SWAP") {
+        const targetJsonStr = document.getElementById("adminSlotSwapTargetSelect")?.value;
+        if (!targetJsonStr) {
+          showToast("⚠️ กรุณาเลือกกะเป้าหมายที่จะสลับด้วย");
+          return;
+        }
+        const targetObj = JSON.parse(targetJsonStr);
+
+        let agA = slot.agName || slot.agent;
+        let agB = targetObj.agent;
+        let descA = "";
+        let descB = "";
+
+        if (slot.type === "WEEKDAY") {
+          const w = sched.weeks[slot.wIdx];
+          const colA = WEEKDAY_COLUMNS[slot.cIdx];
+          const colB = WEEKDAY_COLUMNS[targetObj.cIdx];
+          agA = w.assignments[slot.cIdx][slot.sIdx];
+          agB = w.assignments[targetObj.cIdx][targetObj.sIdx];
+
+          // Swap in currentSchedule
+          w.assignments[slot.cIdx][slot.sIdx] = agB;
+          w.assignments[targetObj.cIdx][targetObj.sIdx] = agA;
+
+          descA = `${colA.role} [${colA.time}]`;
+          descB = `${colB.role} [${colB.time}]`;
+
+          if (asMaster) {
+            // Also swap in originalSchedule baseline so NO SWAP COLOR!
+            if (origSched && origSched.weeks && origSched.weeks[slot.wIdx]) {
+              origSched.weeks[slot.wIdx].assignments[slot.cIdx][slot.sIdx] = agB;
+              origSched.weeks[slot.wIdx].assignments[targetObj.cIdx][targetObj.sIdx] = agA;
+            }
+          }
+        } else if (slot.type === "HOLIDAY") {
+          const h = sched.holidays[slot.hIdx];
+          const metaA = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[slot.sIdx]) ? HOLIDAY_SHIFT_META[slot.sIdx] : {};
+          const metaB = (typeof HOLIDAY_SHIFT_META !== "undefined" && HOLIDAY_SHIFT_META[targetObj.sIdx]) ? HOLIDAY_SHIFT_META[targetObj.sIdx] : {};
+          agA = h.shifts[slot.sIdx];
+          agB = h.shifts[targetObj.sIdx];
+
+          // Swap in currentSchedule
+          h.shifts[slot.sIdx] = agB;
+          h.shifts[targetObj.sIdx] = agA;
+
+          descA = `กะที่ ${slot.sIdx + 1} [${metaA.time || '09.00-18.00 น.'}]`;
+          descB = `กะที่ ${targetObj.sIdx + 1} [${metaB.time || '09.00-18.00 น.'}]`;
+
+          if (asMaster) {
+            // Also swap in originalSchedule baseline so NO SWAP COLOR!
+            if (origSched && origSched.holidays && origSched.holidays[slot.hIdx]) {
+              origSched.holidays[slot.hIdx].shifts[slot.sIdx] = agB;
+              origSched.holidays[slot.hIdx].shifts[targetObj.sIdx] = agA;
+            }
+          }
+        }
+
+        const thA = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[agA]) ? AGENT_NAME_MAP[agA] : agA;
+        const thB = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[agB]) ? AGENT_NAME_MAP[agB] : agB;
+
+        if (!asMaster) {
+          const historyItem = {
+            id: "ADMIN_SWP_" + Date.now(),
+            tag: "[สลับตำแหน่งโดยหัวหน้า]",
+            date: dateStr,
+            time: timeStr,
+            timestamp: now.toISOString(),
+            performedBy: performedBy,
+            yearAD: yearAD,
+            month: month,
+            personA: agA,
+            thA: thA,
+            descA: descA,
+            personB: agB,
+            thB: thB,
+            descB: descB,
+            note: reason || "Admin สลับตำแหน่งเวร"
+          };
+          if (!swapHistory) swapHistory = [];
+          swapHistory.unshift(historyItem);
+          mData.swapHistory = swapHistory;
+        }
+
+        currentSchedule = sched;
+        originalSchedule = origSched;
+
+        triggerAutoSaveToCloud(`Admin สลับตำแหน่งเวร: คุณ${thA} 🔁 คุณ${thB} โดย ${performedBy}`);
+        closeAdminSlotEditModal();
+        if (typeof renderAllViews === "function") renderAllViews();
+        showToast(`✅ สลับตำแหน่ง คุณ${thA} 🔁 คุณ${thB} เรียบร้อยแล้ว${asMaster ? ' (ปรับตารางหลัก - ไม่แสดงสีสลับ)' : ''}`);
+      }
+    }
+
+    function trigger2StepSwapFromModal() {
+      const slot = currentEditingSlot;
+      closeAdminSlotEditModal();
+      if (!slot) return;
+      pendingSwapSlot = slot;
+      const monthShort = THAI_MONTHS_SHORT[slot.month];
+      const displayAgName = slot.agName || slot.agent;
+      const thDisplay = (typeof AGENT_NAME_MAP !== "undefined" && AGENT_NAME_MAP[displayAgName]) ? AGENT_NAME_MAP[displayAgName] : displayAgName;
+      const swapSelectedEl = document.getElementById("swapSelectedName");
+      if (swapSelectedEl) {
+        swapSelectedEl.innerHTML = `คุณ${thDisplay} <span style="font-weight:normal; color:#fde047;">(${monthShort} ${slot.label || ''})</span>`;
+      }
+      const floatingBar = document.getElementById("floating-swap-bar");
+      if (floatingBar) floatingBar.classList.add("show");
+      renderMasterWeekdayTable();
+      renderMasterHolidayTable();
+      showToast("👆 กรุณาคลิกเลือกช่องที่ 2 บนหน้าตารางที่ต้องการสลับตำแหน่งด้วย");
+    }
+
+    function requestPromoteCurrentToBaseline() {
+      if (!currentUser || (!isAdminMode && currentUser.role !== "ADMIN")) {
+        showToast("🔒 เฉพาะหัวหน้างาน (Admin) เท่านั้นที่สามารถตั้งค่าตารางหลักได้");
+        return;
+      }
+      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
+      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const monthName = THAI_MONTHS[month];
+      const yearTH = yearAD + 543;
+
+      openSafetyModal({
+        title: `บันทึกตารางปัจจุบันเป็น Master Baseline (${monthName} ${yearTH})`,
+        icon: "📌",
+        alertHTML: `
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px; border-radius:8px;">
+            <div style="font-size:14px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+              <span>📌</span> บันทึกและล้างแถบสีสลับเวรทั้งหมด
+            </div>
+            <ul style="margin:0; padding-left:18px; line-height:1.5;">
+              <li>ระบบจะนำ <strong>ตารางเวรปัจจุบันที่เห็นอยู่ทั้งหมด</strong> ไปตั้งเป็น <strong>"ตารางต้นฉบับ Master ชุดใหม่"</strong> ของเดือน ${monthName} ${yearTH}</li>
+              <li><strong>แถบสีม่วง/เหลืองสลับเวรทั้งหมดจะถูกเคลียร์กลับเป็นสีปกติ</strong> (เสมือนเป็นตารางที่ถูกจัดคิวไว้ตั้งแต่แรก)</li>
+              <li>ตารางนี้จะถูกใช้เป็นฐานข้อมูลในการคำนวณเดือนถัดไปต่อไป</li>
+            </ul>
+          </div>
+        `,
+        checkboxText: `ฉันยืนยันให้ตารางปัจจุบันเป็น Master Baseline ของเดือน ${monthName} และล้างสีสลับทั้งหมด`,
+        confirmBtnText: "📌 ยืนยันบันทึกเป็นตารางหลัก",
+        actionFn: () => {
+          const key = `${yearAD}-${month}`;
+          const mData = getOrInitMonthSchedule(yearAD, month);
+          // Deep clone currentSchedule into originalSchedule
+          mData.originalSchedule = JSON.parse(JSON.stringify(mData.schedule));
+          originalSchedule = mData.originalSchedule;
+          currentSchedule = mData.schedule;
+
+          const performedBy = typeof getCurrentOperatorName === "function" ? getCurrentOperatorName() : "หัวหน้างาน (Admin)";
+          triggerAutoSaveToCloud(`Admin บันทึกตารางปัจจุบันเป็น Master Baseline (ล้างสีสลับทั้งหมด) เดือน ${monthName} ${yearTH} โดย ${performedBy}`);
+
+          if (typeof renderAllViews === "function") renderAllViews();
+          showToast(`📌 บันทึกตารางเดือน ${monthName} เป็น Master Baseline เรียบร้อยแล้ว (ล้างสีสลับทั้งหมด)`);
+        }
+      });
+    }
+
+
     function switchSettingsSubTab(subTabId, btn) {
       document.querySelectorAll(".settings-sub-panel").forEach(p => p.style.display = "none");
       document.querySelectorAll("#subTabBtnAgents, #subTabBtnWeekdayJD, #subTabBtnHolidayJD").forEach(b => {
