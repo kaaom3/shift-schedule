@@ -9,6 +9,20 @@
       let currentWeekDays = [];
       let currentWeekHolidays = [];
 
+      const finalizeWeek = () => {
+        if (currentWeekDays.length > 0) {
+          let label = currentWeekDays.length === 1
+            ? `${currentWeekDays[0]} ${THAI_MONTHS_SHORT[month]}`
+            : `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
+          if (currentWeekHolidays.length > 0) {
+            label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
+          }
+          weeks.push({ label, days: [...currentWeekDays] });
+          currentWeekDays = [];
+          currentWeekHolidays = [];
+        }
+      };
+
       for (let d = 1; d <= daysInMonth; d++) {
         const dt = new Date(yearAD, month - 1, d);
         const dow = dt.getDay(); // 0 = อาทิตย์, 6 = เสาร์
@@ -16,15 +30,7 @@
 
         if (dow === 0 || dow === 6) {
           // Weekend day
-          if (currentWeekDays.length > 0) {
-            let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
-            if (currentWeekHolidays.length > 0) {
-              label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
-            }
-            weeks.push({ label, days: [...currentWeekDays] });
-            currentWeekDays = [];
-            currentWeekHolidays = [];
-          }
+          finalizeWeek();
           holidays.push({
             dayName: THAI_DAYS[dow],
             date: d,
@@ -43,32 +49,22 @@
           });
           currentWeekHolidays.push(`${d} ${THAI_MONTHS_SHORT[month]} ${botName}`);
 
-          // If Friday is a bank holiday, finalize the week at Thursday
-          if (dow === 5 && currentWeekDays.length > 0) {
-            let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
-            if (currentWeekHolidays.length > 0) {
-              label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
-            }
-            weeks.push({ label, days: [...currentWeekDays] });
-            currentWeekDays = [];
-            currentWeekHolidays = [];
+          // Finalize week if Friday or last day of month
+          if (dow === 5 || d === daysInMonth) {
+            finalizeWeek();
           }
         } else {
           // Normal weekday working day
-          currentWeekDays.append ? currentWeekDays.push(d) : currentWeekDays.push(d);
+          currentWeekDays.push(d);
           if (dow === 5 || d === daysInMonth) {
-            if (currentWeekDays.length > 0) {
-              let label = `${currentWeekDays[0]} - ${currentWeekDays[currentWeekDays.length - 1]} ${THAI_MONTHS_SHORT[month]}`;
-              if (currentWeekHolidays.length > 0) {
-                label += ` (หยุด ${currentWeekHolidays.join(", ")})`;
-              }
-              weeks.push({ label, days: [...currentWeekDays] });
-              currentWeekDays = [];
-              currentWeekHolidays = [];
-            }
+            finalizeWeek();
           }
         }
       }
+
+      // Safety net after loop in case month ended on weekday without finalize
+      finalizeWeek();
+
       return { weeks, holidays };
     }
 
@@ -78,6 +74,21 @@
       if (monthSchedules[key]) {
         if (!monthSchedules[key].leaves) monthSchedules[key].leaves = {};
         if (!monthSchedules[key].dailySwaps) monthSchedules[key].dailySwaps = [];
+
+        // Self-heal: If historical schedule has more weeks than saved schedule (e.g. Week 5 restored)
+        if (HISTORICAL_SCHEDULES[key]) {
+          const histWeeks = HISTORICAL_SCHEDULES[key].weeks;
+          const curWeeks = monthSchedules[key].schedule && monthSchedules[key].schedule.weeks;
+          if (Array.isArray(histWeeks) && Array.isArray(curWeeks) && curWeeks.length < histWeeks.length) {
+            for (let i = curWeeks.length; i < histWeeks.length; i++) {
+              curWeeks.push(JSON.parse(JSON.stringify(histWeeks[i])));
+              if (monthSchedules[key].originalSchedule && Array.isArray(monthSchedules[key].originalSchedule.weeks)) {
+                monthSchedules[key].originalSchedule.weeks.push(JSON.parse(JSON.stringify(histWeeks[i])));
+              }
+            }
+          }
+        }
+
         reconcileScheduleNames(monthSchedules[key].schedule);
         reconcileScheduleNames(monthSchedules[key].originalSchedule);
         return monthSchedules[key];

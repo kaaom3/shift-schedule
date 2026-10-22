@@ -4,6 +4,7 @@ const path = require('path');
 const scheduleHandler = require('./api/schedule');
 const healthHandler = require('./api/health');
 const calendarHandler = require('./api/calendar');
+const usersHandler = require('./api/users');
 
 // Read port from environment or fallback to 3000
 const PORT = process.env.PORT || 3000;
@@ -76,7 +77,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Helper to read JSON body for API routes
-  if (pathname === '/api/schedule' || pathname === '/api/health') {
+  if (pathname === '/api/schedule' || pathname === '/api/health' || pathname === '/api/users') {
     let rawBody = '';
     req.on('data', chunk => { rawBody += chunk; });
     req.on('end', () => {
@@ -90,6 +91,8 @@ const server = http.createServer((req, res) => {
         scheduleHandler(req, res);
       } else if (pathname === '/api/health') {
         healthHandler(req, res);
+      } else if (pathname === '/api/users') {
+        usersHandler(req, res);
       }
     });
     return;
