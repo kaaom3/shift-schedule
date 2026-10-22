@@ -178,6 +178,38 @@ module.exports = async (req, res) => {
         }
       }
 
+      // Safeguard: Ensure December 2026 always retains Week 5 (28-30 ธ.ค. 69)
+      if (finalPayload.monthSchedules && finalPayload.monthSchedules['2026-12']) {
+        const dec = finalPayload.monthSchedules['2026-12'];
+        const week5 = {
+          label: '28 - 30 ธ.ค. 69 (หยุด 31 ธ.ค. วันสิ้นปี)',
+          assignments: [
+            ['theerawut.b'],
+            ['kittiyakorn.h'],
+            ['parinya.si', 'pantip.to'],
+            ['jutharat.ka'],
+            ['nithus.d'],
+            ['panisara.n'],
+            ['mewika.p'],
+            ['sawitree.ton'],
+            ['pattaraporn.n'],
+            ['kittipa.j', 'mallika.to', 'siriyakorn.y', 'pornpoom.t'],
+            ['komkrit.pr'],
+            ['nutchanat.p'],
+            ['anusit.k'],
+            ['chadaporn.sa'],
+            ['suriya.r'],
+            ['yasumin.t']
+          ]
+        };
+        if (dec.schedule && Array.isArray(dec.schedule.weeks) && dec.schedule.weeks.length < 5) {
+          dec.schedule.weeks.push(JSON.parse(JSON.stringify(week5)));
+        }
+        if (dec.originalSchedule && Array.isArray(dec.originalSchedule.weeks) && dec.originalSchedule.weeks.length < 5) {
+          dec.originalSchedule.weeks.push(JSON.parse(JSON.stringify(week5)));
+        }
+      }
+
       await stateCol.updateOne(
         { _id: 'current_state' },
         {
