@@ -91,6 +91,7 @@
         }
       }
       updateSwapPermissionUI();
+      if (typeof updateMonthSelectorPermissions === "function") updateMonthSelectorPermissions();
       renderMasterWeekdayTable();
       renderMasterHolidayTable();
     }

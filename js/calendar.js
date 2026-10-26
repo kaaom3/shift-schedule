@@ -149,9 +149,89 @@
 
 
 
+    function updateMonthSelectorPermissions() {
+      const yearSelect = document.getElementById("yearSelect");
+      const monthSelect = document.getElementById("monthSelect");
+      if (!yearSelect || !monthSelect) return;
+
+      const isAdmin = (typeof isAdminMode !== "undefined" && isAdminMode) || 
+                      (typeof currentUser !== "undefined" && currentUser && currentUser.role === "ADMIN");
+
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+      let maxAllowedYear = curYear;
+      let maxAllowedMonth = curMonth + 2;
+      if (maxAllowedMonth > 12) {
+        maxAllowedMonth -= 12;
+        maxAllowedYear += 1;
+      }
+
+      const selectedYear = parseInt(yearSelect.value, 10);
+
+      // 1. Update Year Options
+      Array.from(yearSelect.options).forEach(opt => {
+        const yr = parseInt(opt.value, 10);
+        if (isAdmin) {
+          opt.disabled = false;
+        } else {
+          opt.disabled = (yr > maxAllowedYear);
+        }
+      });
+
+      // 2. Update Month Options
+      Array.from(monthSelect.options).forEach(opt => {
+        const m = parseInt(opt.value, 10);
+        if (isAdmin) {
+          opt.disabled = false;
+          opt.textContent = THAI_MONTHS[m];
+        } else {
+          const isExceeded = (selectedYear > maxAllowedYear) || (selectedYear === maxAllowedYear && m > maxAllowedMonth);
+          opt.disabled = isExceeded;
+          opt.textContent = isExceeded ? `${THAI_MONTHS[m]} 🔒` : THAI_MONTHS[m];
+        }
+      });
+    }
+
+    function onYearSelectChange() {
+      updateMonthSelectorPermissions();
+      generateScheduleForSelectedMonth();
+    }
+
     function generateScheduleForSelectedMonth(forceRegen = false) {
-      const yearAD = parseInt(document.getElementById("yearSelect").value, 10);
-      const month = parseInt(document.getElementById("monthSelect").value, 10);
+      const yearSelect = document.getElementById("yearSelect");
+      const monthSelect = document.getElementById("monthSelect");
+      if (!yearSelect || !monthSelect) return;
+
+      let yearAD = parseInt(yearSelect.value, 10);
+      let month = parseInt(monthSelect.value, 10);
+
+      // 2-Month Lookahead Limit for Non-Admin Members
+      const isAdmin = (typeof isAdminMode !== "undefined" && isAdminMode) || 
+                      (typeof currentUser !== "undefined" && currentUser && currentUser.role === "ADMIN");
+
+      if (!isAdmin) {
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1;
+        let maxAllowedYear = curYear;
+        let maxAllowedMonth = curMonth + 2;
+        if (maxAllowedMonth > 12) {
+          maxAllowedMonth -= 12;
+          maxAllowedYear += 1;
+        }
+
+        const isExceeded = (yearAD > maxAllowedYear) || (yearAD === maxAllowedYear && month > maxAllowedMonth);
+        if (isExceeded) {
+          showToast(`🔒 สมาชิกทั่วไปสามารถดูตารางล่วงหน้าได้ไม่เกิน 2 เดือน (ถึงเดือน ${THAI_MONTHS[maxAllowedMonth]} ${maxAllowedYear + 543})`);
+          yearSelect.value = curYear;
+          monthSelect.value = Math.min(curMonth + 1, 12);
+          yearAD = curYear;
+          month = Math.min(curMonth + 1, 12);
+        }
+      }
+
+      updateMonthSelectorPermissions();
       const key = `${yearAD}-${month}`;
 
       // Auto-save current month schedule to monthSchedules before switching
@@ -322,4 +402,6 @@
 
     if (typeof window !== "undefined") {
       window.findWeekIndexForDay = findWeekIndexForDay;
+      window.updateMonthSelectorPermissions = updateMonthSelectorPermissions;
+      window.onYearSelectChange = onYearSelectChange;
     }

@@ -26,6 +26,7 @@
       sanitizeSwapHistory();
       currentlyLoadedMonthKey = `${yearAD}-${month}`;
 
+      if (typeof updateMonthSelectorPermissions === "function") updateMonthSelectorPermissions();
       updateAdminModeUI();
       updateSwapPermissionUI();
       populateFilterDropdowns();
