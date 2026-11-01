@@ -74,7 +74,7 @@
     // =========================================================================
     const LATE_SHIFT_COLUMNS = [12, 13, 14, 15]; // Col 13 (10.00-19.00), Col 14 (11.00-20.00), Col 15 (12.00-21.00), Col 16 (13.30-22.30)
 
-    function generateSmartMonthWeeks(calWeeks, prevWeekAssignments, carryOverLateCounts = null, baseShift = 0, extraLateAgentsLastWeek = null) {
+    function generateSmartMonthWeeks(calWeeks, prevWeekAssignments, carryOverLateCounts = null, baseShift = 0, extraLateAgentsLastWeek = null, past2MonthCols = null) {
       const resultWeeks = [];
       const monthLateCounts = {};
       const monthColCounts = {};
@@ -139,7 +139,14 @@
               if (carryA !== carryB) return carryA - carryB;
             }
 
-            // Priority D: Prioritize agents who were in Col 9 (4 slots) or Col 2 (2 slots) last week
+            // Priority D: 2-Month Cooldown on same late column (Rule 3)
+            if (past2MonthCols) {
+              const pastA = past2MonthCols[a]?.has(c) ? 1 : 0;
+              const pastB = past2MonthCols[b]?.has(c) ? 1 : 0;
+              if (pastA !== pastB) return pastA - pastB;
+            }
+
+            // Priority E: Prioritize agents who were in Col 9 (4 slots) or Col 2 (2 slots) last week
             const wasMultiA = (prevColMap[a] === 9 || prevColMap[a] === 2) ? 0 : 1;
             const wasMultiB = (prevColMap[b] === 9 || prevColMap[b] === 2) ? 0 : 1;
             if (wasMultiA !== wasMultiB) return wasMultiA - wasMultiB;
@@ -276,7 +283,32 @@
         });
       }
 
-      const { weeks } = generateSmartMonthWeeks(cal.weeks, prevWeekAssignments, carryOverLateCounts, baseShift, extraLateAgentsLastWeek);
+      // Collect past 2 months column history to enforce 2-Month Cooldown rule (Rule 3)
+      const past2MonthCols = {};
+      const lookbackKeys = [];
+      let y = yearAD, m = month - 1;
+      if (m < 1) { m += 12; y -= 1; }
+      lookbackKeys.push(`${y}-${m}`);
+      m -= 1;
+      if (m < 1) { m += 12; y -= 1; }
+      lookbackKeys.push(`${y}-${m}`);
+
+      lookbackKeys.forEach(k => {
+        const pastSched = (typeof monthSchedules !== "undefined" && monthSchedules[k]?.schedule) || 
+                          (typeof HISTORICAL_SCHEDULES !== "undefined" && HISTORICAL_SCHEDULES[k]);
+        if (pastSched && Array.isArray(pastSched.weeks)) {
+          pastSched.weeks.forEach(w => {
+            w.assignments.forEach((col, c) => {
+              col.forEach(ag => {
+                if (!past2MonthCols[ag]) past2MonthCols[ag] = new Set();
+                past2MonthCols[ag].add(c);
+              });
+            });
+          });
+        }
+      });
+
+      const { weeks } = generateSmartMonthWeeks(cal.weeks, prevWeekAssignments, carryOverLateCounts, baseShift, extraLateAgentsLastWeek, past2MonthCols);
 
       // Holidays quota & balancing (2-month cycle)
       const prevHolidayCounts = {};
