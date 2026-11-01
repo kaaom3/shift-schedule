@@ -69,6 +69,269 @@
     }
 
     
+    // =========================================================================
+    // SMART CONSTRAINT-SATISFACTION SHIFT GENERATOR
+    // =========================================================================
+    const LATE_SHIFT_COLUMNS = [12, 13, 14, 15]; // Col 13 (10.00-19.00), Col 14 (11.00-20.00), Col 15 (12.00-21.00), Col 16 (13.30-22.30)
+
+    function generateSmartMonthWeeks(calWeeks, prevWeekAssignments, carryOverLateCounts = null, baseShift = 0, extraLateAgentsLastWeek = null) {
+      const resultWeeks = [];
+      const monthLateCounts = {};
+      const monthColCounts = {};
+      AGENTS.forEach(a => {
+        monthLateCounts[a] = 0;
+        monthColCounts[a] = Array(16).fill(0);
+      });
+
+      let prevWeek = prevWeekAssignments;
+
+      for (let wIdx = 0; wIdx < calWeeks.length; wIdx++) {
+        const w = calWeeks[wIdx];
+        
+        // Check who worked late (Col 12..15) in prevWeek
+        const workedLateLastWeek = new Set();
+        if (prevWeek) {
+          LATE_SHIFT_COLUMNS.forEach(c => {
+            (prevWeek[c] || []).forEach(ag => workedLateLastWeek.add(ag));
+          });
+        }
+        if (wIdx === 0 && extraLateAgentsLastWeek) {
+          extraLateAgentsLastWeek.forEach(ag => workedLateLastWeek.add(ag));
+        }
+
+        // Map each agent's column in prevWeek
+        const prevColMap = {};
+        if (prevWeek) {
+          prevWeek.forEach((colAgents, c) => {
+            colAgents.forEach(ag => prevColMap[ag] = c);
+          });
+        }
+
+        const weekAssigned = new Set();
+        const currentAssignments = Array.from({ length: 16 }, () => []);
+
+        const spinOffset = (typeof customSpinSeed !== "undefined") ? customSpinSeed : 0;
+        const weekOffset = (baseShift + wIdx * 3 + spinOffset) % 20;
+        const getAgentPriority = (a) => {
+          const idx = BASE_ROTATION_ORDER_INDICES.indexOf(AGENTS.indexOf(a));
+          return (idx - weekOffset + 20) % 20;
+        };
+
+        // 1. Assign Late Shifts: Col 15 (13.30), 14 (12.00), 13 (11.00), 12 (10.00)
+        const lateColumnsOrder = [15, 14, 13, 12];
+        for (const c of lateColumnsOrder) {
+          const candidates = [...AGENTS].filter(a => !weekAssigned.has(a));
+          candidates.sort((a, b) => {
+            // Priority A: Strict No Back-to-Back Late Shift
+            const lateLastA = workedLateLastWeek.has(a) ? 1 : 0;
+            const lateLastB = workedLateLastWeek.has(b) ? 1 : 0;
+            if (lateLastA !== lateLastB) return lateLastA - lateLastB;
+
+            // Priority B: Least late count in current month
+            if (monthLateCounts[a] !== monthLateCounts[b]) {
+              return monthLateCounts[a] - monthLateCounts[b];
+            }
+
+            // Priority C: Least late count carried over
+            if (carryOverLateCounts) {
+              const carryA = carryOverLateCounts[a] || 0;
+              const carryB = carryOverLateCounts[b] || 0;
+              if (carryA !== carryB) return carryA - carryB;
+            }
+
+            // Priority D: Prioritize agents who were in Col 9 (4 slots) or Col 2 (2 slots) last week
+            const wasMultiA = (prevColMap[a] === 9 || prevColMap[a] === 2) ? 0 : 1;
+            const wasMultiB = (prevColMap[b] === 9 || prevColMap[b] === 2) ? 0 : 1;
+            if (wasMultiA !== wasMultiB) return wasMultiA - wasMultiB;
+
+            return getAgentPriority(a) - getAgentPriority(b);
+          });
+
+          const chosen = candidates[0];
+          currentAssignments[c].push(chosen);
+          weekAssigned.add(chosen);
+          monthLateCounts[chosen]++;
+          monthColCounts[chosen][c]++;
+        }
+
+        // 2. Assign Day Single-slot Columns: 0, 1, 3, 4, 5, 6, 7, 8, 10, 11
+        const daySingleCols = [0, 1, 3, 4, 5, 6, 7, 8, 10, 11];
+        for (const c of daySingleCols) {
+          const candidates = [...AGENTS].filter(a => !weekAssigned.has(a));
+          candidates.sort((a, b) => {
+            // Strict Priority: Did not work this column last week
+            const sameColA = prevColMap[a] === c ? 1 : 0;
+            const sameColB = prevColMap[b] === c ? 1 : 0;
+            if (sameColA !== sameColB) return sameColA - sameColB;
+
+            // Prioritize agents who were in Col 9 last week
+            const wasCol9A = prevColMap[a] === 9 ? 0 : 1;
+            const wasCol9B = prevColMap[b] === 9 ? 0 : 1;
+            if (wasCol9A !== wasCol9B) return wasCol9A - wasCol9B;
+
+            // Prioritize agents who were in Col 2 last week
+            const wasCol2A = prevColMap[a] === 2 ? 0 : 1;
+            const wasCol2B = prevColMap[b] === 2 ? 0 : 1;
+            if (wasCol2A !== wasCol2B) return wasCol2A - wasCol2B;
+
+            if (monthColCounts[a][c] !== monthColCounts[b][c]) {
+              return monthColCounts[a][c] - monthColCounts[b][c];
+            }
+
+            return getAgentPriority(a) - getAgentPriority(b);
+          });
+
+          const chosen = candidates[0];
+          currentAssignments[c].push(chosen);
+          weekAssigned.add(chosen);
+          monthColCounts[chosen][c]++;
+        }
+
+        // 3. Assign Remaining 6 Agents to Col 2 (2 slots) and Col 9 (4 slots)
+        const remaining = [...AGENTS].filter(a => !weekAssigned.has(a));
+
+        // Col 2 (2 slots)
+        for (let s = 0; s < 2; s++) {
+          remaining.sort((a, b) => {
+            const sameColA = prevColMap[a] === 2 ? 1 : 0;
+            const sameColB = prevColMap[b] === 2 ? 1 : 0;
+            if (sameColA !== sameColB) return sameColA - sameColB;
+
+            if (monthColCounts[a][2] !== monthColCounts[b][2]) {
+              return monthColCounts[a][2] - monthColCounts[b][2];
+            }
+
+            return getAgentPriority(a) - getAgentPriority(b);
+          });
+          const chosen = remaining.shift();
+          currentAssignments[2].push(chosen);
+          weekAssigned.add(chosen);
+          monthColCounts[chosen][2]++;
+        }
+
+        // Col 9 (4 slots)
+        for (let s = 0; s < 4; s++) {
+          remaining.sort((a, b) => {
+            const sameColA = prevColMap[a] === 9 ? 1 : 0;
+            const sameColB = prevColMap[b] === 9 ? 1 : 0;
+            if (sameColA !== sameColB) return sameColA - sameColB;
+
+            if (monthColCounts[a][9] !== monthColCounts[b][9]) {
+              return monthColCounts[a][9] - monthColCounts[b][9];
+            }
+
+            return getAgentPriority(a) - getAgentPriority(b);
+          });
+          const chosen = remaining.shift();
+          currentAssignments[9].push(chosen);
+          weekAssigned.add(chosen);
+          monthColCounts[chosen][9]++;
+        }
+
+        resultWeeks.push({
+          label: w.label,
+          days: w.days,
+          assignments: currentAssignments
+        });
+
+        prevWeek = currentAssignments;
+      }
+
+      return { weeks: resultWeeks, monthLateCounts, lastWeek: resultWeeks[resultWeeks.length - 1].assignments };
+    }
+
+    function generateSmartMonthSchedule(yearAD, month, baseSchedule, actualSchedule = null) {
+      const cal = buildCalendarWeeksAndHolidays(yearAD, month);
+      let prevWeekAssignments = null;
+      let carryOverLateCounts = null;
+      let baseShift = 0;
+      let baseHolidays = null;
+      const extraLateAgentsLastWeek = new Set();
+
+      if (baseSchedule && baseSchedule.weeks && baseSchedule.weeks.length > 0) {
+        const lastW = baseSchedule.weeks[baseSchedule.weeks.length - 1];
+        prevWeekAssignments = lastW.assignments;
+        const lastCol0Agent = lastW.assignments[0]?.[0];
+        const lastIdx = BASE_ROTATION_ORDER_INDICES.indexOf(AGENTS.indexOf(lastCol0Agent));
+        baseShift = (lastIdx !== -1 ? lastIdx + 3 : 0) % 20;
+
+        carryOverLateCounts = {};
+        AGENTS.forEach(a => carryOverLateCounts[a] = 0);
+        baseSchedule.weeks.forEach(w => {
+          LATE_SHIFT_COLUMNS.forEach(c => {
+            (w.assignments[c] || []).forEach(a => carryOverLateCounts[a]++);
+          });
+        });
+        baseHolidays = baseSchedule.holidays || null;
+
+        LATE_SHIFT_COLUMNS.forEach(c => {
+          (lastW.assignments[c] || []).forEach(a => extraLateAgentsLastWeek.add(a));
+        });
+      }
+
+      if (actualSchedule && actualSchedule.weeks && actualSchedule.weeks.length > 0) {
+        const lastW = actualSchedule.weeks[actualSchedule.weeks.length - 1];
+        LATE_SHIFT_COLUMNS.forEach(c => {
+          (lastW.assignments[c] || []).forEach(a => extraLateAgentsLastWeek.add(a));
+        });
+      }
+
+      const { weeks } = generateSmartMonthWeeks(cal.weeks, prevWeekAssignments, carryOverLateCounts, baseShift, extraLateAgentsLastWeek);
+
+      // Holidays quota & balancing (2-month cycle)
+      const prevHolidayCounts = {};
+      AGENTS.forEach(a => prevHolidayCounts[a] = 0);
+      if (baseHolidays) {
+        baseHolidays.forEach(h => {
+          (h.shifts || []).forEach(ag => {
+            if (prevHolidayCounts[ag] !== undefined) prevHolidayCounts[ag]++;
+          });
+        });
+      }
+
+      const lastHol = baseHolidays && baseHolidays.length > 0 ? baseHolidays[baseHolidays.length - 1] : null;
+      const lastHolAgents = lastHol ? (lastHol.shifts || []) : [];
+
+      const nextHolCounts = {};
+      AGENTS.forEach(a => nextHolCounts[a] = 0);
+
+      let prevDayAssigned = [...lastHolAgents];
+      const generatedHolidays = cal.holidays.map((h, hIdx) => {
+        const shifts = [];
+        const candidates = [...AGENTS].sort((a, b) => {
+          const totalA = (prevHolidayCounts[a] || 0) + (nextHolCounts[a] || 0);
+          const totalB = (prevHolidayCounts[b] || 0) + (nextHolCounts[b] || 0);
+          if (totalA !== totalB) return totalA - totalB;
+          return (nextHolCounts[a] || 0) - (nextHolCounts[b] || 0);
+        });
+
+        for (const cand of candidates) {
+          if (shifts.length >= 4) break;
+          if (shifts.includes(cand)) continue;
+          if (hIdx > 0 && prevDayAssigned.includes(cand)) continue;
+          if (hIdx === 0 && prevDayAssigned.includes(cand) && h.date === 1) continue;
+
+          shifts.push(cand);
+          nextHolCounts[cand]++;
+        }
+
+        if (shifts.length < 4) {
+          for (const cand of candidates) {
+            if (shifts.length >= 4) break;
+            if (!shifts.includes(cand)) {
+              shifts.push(cand);
+              nextHolCounts[cand]++;
+            }
+          }
+        }
+
+        prevDayAssigned = [...shifts];
+        return { ...h, shifts };
+      });
+
+      return { weeks, holidays: generatedHolidays };
+    }
+
     function getOrInitMonthSchedule(yearAD, month) {
       const key = `${yearAD}-${month}`;
       if (monthSchedules[key]) {
@@ -106,43 +369,36 @@
         return monthSchedules[key];
       }
 
-      // Auto-generate for future months using authentic rotation matrices
-      const cal = buildCalendarWeeksAndHolidays(yearAD, month);
-      
-      // Calculate continuous week offset from November 2026 (Nov 2026 = 5 weeks, Dec 2026 starts at cycle week 5)
-      const monthDiff = (yearAD - 2026) * 12 + (month - 11);
-      const approxWeeksBefore = monthDiff > 0 ? (5 + (monthDiff - 1) * 4) : 0;
-      
-      const generatedWeeks = cal.weeks.map((w, wIdx) => {
-        const cycleIdx = (approxWeeksBefore + wIdx + customSpinSeed) % 20;
-        const cycleAssignments = WEEKDAY_ROTATION_MATRIX[cycleIdx];
-        return {
-          label: w.label,
-          assignments: JSON.parse(JSON.stringify(cycleAssignments))
-        };
-      });
+      // Auto-generate for future months using smart constraint solver
+      let prevYear = yearAD;
+      let prevMonth = month - 1;
+      if (prevMonth < 1) {
+        prevMonth = 12;
+        prevYear -= 1;
+      }
+      const prevKey = `${prevYear}-${prevMonth}`;
+      let baseSched = null;
+      let actualSched = null;
+      if (monthSchedules[prevKey]) {
+        baseSched = monthSchedules[prevKey].originalSchedule || monthSchedules[prevKey].schedule;
+        actualSched = monthSchedules[prevKey].schedule || null;
+      } else if (HISTORICAL_SCHEDULES[prevKey]) {
+        baseSched = HISTORICAL_SCHEDULES[prevKey];
+        actualSched = HISTORICAL_SCHEDULES[prevKey];
+      } else if (prevYear >= 2026 && (prevYear > 2026 || prevMonth >= 9)) {
+        const prevMData = getOrInitMonthSchedule(prevYear, prevMonth);
+        baseSched = prevMData ? (prevMData.originalSchedule || prevMData.schedule) : null;
+        actualSched = prevMData ? prevMData.schedule : null;
+      }
 
-      // Holiday rotation continues seamlessly from November's last holiday (indices 15, 12, 7, 3)
-      // So first holiday day after Nov starts at offsets: [16, 13, 8, 4]
-      const approxHolidaysBefore = monthDiff > 0 ? (monthDiff - 1) * 8 : 0;
-      const generatedHolidays = cal.holidays.map((h, hIdx) => {
-        const step = (approxHolidaysBefore + hIdx + customSpinSeed) % 20;
-        const shifts = [
-          HOLIDAY_ROTATION_AGENTS[(16 + step) % 20],
-          HOLIDAY_ROTATION_AGENTS[(13 + step) % 20],
-          HOLIDAY_ROTATION_AGENTS[(8 + step) % 20],
-          HOLIDAY_ROTATION_AGENTS[(4 + step) % 20]
-        ];
-        return { ...h, shifts };
-      });
-
-      const sched = { weeks: generatedWeeks, holidays: generatedHolidays };
-      reconcileScheduleNames(sched);
+      const generated = generateSmartMonthSchedule(yearAD, month, baseSched, actualSched);
+      reconcileScheduleNames(generated);
       monthSchedules[key] = {
-        schedule: sched,
-        originalSchedule: JSON.parse(JSON.stringify(sched)),
+        schedule: generated,
+        originalSchedule: JSON.parse(JSON.stringify(generated)),
         swapHistory: [],
-        leaves: {}
+        leaves: {},
+        dailySwaps: []
       };
       return monthSchedules[key];
     }
@@ -269,85 +525,14 @@
       const base = (originalSchedule && originalSchedule.weeks && originalSchedule.weeks.length > 0)
         ? originalSchedule
         : currentSchedule;
+      const actual = (currentSchedule && currentSchedule.weeks && currentSchedule.weeks.length > 0)
+        ? currentSchedule
+        : null;
 
-      const cal = buildCalendarWeeksAndHolidays(nextYearAD, nextMonth);
-
-      // 1. Weekday rotation calculation from base.weeks
-      let lastWeekStartAgent = "";
-      if (base.weeks.length > 0) {
-        lastWeekStartAgent = base.weeks[base.weeks.length - 1].assignments[0]?.[0] || AGENTS[0];
-      }
-      let baseIdx = BASE_ROTATION_ORDER_INDICES.findIndex(idx => AGENTS[idx] === lastWeekStartAgent);
-      if (baseIdx === -1) baseIdx = 0;
-
-      const generatedWeeks = cal.weeks.map((w, wIdx) => {
-        const stepShift = (baseIdx + (wIdx + 1) * 3) % 20;
-        const rotatedPool = [];
-        for (let i = 0; i < 20; i++) {
-          rotatedPool.push(AGENTS[BASE_ROTATION_ORDER_INDICES[(i + stepShift) % 20]]);
-        }
-        let ptr = 0;
-        const assignments = WEEKDAY_COLUMNS.map(col => {
-          const slotNames = [];
-          for (let s = 0; s < col.slots; s++) slotNames.push(rotatedPool[ptr++]);
-          return slotNames;
-        });
-        return { label: w.label, assignments };
-      });
-
-      // 2. Weekend / Holiday quota calculation from base.holidays (from baseline only!)
-      const prevHolidayCounts = {};
-      AGENTS.forEach(a => prevHolidayCounts[a] = 0);
-      if (base.holidays) {
-        base.holidays.forEach(h => {
-          h.shifts.forEach(ag => {
-            if (prevHolidayCounts[ag] !== undefined) prevHolidayCounts[ag]++;
-          });
-        });
-      }
-
-      const lastHol = base.holidays && base.holidays.length > 0 ? base.holidays[base.holidays.length - 1] : null;
-      const lastHolAgents = lastHol ? lastHol.shifts : [];
-
-      const nextHolCounts = {};
-      AGENTS.forEach(a => nextHolCounts[a] = 0);
-
-      let prevDayAssigned = [...lastHolAgents];
-      const generatedHolidays = cal.holidays.map((h, hIdx) => {
-        const shifts = [];
-        const candidates = [...AGENTS].sort((a, b) => {
-          const totalA = (prevHolidayCounts[a] || 0) + (nextHolCounts[a] || 0);
-          const totalB = (prevHolidayCounts[b] || 0) + (nextHolCounts[b] || 0);
-          if (totalA !== totalB) return totalA - totalB;
-          return (nextHolCounts[a] || 0) - (nextHolCounts[b] || 0);
-        });
-
-        for (const cand of candidates) {
-          if (shifts.length >= 4) break;
-          if (shifts.includes(cand)) continue;
-          if (hIdx > 0 && prevDayAssigned.includes(cand)) continue;
-          if (hIdx === 0 && prevDayAssigned.includes(cand) && h.date === 1) continue;
-
-          shifts.push(cand);
-          nextHolCounts[cand]++;
-        }
-
-        if (shifts.length < 4) {
-          for (const cand of candidates) {
-            if (shifts.length >= 4) break;
-            if (!shifts.includes(cand)) {
-              shifts.push(cand);
-              nextHolCounts[cand]++;
-            }
-          }
-        }
-
-        prevDayAssigned = [...shifts];
-        return { ...h, shifts };
-      });
+      const generated = generateSmartMonthSchedule(nextYearAD, nextMonth, base, actual);
 
       // Set new schedule and baseline
-      currentSchedule = { weeks: generatedWeeks, holidays: generatedHolidays };
+      currentSchedule = { weeks: generated.weeks, holidays: generated.holidays };
       originalSchedule = JSON.parse(JSON.stringify(currentSchedule));
       swapHistory = [];
       isViewingOriginal = false;
@@ -356,7 +541,9 @@
       monthSchedules[nextKey] = {
         schedule: currentSchedule,
         originalSchedule: originalSchedule,
-        swapHistory: []
+        swapHistory: [],
+        leaves: (monthSchedules[nextKey] && monthSchedules[nextKey].leaves) || {},
+        dailySwaps: (monthSchedules[nextKey] && monthSchedules[nextKey].dailySwaps) || []
       };
       currentlyLoadedMonthKey = nextKey;
 
@@ -368,8 +555,9 @@
 
       alert(`🎉 คำนวณตารางเวรเดือน ${nextMonthName} ${nextYearTH} สำเร็จ!\n\n` +
             `• คำนวณต่อเนื่องจาก "ตารางต้นฉบับ" ของเดือนก่อนหน้า (ไม่นำการสลับเวรมาคิดรวม)\n` +
-            `• กะวันธรรมดาหมุนเวียนต่อเนื่องไร้รอยต่อ\n` +
-            `• เกลี่ยโควตาวันหยุดให้คนที่ได้น้อยในเดือนก่อน ได้รับสิทธิ์เพิ่มขึ้นในเดือนนี้ตามกฎรอบ 2 เดือน\n` +
+            `• ไร้การอยู่เวรดึกซ้ำติดกัน 2 สัปดาห์ (Back-to-Back Late Shift: 0%)\n` +
+            `• ไร้การอยู่กะ/คอลัมน์เดิมซ้ำสัปดาห์ติดกัน (Same Column Repeat: 0%)\n` +
+            `• เกลี่ยโควตากะดึกและวันหยุดเท่าเทียมครบทุกคนตามกฎรอบ 2 เดือน\n` +
             `• ระบบได้บันทึกเป็นตารางต้นฉบับของเดือน ${nextMonthName} และซิงค์ขึ้น MongoDB Atlas เรียบร้อยแล้ว`);
       triggerAutoSaveToCloud(`คำนวณเดือน ${nextMonthName} ${nextYearTH}`);
     }
