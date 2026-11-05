@@ -327,9 +327,31 @@
       const nextHolCounts = {};
       AGENTS.forEach(a => nextHolCounts[a] = 0);
 
+      // Smart Holiday Slot Rotation (H1..H4 slot variety, preventing same H-slot repeats in month/cycle)
+      const prevHolidaySlots = {};
+      AGENTS.forEach(a => prevHolidaySlots[a] = []);
+      if (baseHolidays) {
+        baseHolidays.forEach(h => {
+          (h.shifts || []).forEach((ag, sIdx) => {
+            if (!prevHolidaySlots[ag]) prevHolidaySlots[ag] = [];
+            prevHolidaySlots[ag].push(sIdx);
+          });
+        });
+      }
+
+      const agentSlotsInMonth = {};
+      AGENTS.forEach(a => agentSlotsInMonth[a] = []);
+
+      const permutations = [
+        [0,1,2,3], [0,1,3,2], [0,2,1,3], [0,2,3,1], [0,3,1,2], [0,3,2,1],
+        [1,0,2,3], [1,0,3,2], [1,2,0,3], [1,2,3,0], [1,3,0,2], [1,3,2,0],
+        [2,0,1,3], [2,0,3,1], [2,1,0,3], [2,1,3,0], [2,3,0,1], [2,3,1,0],
+        [3,0,1,2], [3,0,2,1], [3,1,0,2], [3,1,2,0], [3,2,0,1], [3,2,1,0]
+      ];
+
       let prevDayAssigned = [...lastHolAgents];
       const generatedHolidays = cal.holidays.map((h, hIdx) => {
-        const shifts = [];
+        // 1. Pick 4 candidates with least accumulated holiday shifts
         const candidates = [...AGENTS].sort((a, b) => {
           const totalA = (prevHolidayCounts[a] || 0) + (nextHolCounts[a] || 0);
           const totalB = (prevHolidayCounts[b] || 0) + (nextHolCounts[b] || 0);
@@ -337,24 +359,54 @@
           return (nextHolCounts[a] || 0) - (nextHolCounts[b] || 0);
         });
 
+        const chosenAgents = [];
         for (const cand of candidates) {
-          if (shifts.length >= 4) break;
-          if (shifts.includes(cand)) continue;
+          if (chosenAgents.length >= 4) break;
+          if (chosenAgents.includes(cand)) continue;
           if (hIdx > 0 && prevDayAssigned.includes(cand)) continue;
           if (hIdx === 0 && prevDayAssigned.includes(cand) && h.date === 1) continue;
-
-          shifts.push(cand);
-          nextHolCounts[cand]++;
+          chosenAgents.push(cand);
         }
 
-        if (shifts.length < 4) {
+        if (chosenAgents.length < 4) {
           for (const cand of candidates) {
-            if (shifts.length >= 4) break;
-            if (!shifts.includes(cand)) {
-              shifts.push(cand);
-              nextHolCounts[cand]++;
+            if (chosenAgents.length >= 4) break;
+            if (!chosenAgents.includes(cand)) chosenAgents.push(cand);
+          }
+        }
+
+        // 2. Assign the 4 chosen agents to slots [0, 1, 2, 3] to minimize slot repeats
+        let bestPerm = null;
+        let minPenalty = 999999;
+        for (const perm of permutations) {
+          let penalty = 0;
+          for (let i = 0; i < 4; i++) {
+            const ag = chosenAgents[i];
+            const slot = perm[i];
+            // High penalty if agent has already worked this specific H-slot in current month
+            const timesInMonth = agentSlotsInMonth[ag].filter(s => s === slot).length;
+            penalty += timesInMonth * 1000;
+            // Minor penalty if same as the very last H-slot from base month
+            const lastDecSlot = prevHolidaySlots[ag] && prevHolidaySlots[ag].length > 0
+              ? prevHolidaySlots[ag][prevHolidaySlots[ag].length - 1]
+              : -1;
+            if (agentSlotsInMonth[ag].length === 0 && lastDecSlot === slot) {
+              penalty += 10;
             }
           }
+          if (penalty < minPenalty) {
+            minPenalty = penalty;
+            bestPerm = perm;
+          }
+        }
+
+        const shifts = Array(4);
+        for (let i = 0; i < 4; i++) {
+          const ag = chosenAgents[i];
+          const slot = bestPerm[i];
+          shifts[slot] = ag;
+          nextHolCounts[ag]++;
+          agentSlotsInMonth[ag].push(slot);
         }
 
         prevDayAssigned = [...shifts];
